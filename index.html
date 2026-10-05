@@ -2,8 +2,8 @@
 <title>Fabrique de séries</title>
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-<script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
   <script src="./styles.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -292,7 +292,7 @@ var SPEECH = [
 var NONE = ["", "personne", "aucun", "aucune", "-", "nobody", "none", "sans voix", "n/a", "x"];
 
 var STORE = "fabrique-series-v2";
-function fresh() { return { genre:"", castNote:"", ambs:[], vus:[], cible:"", veille:[], tendances:"", concepts:[], lecons:"", exSkip:false, titre:"", idee:"", style:"", speech:"A", nb:3, rec:"oui", duree:70, skin:"", teints:[], effets:[], cam:"", yeux:"", transfo:"", sous:["U1"], custom:"", concept:"", regle:"", ton:"", arc:"", persos:[], lieux:[], eps:[], uid:1 }; }
+function fresh() { return { genre:"", castNote:"", ambs:[], vus:[], cible:"", veille:[], tendances:"", concepts:[], lecons:"", exSkip:false, titre:"", idee:"", style:[], speech:"A", nb:3, rec:"oui", duree:70, skin:"", teints:[], effets:[], cam:"", yeux:"", transfo:"", sous:["U1"], custom:"", concept:"", regle:"", ton:"", arc:"", persos:[], lieux:[], eps:[], uid:1 }; }
 var P = fresh();
 var R = { tab:"univers", ep:0, fb:null, busy:null, arm:"", refs:[], chain:null, mont:false, angle:{} };
 var memOnly = false;
@@ -310,6 +310,7 @@ function save() {
   catch (e) { memOnly = true; }
 }
 function fixEps() {
+    if (typeof P.style === "string") P.style = P.style ? [P.style] : [];
   P.eps.forEach(function (e) {
     if (!e.cast) e.cast = [];
     if (!e.stats) e.stats = statsFresh();
@@ -335,10 +336,14 @@ function toast(m) { var t = document.getElementById("toast"); t.textContent = m;
 function byId(arr, id) { return arr.filter(function (x) { return x.id === id; })[0]; }
 function sentence(t) { t = String(t || "").trim(); return t && !/[.!?]$/.test(t) ? t + "." : t; }
 function setPath(o, path, v) { var a = path.split("."), i; for (i = 0; i < a.length - 1; i++) o = o[a[i]]; o[a[a.length - 1]] = v; }
-function sty() { return byId(STYLES, P.style); }
+function styList() {
+  var list = Array.isArray(P.style) ? P.style : (P.style ? [P.style] : []);
+  return list.map(function (id) { return byId(STYLES, id); }).filter(Boolean);
+}
+function sty() { return styList()[0]; }
 function phrase() {
-  var s = sty(), a = [];
-  if (s) a.push(s.phrase);
+  var a = [];
+  styList().forEach(function (s) { a.push(s.phrase); });
   P.effets.forEach(function (id) { var e = byId(EFFETS, id); if (e) a.push(e.p); });
   if (has(P.custom)) a.push(P.custom.trim());
   var seen = {}; return a.filter(function (x) { var k = String(x).toLowerCase(); if (seen[k]) return false; seen[k] = 1; return true; }).join(", ");
@@ -491,36 +496,54 @@ async function ffmpegLoad() {
   if (FF.loading) { while (FF.loading) await new Promise(function (ok) { setTimeout(ok, 200); }); return FF.instance; }
   FF.loading = true;
   try {
-    var ffmpeg = new FFmpeg.FFmpeg();
-    var baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+    // Détecte la bonne variable globale selon la version du CDN
+    var FFCls = (typeof FFmpeg !== "undefined" && FFmpeg.FFmpeg) ? FFmpeg.FFmpeg
+              : (typeof FFmpegWASM !== "undefined" && FFmpegWASM.FFmpeg) ? FFmpegWASM.FFmpeg
+              : null;
+    if (!FFCls) throw new Error("FFmpeg non chargé (CDN inaccessible ?)");
+
+    var ffmpeg = new FFCls();
+    var baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
     await ffmpeg.load({
       coreURL: baseURL + "/ffmpeg-core.js",
       wasmURL: baseURL + "/ffmpeg-core.wasm"
     });
     FF.instance = ffmpeg; FF.loaded = true;
+    console.log("✅ FFmpeg chargé");
     return ffmpeg;
   } finally { FF.loading = false; }
 }
 async function ffmpegConcatenate(ep, onProgress) {
   var main = ep.plans.filter(function (p) { return !p.reserve && p.videoUrl; });
   if (!main.length) throw new Error("Aucun clip à assembler.");
-  if (onProgress) onProgress("Chargement de FFmpeg…");
+  if (onProgress) onProgress("Chargement de FFmpeg (30 Mo la 1ère fois)…");
   var ffmpeg = await ffmpegLoad();
   var names = [];
   for (var i = 0; i < main.length; i++) {
     var p = main[i];
     if (onProgress) onProgress("Téléchargement du clip " + (i + 1) + "/" + main.length + "…");
-    var res = await fetch(p.videoUrl);
+    var res;
+    try { res = await fetch(p.videoUrl, { mode: "cors" }); }
+    catch (e) { throw new Error("Clip " + (i + 1) + " inaccessible (CORS). Essaie de le télécharger à la main."); }
+    if (!res.ok) throw new Error("Clip " + (i + 1) + " : HTTP " + res.status);
     var buf = new Uint8Array(await res.arrayBuffer());
+    if (buf.length < 1000) throw new Error("Clip " + (i + 1) + " vide ou corrompu.");
     var name = "plan" + String(i).padStart(3, "0") + ".mp4";
     await ffmpeg.writeFile(name, buf);
     names.push(name);
   }
   var listTxt = names.map(function (n) { return "file '" + n + "'"; }).join("\n");
   await ffmpeg.writeFile("list.txt", new TextEncoder().encode(listTxt));
-  if (onProgress) onProgress("Assemblage final (peut prendre 1-2 min)…");
-  await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", "sortie.mp4"]);
+  if (onProgress) onProgress("Assemblage final (1-3 min)…");
+  try {
+    await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", "sortie.mp4"]);
+  } catch (e) {
+    // Si le -c copy échoue, on réencode (plus lent mais marche toujours)
+    if (onProgress) onProgress("Réencodage de secours (plus long)…");
+    await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c:v", "libx264", "-c:a", "aac", "sortie.mp4"]);
+  }
   var data = await ffmpeg.readFile("sortie.mp4");
+  if (!data || data.length < 1000) throw new Error("Fichier final vide.");
   var blob = new Blob([data.buffer], { type: "video/mp4" });
   return URL.createObjectURL(blob);
 }
@@ -923,8 +946,13 @@ function universHtml() {
     '<div class="fld"><span class="q">Personnages récurrents ?</span><div class="opt">' + RECS.map(function (r) { return '<button type="button" class="optb" data-act="rec" data-v="' + r.id + '" aria-pressed="' + (P.rec === r.id) + '"><b>' + esc(r.t) + '</b><span>' + esc(r.d) + '</span></button>'; }).join("") + '</div></div></section>';
   h += '<section class="glass card"><h2>2. Mon idée</h2>' + bind("titre", P.titre, 0, "Titre") +
     bind("idee", P.idee, 5, "Mon idée ou mon script", "Une phrase suffit. Exemple : une laverie de quartier où chaque machine révèle un secret.") + '</section>';
-  h += '<section class="glass card"><h2>3. Mon look</h2><div class="fld"><label class="q" for="style">Style visuel</label><select id="style" data-act="stylesel">' + styleOpts + '</select>' +
-    (sty() ? '<p class="small muted">' + esc(sty().voit) + '</p>' : '') + '</div>' +
+ h += '<section class="glass card"><h2>3. Mon look</h2><div class="fld"><span class="q">Style visuel (coche un ou plusieurs styles)</span><div class="chips" id="style-chips">' +
+    STYLES.map(function (s) {
+      var sel = (Array.isArray(P.style) ? P.style : []).indexOf(s.id) >= 0;
+      return '<button type="button" class="chip small" data-act="style" data-v="' + s.id + '" aria-pressed="' + sel + '" title="' + esc(s.nom) + '">' + (s.emoji ? s.emoji + ' ' : '') + esc(s.nom) + '</button>';
+    }).join("") +
+    '</div>' +
+    (styList().length ? '<p class="small muted">' + styList().length + ' style' + (styList().length > 1 ? 's' : '') + ' sélectionné' + (styList().length > 1 ? 's' : '') + '</p>' : '<p class="small muted">Aucun style — les prompts seront génériques.</p>') + '</div>' +
     '<details class="glass acc" data-keep="1"><summary><div><b>Affiner : peau, teint, lumière, effets</b><br><span>' + (P.skin || P.teints.length || P.effets.length || P.cam ? "Réglages choisis" : "Facultatif") + '</span></div></summary><div class="in">' +
     '<div class="fld"><span class="q">Rendu de peau</span><div class="chips">' + SKINS.map(function (k) { return '<button type="button" class="chip small" data-act="skin" data-v="' + k.id + '" aria-pressed="' + (P.skin === k.id) + '" title="' + esc(k.d) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
     '<div class="fld"><span class="q">Teints</span><div class="chips">' + TEINTS.map(function (k) { return '<button type="button" class="chip small" data-act="teint" data-v="' + k.id + '" aria-pressed="' + (P.teints.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
@@ -1067,6 +1095,7 @@ function epHtml(e) {
     '<button type="button" class="btn big" data-act="genmont" data-v="' + e.n + '"' + (pl.length ? "" : " disabled") + '>' + (has(e.montage) ? "Refaire le montage" : "Préparer le montage") + '</button>' +
     (has(e.montage) ? '<button type="button" class="btn ghost big" data-act="montopen" data-v="' + e.n + '">Ouvrir le montage</button>' : '') +
     '<button type="button" class="btn ghost big" data-act="ffmpeg-ep" data-v="' + e.n + '"' + (pl.filter(function (p) { return p.videoUrl; }).length >= 2 ? "" : " disabled") + '>🎬 Assembler la vidéo finale (FFmpeg)</button>' +
+'<button type="button" class="btn ghost big" data-act="copylist" data-v="' + e.n + '"' + (pl.filter(function (p) { return p.videoUrl; }).length >= 1 ? "" : " disabled") + '>📋 Copier la liste des clips (montage manuel)</button>' +
     (e.finalVideoUrl ? '<div class="plan-thumb" style="margin-top:10px"><video src="' + esc(e.finalVideoUrl) + '" controls playsinline></video><div class="bar"><a class="btn ghost" href="' + esc(e.finalVideoUrl) + '" download="' + esc(e.titre || ("episode-" + e.n)) + '.mp4" target="_blank" rel="noopener">⬇ Télécharger la vidéo finale</a></div></div>' : '') +
     (e.finalVideoStatus === "busy" ? '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(e.finalVideoError || "Assemblage en cours…") + '</div>' : '') +
     '</section>';
@@ -1122,6 +1151,12 @@ document.addEventListener("click", function (e) {
   else if (a === "sous") { var sl = sousList(); var si = sl.indexOf(v); if (si >= 0) sl.splice(si, 1); else sl.push(v); P.sous = sl.length ? sl : ["U1"]; save(); render(); }
   else if (a === "amb") { var ai = P.ambs.indexOf(v); if (ai >= 0) P.ambs.splice(ai, 1); else P.ambs.push(v); save(); render(); }
   else if (a === "agnes-save") { saveAgnesKey(); }
+      else if (a === "style") {
+    if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
+    var si = P.style.indexOf(v);
+    if (si >= 0) P.style.splice(si, 1); else P.style.push(v);
+    save(); render();
+  }
   else if (a === "genuni") { if (P.persos.length && !arm("uni", "Touche encore pour tout remplacer.")) return; genUnivers(); }
   else if (a === "addperso") { P.persos.push({ id: uid(), nom: "", role: "", caractere: "", secret: "", voix: "", voix_en: "", visuel: "", ok: false }); save(); render(); }
   else if (a === "addlieu") { P.lieux.push({ id: uid(), nom: "", visuel: "", ok: false }); save(); render(); }
@@ -1147,6 +1182,14 @@ document.addEventListener("click", function (e) {
   else if (a === "montclose") { R.mont = false; render(); }
   else if (a === "copymall") { var em = epBy(+v); if (em) copyAll(em.montage, "Texte copié."); }
   else if (a === "bilan") { var eb = epBy(+v); if (eb) genBilan(eb); }
+      else if (a === "copylist") {
+    var el = epBy(+v);
+    if (!el) return;
+    var clips = el.plans.filter(function (p) { return !p.reserve && p.videoUrl; }).map(function (p, k) {
+      return "Plan " + (k + 1) + " (" + p.n + ") : " + p.videoUrl;
+    });
+    copyAll(clips.join("\n"), clips.length + " clip" + (clips.length > 1 ? "s" : "") + " copiés. Colle cette liste quelque part, ouvre chaque lien et enregistre.");
+  }
   else if (a === "ffmpeg-ep") {
     var ef = epBy(+v);
     if (!ef) return;
@@ -1182,7 +1225,6 @@ document.addEventListener("input", function (e) {
 });
 document.addEventListener("change", function (e) {
   var id = e.target.id;
-  if (id === "style") { P.style = e.target.value; save(); render(); }
   else if (id === "cam") { P.cam = e.target.value; save(); }
   else if (id === "bk-file") {
     var f = e.target.files[0]; if (!f) return;
