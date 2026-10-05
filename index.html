@@ -1,11 +1,9 @@
-=== DÉBUT PARTIE A ===
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#ECE8FF">
 <title>Fabrique de séries · Agnes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,7 +19,7 @@
   --fg: #1B1340;
   --muted: #55497E;
   --glass: rgba(255, 255, 255, .55);
-  --glass-strong: rgba(255, 255, 255, .8);
+  --glass-strong: rgba(255, 255, 255, .82);
   --glass-line: rgba(255, 255, 255, .8);
   --shadow: 0 10px 34px rgba(72, 46, 160, .16);
   --line: rgba(27, 19, 64, .14);
@@ -54,7 +52,6 @@
     color-scheme: dark;
   }
 }
-
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
 body {
@@ -62,7 +59,7 @@ body {
   background: var(--bg); color: var(--fg);
   font-family: var(--font-body); font-size: 16px; line-height: 1.55;
   padding-inline: 16px;
-  padding-block: 18px 220px;
+  padding-block: 18px 240px;
   padding-top: calc(18px + env(safe-area-inset-top, 0px));
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
@@ -127,10 +124,9 @@ button { cursor: pointer; }
 .btn.big { width: 100%; }
 .btn[disabled] { opacity: .45; cursor: not-allowed; }
 .btn.danger { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn); box-shadow: none; }
-.back {
-  background: none; border: 0; color: var(--accent-text);
-  font-weight: 700; padding: 8px 0; text-align: left;
-  align-self: flex-start; min-height: 44px;
+.btn.next {
+  background: linear-gradient(135deg, #10B981, #059669);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, .35);
 }
 
 .strip {
@@ -143,7 +139,6 @@ button { cursor: pointer; }
   flex: none; min-width: 92px; border-radius: 16px; padding: 10px 12px;
   text-align: left; color: var(--fg); background: var(--glass);
   border: 1px solid var(--glass-line);
-  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   display: flex; flex-direction: column; gap: 2px; min-height: 64px;
 }
 .stage small { font-size: .72rem; color: var(--muted); font-weight: 600; }
@@ -155,6 +150,76 @@ button { cursor: pointer; }
   color: #fff; border-color: transparent;
 }
 .stage.cur small { color: rgba(255,255,255,.85); }
+
+.api-panel { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.api-panel.ok { border-color: var(--accent-a); box-shadow: 0 0 0 2px var(--accent-a) inset, var(--shadow); }
+.api-key-input {
+  width: 100%; padding: 12px 14px; border-radius: 14px;
+  border: 1.5px solid var(--line); background: var(--glass-strong);
+  color: var(--fg);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 14px;
+}
+.api-key-input:focus { outline: none; border-color: var(--accent-a); box-shadow: 0 0 0 3px rgba(109, 74, 232, .22); }
+.api-status-line {
+  font-size: .85rem; padding: 10px 14px; border-radius: 12px;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--code-bg); color: var(--muted);
+}
+.api-status-line.ok { background: var(--ok-bg); color: var(--ok); font-weight: 600; }
+.api-status-line .status-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--muted); flex-shrink: 0;
+}
+.api-status-line.ok .status-dot { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.api-hint { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+.api-hint a { color: var(--accent-text); text-decoration: underline; }
+.api-security {
+  background: var(--hot-bg); border-radius: 12px; padding: 10px 12px;
+  font-size: .78rem; color: var(--fg); font-weight: 500; line-height: 1.5;
+}
+
+.quota-panel { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.quota-row {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; font-size: .82rem;
+  padding: 6px 0; border-bottom: 1px solid var(--line);
+}
+.quota-row:last-child { border-bottom: none; }
+.quota-label { color: var(--muted); }
+.quota-value {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-weight: 600; display: flex; align-items: center; gap: 6px;
+}
+.quota-bar {
+  width: 70px; height: 6px; background: var(--code-bg);
+  border-radius: 3px; overflow: hidden;
+}
+.quota-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+  transition: width .3s;
+}
+.quota-bar-fill.warn { background: var(--warn); }
+.quota-warn {
+  background: var(--warn-bg); border-radius: 12px; padding: 10px 12px;
+  font-size: .8rem; color: var(--warn); font-weight: 600; line-height: 1.45;
+  display: none;
+}
+
+.wake-status {
+  font-size: .78rem; padding: 10px 12px; border-radius: 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--code-bg); color: var(--muted);
+  flex-wrap: wrap; gap: 8px;
+}
+.wake-status.active { background: var(--ok-bg); color: var(--ok); }
+.wake-status.warn { background: var(--warn-bg); color: var(--warn); }
+.wake-status button {
+  background: transparent; border: 1px solid currentColor;
+  color: inherit; padding: 6px 12px; border-radius: 10px;
+  font-size: .75rem; font-weight: 600;
+}
 
 label.q { font-weight: 700; display: block; margin-bottom: 6px; }
 .q-hint { display: block; font-size: .82rem; color: var(--muted); font-weight: 500; margin-top: 3px; line-height: 1.45; }
@@ -200,10 +265,20 @@ select {
 .scrollrow::-webkit-scrollbar { display: none; }
 .scrollrow .chip { white-space: nowrap; flex: none; }
 
-.warnbox { background: var(--warn-bg); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.warnbox {
+  background: var(--warn-bg); border-radius: 16px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
+}
 .warnbox h3 { color: var(--warn); }
-.okbox { background: var(--ok-bg); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; color: var(--ok); }
-.hotbox { background: var(--hot-bg); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.okbox {
+  background: var(--ok-bg); border-radius: 16px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+  color: var(--ok);
+}
+.hotbox {
+  background: var(--hot-bg); border-radius: 16px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+}
 
 .upload-zone {
   position: relative;
@@ -238,22 +313,21 @@ select {
   background: rgba(0,0,0,.7); color: #fff; border: none; border-radius: 50%;
   font-size: 12px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  line-height: 1;
 }
-.image-card .sel {
-  position: absolute; bottom: 6px; left: 6px; width: 28px; height: 28px;
-  background: rgba(255,255,255,.85); border: 2px solid rgba(0,0,0,.2);
-  border-radius: 50%; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; color: transparent; font-weight: 700;
-}
-.image-card.selected .sel { background: var(--accent-a); color: #fff; border-color: #fff; }
 .image-card .regen {
-  position: absolute; bottom: 6px; right: 6px; padding: 5px 10px;
-  background: rgba(0,0,0,.75); color: #fff; border: none; border-radius: 10px;
-  font-size: .72rem; font-weight: 700; cursor: pointer;
+  position: absolute; bottom: 6px; left: 6px; right: 6px;
+  padding: 8px 10px; background: rgba(0,0,0,.75); color: #fff;
+  border: none; border-radius: 10px;
+  font-size: .74rem; font-weight: 700; cursor: pointer;
 }
 .image-card .regen:active { background: var(--accent-a); }
+.image-card .dl {
+  position: absolute; bottom: 44px; right: 6px; width: 32px; height: 32px;
+  background: rgba(0,0,0,.75); color: #fff; border: none; border-radius: 8px;
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.image-card .dl:active { background: var(--accent-a); }
 
 .styles-grid {
   display: grid;
@@ -324,7 +398,7 @@ select {
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
 }
 .gallery-item {
@@ -405,7 +479,6 @@ select {
 .debug-entry.warn .c { color: var(--warn); }
 .debug-entry.err .c { color: var(--warn); }
 .debug-entry.api .c { color: var(--accent-a); }
-.debug-entry.measure .c { color: var(--accent-b); }
 
 .status-bar {
   position: fixed; left: 50%; transform: translateX(-50%) translateY(120%);
@@ -452,8 +525,8 @@ select {
 .dock {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  width: min(520px, calc(100% - 24px));
-  display: flex; gap: 4px; padding: 6px;
+  width: min(720px, calc(100% - 24px));
+  display: flex; gap: 3px; padding: 6px;
   border-radius: 26px;
   background: var(--glass-strong);
   -webkit-backdrop-filter: blur(22px) saturate(160%);
@@ -465,15 +538,15 @@ select {
 .dock button {
   flex: 1; border: 0; background: transparent;
   color: var(--muted); border-radius: 20px;
-  padding: 8px 4px; min-height: 54px;
+  padding: 6px 2px; min-height: 56px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; font-size: .72rem; font-weight: 700;
+  gap: 2px; font-size: .62rem; font-weight: 700;
 }
 .dock button[aria-current="page"] {
   color: #fff;
   background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
 }
-.dock svg { width: 22px; height: 22px; }
+.dock svg { width: 20px; height: 20px; }
 
 .hidden { display: none !important; }
 .empty {
@@ -552,22 +625,32 @@ pre.fin {
 .del { background: none; border: 0; color: var(--warn); font-weight: 700; padding: 8px 0; text-align: left; min-height: 40px; }
 .linkbtn { background: none; border: 0; color: var(--accent-text); font-weight: 700; padding: 6px 0; text-align: left; min-height: 36px; font-size: .9rem; }
 
+.next-step {
+  background: linear-gradient(135deg, rgba(16, 185, 129, .12), rgba(5, 150, 105, .08));
+  border-left: 3px solid var(--ok);
+  border-radius: 18px; padding: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  margin-top: 16px;
+}
+.next-step .kicker { color: var(--ok); }
+.next-step p { font-size: .88rem; color: var(--fg); }
+
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 420px) { .two { grid-template-columns: 1fr; } }
-.next { border-left: 3px solid var(--accent-a); }
 
 @supports (-webkit-touch-callout: none) {
   input, textarea, select { font-size: 16px !important; }
 }
 @media (max-width: 480px) {
-  body { font-size: 15px; padding-block: 14px 200px; }
+  body { font-size: 15px; padding-block: 14px 260px; }
   h1 { font-size: 1.35rem; }
   .card { padding: 14px; gap: 8px; }
   .btn { padding: 12px 16px; min-height: 46px; font-size: .95rem; }
   .images-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .styles-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
-  .dock button { font-size: .68rem; }
+  .dock button { font-size: .56rem; }
+  .dock svg { width: 18px; height: 18px; }
 }
 </style>
 </head>
@@ -579,116 +662,126 @@ pre.fin {
   <header class="hero">
     <span class="kicker">Fabrique de séries · Agnes</span>
     <h1>De l'idée à la vidéo</h1>
-    <p class="muted">Écris ton histoire, choisis ton style, et Agnes génère les images et les vidéos.</p>
+    <p class="muted">Casting, décors, scènes, vidéos. Agnes génère tout.</p>
   </header>
 
-  <!-- Panneau API (visible uniquement la 1ère fois) -->
-  <section class="glass card" id="api-panel" style="display:none;">
+  <section class="glass card api-panel" id="api-panel" style="display:none;">
     <h2>Ma clé Agnes</h2>
-    <input type="password" id="api-key-input" placeholder="Colle ta clé Agnes ici (sk-...)" autocomplete="off" spellcheck="false">
+    <input type="password" id="api-key-input" class="api-key-input" placeholder="Colle ta clé Agnes ici (sk-...)" autocomplete="off" spellcheck="false">
     <div class="row">
       <button type="button" class="btn big" id="api-save-btn">Enregistrer la clé</button>
     </div>
-    <div id="api-status-line" style="font-size:.85rem;padding:10px 14px;border-radius:12px;background:var(--code-bg);color:var(--muted);display:flex;align-items:center;gap:10px;">
-      <span style="width:9px;height:9px;border-radius:50%;background:var(--muted);"></span>
+    <div class="api-status-line" id="api-status-line">
+      <span class="status-dot"></span>
       <span id="api-status-text">Aucune clé Agnes enregistrée</span>
     </div>
     <details style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
       <summary style="cursor:pointer;font-weight:700;color:var(--accent-text);">Clés de secours (facultatif)</summary>
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
         <label class="q">Clé Groq (texte rapide)</label>
-        <input type="password" id="groq-key" placeholder="gsk_..." autocomplete="off">
+        <input type="password" id="groq-key" class="api-key-input" placeholder="gsk_..." autocomplete="off">
         <label class="q">Clé OpenRouter (texte varié)</label>
-        <input type="password" id="openrouter-key" placeholder="sk-or-v1-..." autocomplete="off">
+        <input type="password" id="openrouter-key" class="api-key-input" placeholder="sk-or-v1-..." autocomplete="off">
         <p class="small muted">Pollinations fonctionne sans clé pour les images.</p>
       </div>
     </details>
-    <div class="small muted">
-      Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank" rel="noopener" style="color:var(--accent-text);">platform.agnes-ai.com</a> (Settings, puis API Keys).
+    <div class="api-hint">
+      Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank" rel="noopener">platform.agnes-ai.com</a> (Settings, puis API Keys).
     </div>
-    <div class="hotbox">🔒 Utilise une clé limitée, uniquement sur tes appareils. Ne partage jamais ce fichier après avoir saisi une clé.</div>
+    <div class="api-security">
+      🔒 Utilise une clé limitée, uniquement sur tes appareils. Ne partage jamais ce fichier après avoir saisi une clé.
+    </div>
     <div class="row">
       <button type="button" class="btn ghost big" id="api-clear-btn">Effacer mes clés</button>
     </div>
   </section>
 
-  <!-- Panneau quotas (toujours visible) -->
-  <section class="glass card" id="quota-panel">
+  <section class="glass quota-panel" id="quota-panel">
     <h2 class="small">Quotas Agnes (compteurs locaux)</h2>
-    <div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;padding:6px 0;border-bottom:1px solid var(--line);">
-      <span class="muted">Requêtes texte</span>
-      <span style="font-family:ui-monospace,Menlo,monospace;font-weight:600;"><span id="quota-text">0</span>/30 min</span>
+    <div class="quota-row">
+      <span class="quota-label">Requêtes texte</span>
+      <span class="quota-value">
+        <span id="quota-text">0</span>/30 min
+        <span class="quota-bar"><span class="quota-bar-fill" id="quota-text-bar" style="width:0%"></span></span>
+      </span>
     </div>
-    <div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;padding:6px 0;border-bottom:1px solid var(--line);">
-      <span class="muted">Images générées</span>
-      <span style="font-family:ui-monospace,Menlo,monospace;font-weight:600;"><span id="quota-image">0</span>/4000 jour</span>
+    <div class="quota-row">
+      <span class="quota-label">Images générées</span>
+      <span class="quota-value">
+        <span id="quota-image">0</span>/4000 jour
+        <span class="quota-bar"><span class="quota-bar-fill" id="quota-image-bar" style="width:0%"></span></span>
+      </span>
     </div>
-    <div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;padding:6px 0;border-bottom:1px solid var(--line);">
-      <span class="muted">Secondes de vidéo</span>
-      <span style="font-family:ui-monospace,Menlo,monospace;font-weight:600;"><span id="quota-video">0</span>/500 jour</span>
+    <div class="quota-row">
+      <span class="quota-label">Secondes de vidéo</span>
+      <span class="quota-value">
+        <span id="quota-video">0</span>/500 jour
+        <span class="quota-bar"><span class="quota-bar-fill" id="quota-video-bar" style="width:0%"></span></span>
+      </span>
     </div>
-    <div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;padding:6px 0;">
-      <span class="muted">Vitesse mesurée</span>
-      <span style="font-family:ui-monospace,Menlo,monospace;font-weight:600;"><span id="stat-speed">en attente</span></span>
+    <div class="quota-row">
+      <span class="quota-label">Vitesse mesurée</span>
+      <span class="quota-value"><span id="stat-speed">en attente</span></span>
     </div>
+    <div class="quota-warn" id="quota-warn"></div>
   </section>
 
-  <!-- Wake lock -->
   <section class="glass card">
-    <div id="wake-status" style="font-size:.78rem;padding:10px 12px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;background:var(--code-bg);color:var(--muted);flex-wrap:wrap;gap:8px;">
+    <div class="wake-status" id="wake-status">
       <span id="wake-status-text">💤 Veille automatique</span>
-      <button type="button" id="wake-toggle-btn" style="background:transparent;border:1px solid currentColor;color:inherit;padding:6px 12px;border-radius:10px;font-size:.75rem;font-weight:600;">Garder l'écran allumé</button>
+      <button type="button" id="wake-toggle-btn">Garder l'écran allumé</button>
     </div>
   </section>
 
-  <!-- Contenu des onglets -->
   <div id="tab-content"></div>
 </main>
 
-<!-- Overlay pour les chargements -->
 <div id="overlay"></div>
 
-<!-- Barre de statut -->
 <div class="status-bar" id="status-bar">
   <div class="spinner"></div>
   <span id="status-text">Préparation…</span>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!-- Dock de navigation -->
 <nav class="dock" aria-label="Navigation principale">
   <button type="button" data-tab="idees" aria-current="page">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
     Idées
   </button>
-  <button type="button" data-tab="univers">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
-    Univers
+  <button type="button" data-tab="casting">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Casting
   </button>
-  <button type="button" data-tab="refs">
+  <button type="button" data-tab="decors">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Décors
+  </button>
+  <button type="button" data-tab="scenes">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
-    Références
+    Scènes
   </button>
   <button type="button" data-tab="videos">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M7 6l-2-3M12 6l-2-3M17 6l-2-3"/></svg>
     Vidéos
   </button>
+  <button type="button" data-tab="montage">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
+    Montage
+  </button>
 </nav>
 
-<!-- Canvas anti-veille -->
 <canvas id="noSleepCanvas" width="2" height="2" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1;"></canvas>
 <video id="noSleepVideo" playsinline muted loop style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1;"></video>
-
 <script src="./styles.js"></script>
 <script>
 "use strict";
 
-/* ============================================================
+/* ═══════════════════════════════════════════════════════════════
    FABRIQUE DE SÉRIES · AGNES
-   Moteur JavaScript — Constantes, API, parsers
-   ============================================================ */
+   Constantes, état, parsers, appels API
+   ═══════════════════════════════════════════════════════════════ */
 
 var API_BASE = 'https://apihub.agnes-ai.com/v1';
 var POLL_BASE = 'https://apihub.agnes-ai.com/agnesapi';
@@ -715,6 +808,7 @@ var VIDEO_RPM_LIMIT = 1;
 
 var RETRY_429 = [10, 20, 35, 50, 75, 100, 150];
 var RETRY_503 = [5, 10, 15, 20, 30, 45];
+var RETRY_NETWORK = [3, 5, 8, 12, 20, 30];
 
 var DUREES_TOTALES = [
   { v: 30, t: '30 s' },
@@ -733,9 +827,7 @@ var DUREES_CLIP = [
   { frames: 241, s: 10.04, t: '10 s' }
 ];
 
-var NBS = [1, 2, 3, 4, 5, 6, 8, 10];
-
-var STORE = 'fabrique_agnes_v2';
+var STORE = 'fabrique_agnes_v3';
 var API_KEY_STORAGE = 'fabrique_agnes_key';
 var EXTERNAL_KEY_STORAGE = 'fabrique_agnes_ext';
 var WAKE_LOCK_PREF = 'fabrique_agnes_wakelock';
@@ -750,19 +842,21 @@ var state = {
   theme: '',
   totalDuration: 70,
   durationFrames: 169,
-  durationFramesHook: 121,
   imageModel: MODEL_IMAGE_DEFAULT,
   textProvider: 'agnes',
   externalService: 'openai',
   externalUrl: 'https://api.openai.com/v1/chat/completions',
   externalModel: 'gpt-4o-mini',
   externalKey: '',
+  groqKey: '',
+  openrouterKey: '',
   styles: [],
   skin: '',
   teint: '',
   yeux: '',
-  images: [],
-  selectedImages: [],
+  casting: [],
+  decors: [],
+  scenes: [],
   episode: null,
   queue: [],
   isRunning: false,
@@ -777,9 +871,8 @@ var state = {
     lastResetTime: Date.now()
   },
   wakeEnabled: false,
-  fallbackMode: null,
-  apiKeyPanelShown: false,
-  busy: null
+  busy: null,
+  uid: 1
 };
 
 function $(id) { return document.getElementById(id); }
@@ -796,8 +889,7 @@ function nowTime() {
 }
 function has(v) { return String(v || '').trim().length > 0; }
 function sentence(t) { t = String(t || '').trim(); return t && !/[.!?]$/.test(t) ? t + '.' : t; }
-function uid() { return state.uid = (state.uid || 1) + 1; }
-function byId(arr, id) { return (arr || []).filter(function (x) { return x.id === id; })[0]; }
+function newId() { return state.uid++; }
 
 var toastTimer = null;
 function showToast(msg, type, dur) {
@@ -859,9 +951,9 @@ function loadState() {
     if (raw) {
       var d = JSON.parse(raw);
       if (d && typeof d === 'object') {
-        for (var k in state) {
-          if (d[k] !== undefined && typeof d[k] !== 'function') state[k] = d[k];
-        }
+        ['mode','idea','theme','tone','totalDuration','durationFrames','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','casting','decors','scenes','episode','uid'].forEach(function (k) {
+          if (d[k] !== undefined) state[k] = d[k];
+        });
       }
     }
   } catch (e) {}
@@ -869,7 +961,7 @@ function loadState() {
 function saveState() {
   try {
     var d = {};
-    ['mode','idea','theme','tone','totalDuration','durationFrames','durationFramesHook','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','episode'].forEach(function (k) {
+    ['mode','idea','theme','tone','totalDuration','durationFrames','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','casting','decors','scenes','episode','uid'].forEach(function (k) {
       d[k] = state[k];
     });
     localStorage.setItem(STORE, JSON.stringify(d));
@@ -877,8 +969,7 @@ function saveState() {
 }
 
 function getApiKey() {
-  try { return (localStorage.getItem(API_KEY_STORAGE) || '').trim(); }
-  catch (e) { return ''; }
+  try { return (localStorage.getItem(API_KEY_STORAGE) || '').trim(); } catch (e) { return ''; }
 }
 function saveApiKey() {
   var inp = $('api-key-input');
@@ -915,17 +1006,11 @@ function updateApiPanel() {
   if (!line || !txt || !inp) return;
   var k = getApiKey();
   if (k) {
-    line.style.background = 'var(--ok-bg)';
-    line.style.color = 'var(--ok)';
-    var dot = line.querySelector('span:first-child');
-    if (dot) dot.style.background = 'var(--ok)';
+    line.classList.add('ok');
     txt.textContent = 'Clé Agnes active · ' + k.slice(0, 8) + '…' + k.slice(-4);
     inp.value = k;
   } else {
-    line.style.background = 'var(--code-bg)';
-    line.style.color = 'var(--muted)';
-    var dot2 = line.querySelector('span:first-child');
-    if (dot2) dot2.style.background = 'var(--muted)';
+    line.classList.remove('ok');
     txt.textContent = 'Aucune clé Agnes enregistrée';
     inp.value = '';
   }
@@ -936,8 +1021,8 @@ function updateApiPanelVisibility() {
   var hasKey = !!getApiKey();
   var seen = false;
   try { seen = localStorage.getItem(PREFS_KEY) === '1'; } catch (e) {}
-  if (!hasKey && !seen) { panel.style.display = 'flex'; state.apiKeyPanelShown = true; }
-  else { panel.style.display = 'none'; state.apiKeyPanelShown = false; }
+  if (!hasKey && !seen) panel.style.display = 'flex';
+  else panel.style.display = 'none';
 }
 
 function updateQuotaPanel() {
@@ -948,19 +1033,30 @@ function updateQuotaPanel() {
   el = $('quota-text'); if (el) el.textContent = c.textRequests;
   el = $('quota-image'); if (el) el.textContent = c.imagesGenerated;
   el = $('quota-video'); if (el) el.textContent = Math.round(c.videoSeconds);
+  var bar;
+  bar = $('quota-text-bar'); if (bar) bar.style.width = Math.min((c.textRequests / TEXT_RPM_LIMIT) * 100, 100) + '%';
+  bar = $('quota-image-bar'); if (bar) bar.style.width = Math.min((c.imagesGenerated / IMAGE_DAILY_LIMIT) * 100, 100) + '%';
+  bar = $('quota-video-bar');
+  if (bar) {
+    var pct = Math.min((c.videoSeconds / VIDEO_DAILY_SECONDS) * 100, 100);
+    bar.style.width = pct + '%';
+    bar.classList.toggle('warn', pct > 70);
+  }
   updateSpeedDisplay();
 }
 function checkQuotaWarn(frames, count) {
   var use = (frames / FRAME_RATE) * count;
   var remaining = VIDEO_DAILY_SECONDS - state.counters.videoSeconds;
+  var warn = $('quota-warn');
+  if (!warn) return;
   if (use > remaining * 0.6 || use > 300) {
-    showToast('⚠️ Attention : ' + count + ' clip' + (count > 1 ? 's' : '') + ' vont consommer environ ' + Math.round(use) + ' s. Il reste ' + Math.round(remaining) + ' s sur 500.', 'warn', 5000);
-  }
+    warn.style.display = 'block';
+    warn.innerHTML = '⚠️ ' + count + ' clip' + (count > 1 ? 's' : '') + ' vont consommer environ ' + Math.round(use) + ' s. Il reste ' + Math.round(remaining) + ' s sur 500.';
+  } else warn.style.display = 'none';
 }
 
 function loadTimingCache() {
-  try { return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY) || '{}'); }
-  catch (e) { return {}; }
+  try { return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY) || '{}'); } catch (e) { return {}; }
 }
 function saveTimingCache(c) {
   try { localStorage.setItem(TIMING_CACHE_KEY, JSON.stringify(c)); } catch (e) {}
@@ -1004,17 +1100,12 @@ async function requestWakeLockAPI() {
   if (!isWakeLockSupported()) return false;
   try {
     wakeLockSentinel = await navigator.wakeLock.request('screen');
-    wakeLockSentinel.addEventListener('release', function () {
-      wakeLockSentinel = null; updateWakeStatus();
-    });
+    wakeLockSentinel.addEventListener('release', function () { wakeLockSentinel = null; updateWakeStatus(); });
     return true;
   } catch (e) { return false; }
 }
 async function releaseWakeLockAPI() {
-  if (wakeLockSentinel) {
-    try { await wakeLockSentinel.release(); } catch (e) {}
-    wakeLockSentinel = null;
-  }
+  if (wakeLockSentinel) { try { await wakeLockSentinel.release(); } catch (e) {} wakeLockSentinel = null; }
 }
 function startCanvasStream() {
   if (canvasStream) return true;
@@ -1024,7 +1115,8 @@ function startCanvasStream() {
     if (!canvas || !video) return false;
     var ctx = canvas.getContext('2d');
     if (!ctx) return false;
-    ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (typeof canvas.captureStream !== 'function') return false;
     canvasStream = canvas.captureStream(1);
     var toggle = false;
@@ -1043,10 +1135,7 @@ function stopCanvasStream() {
   if (canvasInterval) { clearInterval(canvasInterval); canvasInterval = null; }
   var video = $('noSleepVideo');
   if (video) { try { video.pause(); video.srcObject = null; } catch (e) {} }
-  if (canvasStream) {
-    try { canvasStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-    canvasStream = null;
-  }
+  if (canvasStream) { try { canvasStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {} canvasStream = null; }
 }
 async function activateWakeLock() {
   var ok = false;
@@ -1060,30 +1149,19 @@ async function deactivateWakeLock() {
 function updateWakeStatus() {
   var el = $('wake-status'), txt = $('wake-status-text'), btn = $('wake-toggle-btn');
   if (!el || !txt || !btn) return;
+  el.classList.remove('active', 'warn');
   var canvas = $('noSleepCanvas');
   var hasIt = isWakeLockSupported() || (canvas && canvas.captureStream);
-  if (!hasIt) {
-    el.style.background = 'var(--warn-bg)'; el.style.color = 'var(--warn)';
-    txt.textContent = '⚠️ Non supporté'; btn.style.display = 'none';
-    return;
-  }
+  if (!hasIt) { el.classList.add('warn'); txt.textContent = '⚠️ Non supporté'; btn.style.display = 'none'; return; }
   btn.style.display = 'inline-block';
   var active = wakeLockSentinel !== null || canvasStream !== null;
-  if (state.wakeEnabled && active) {
-    el.style.background = 'var(--ok-bg)'; el.style.color = 'var(--ok)';
-    txt.textContent = '✅ Écran reste allumé'; btn.textContent = 'Désactiver';
-  } else if (state.wakeEnabled && !active) {
-    el.style.background = 'var(--warn-bg)'; el.style.color = 'var(--warn)';
-    txt.textContent = '⏳ En attente'; btn.textContent = 'Désactiver';
-  } else {
-    el.style.background = 'var(--code-bg)'; el.style.color = 'var(--muted)';
-    txt.textContent = '💤 Veille automatique'; btn.textContent = "Garder l'écran allumé";
-  }
+  if (state.wakeEnabled && active) { el.classList.add('active'); txt.textContent = '✅ Écran reste allumé'; btn.textContent = 'Désactiver'; }
+  else if (state.wakeEnabled && !active) { el.classList.add('warn'); txt.textContent = '⏳ En attente'; btn.textContent = 'Désactiver'; }
+  else { txt.textContent = '💤 Veille automatique'; btn.textContent = "Garder l'écran allumé"; }
 }
 async function toggleWakeLock() {
   if (state.wakeEnabled) {
-    state.wakeEnabled = false;
-    await deactivateWakeLock();
+    state.wakeEnabled = false; await deactivateWakeLock();
     try { localStorage.setItem(WAKE_LOCK_PREF, '0'); } catch (e) {}
     showToast('Veille automatique', 'warn');
   } else {
@@ -1095,6 +1173,9 @@ async function toggleWakeLock() {
   updateWakeStatus();
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PARSEUR JSON À 5 STRATÉGIES
+   ═══════════════════════════════════════════════════════════════ */
 function escapeControlCharsInStrings(text) {
   var result = '', inString = false, escape = false, i, ch, code;
   for (i = 0; i < text.length; i++) {
@@ -1177,33 +1258,32 @@ function extractJson(text, kind) {
   return null;
 }
 
-async function apiFetch(url, options, label, kind) {
+/* ═══════════════════════════════════════════════════════════════
+   FETCH AVEC RETRY (429 / 503 / réseau)
+   ═══════════════════════════════════════════════════════════════ */
+async function apiFetch(url, options, label) {
   options = options || {};
   label = label || 'API';
-  kind = kind || 'default';
-  var attempt, res;
-  for (attempt = 0; attempt < 7; attempt++) {
+  for (var attempt = 0; attempt < 7; attempt++) {
     if (state.stopRequested) throw new Error('Arrêt demandé');
     try {
-      res = await fetch(url, options);
+      var res = await fetch(url, options);
       if (res.status === 429) {
         var w429 = RETRY_429[Math.min(attempt, RETRY_429.length - 1)];
         logDebug('warn', 'RATELIMIT', label + ' : 429, attente ' + w429 + 's');
         setStatus('L\'IA se prépare (' + w429 + ' s)…');
-        await sleep(w429 * 1000);
-        continue;
+        await sleep(w429 * 1000); continue;
       }
       if (res.status === 503) {
         var w503 = RETRY_503[Math.min(attempt, RETRY_503.length - 1)];
         logDebug('warn', 'SERVICE', label + ' : 503, attente ' + w503 + 's');
         setStatus('Le service se prépare (' + w503 + ' s)…');
-        await sleep(w503 * 1000);
-        continue;
+        await sleep(w503 * 1000); continue;
       }
       return res;
     } catch (e) {
       if (e.message === 'Arrêt demandé') throw e;
-      var wNet = [3, 5, 8, 12, 20, 30][Math.min(attempt, 5)];
+      var wNet = RETRY_NETWORK[Math.min(attempt, RETRY_NETWORK.length - 1)];
       logDebug('warn', 'NETWORK', label + ' : ' + e.message + ', retry ' + wNet + 's');
       await sleep(wNet * 1000);
     }
@@ -1211,6 +1291,9 @@ async function apiFetch(url, options, label, kind) {
   throw new Error(label + ' : échec après 7 tentatives');
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   APPEL TEXTE — Agnes (principal)
+   ═══════════════════════════════════════════════════════════════ */
 async function callAgnesText(system, user, temperature, maxTokens) {
   state.counters.textRequests++;
   updateQuotaPanel();
@@ -1221,7 +1304,8 @@ async function callAgnesText(system, user, temperature, maxTokens) {
       { role: 'user', content: user }
     ],
     temperature: temperature || 0.85,
-    max_tokens: maxTokens || 4000
+    max_tokens: maxTokens || 4000,
+    response_format: { type: 'json_object' }
   };
   logDebug('api', 'TEXTE', 'Agnes → ' + MODEL_TEXT);
   var res = await apiFetch(API_BASE + '/chat/completions', {
@@ -1231,7 +1315,7 @@ async function callAgnesText(system, user, temperature, maxTokens) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(body)
-  }, 'Texte', 'text');
+  }, 'Texte');
   if (!res.ok) {
     var err = await res.text();
     throw new Error('Texte HTTP ' + res.status + ' : ' + err.slice(0, 200));
@@ -1242,6 +1326,103 @@ async function callAgnesText(system, user, temperature, maxTokens) {
   return content;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   APPEL TEXTE — Groq (secours rapide)
+   ═══════════════════════════════════════════════════════════════ */
+async function callGroqText(system, user, temperature, maxTokens) {
+  var groqKey = '';
+  try { groqKey = (localStorage.getItem('groq_key') || '').trim(); } catch (e) {}
+  if (!groqKey) throw new Error('Pas de clé Groq');
+  state.counters.textRequests++;
+  updateQuotaPanel();
+  var body = {
+    model: 'llama-3.3-70b-versatile',
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user }
+    ],
+    temperature: temperature || 0.85,
+    max_tokens: maxTokens || 4000,
+    response_format: { type: 'json_object' }
+  };
+  logDebug('api', 'TEXTE', 'Groq → llama-3.3-70b');
+  var res = await apiFetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + groqKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  }, 'Groq');
+  if (!res.ok) throw new Error('Groq HTTP ' + res.status);
+  var data = await res.json();
+  var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!content) throw new Error('Pas de contenu Groq');
+  return content;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APPEL TEXTE — OpenRouter (secours varié)
+   ═══════════════════════════════════════════════════════════════ */
+async function callOpenRouterText(system, user, temperature, maxTokens) {
+  var orKey = '';
+  try { orKey = (localStorage.getItem('openrouter_key') || '').trim(); } catch (e) {}
+  if (!orKey) throw new Error('Pas de clé OpenRouter');
+  state.counters.textRequests++;
+  updateQuotaPanel();
+  var body = {
+    model: 'meta-llama/llama-3.3-70b-instruct:free',
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user }
+    ],
+    temperature: temperature || 0.85,
+    max_tokens: maxTokens || 4000
+  };
+  logDebug('api', 'TEXTE', 'OpenRouter → llama-3.3-70b:free');
+  var res = await apiFetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + orKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  }, 'OpenRouter');
+  if (!res.ok) throw new Error('OpenRouter HTTP ' + res.status);
+  var data = await res.json();
+  var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!content) throw new Error('Pas de contenu OpenRouter');
+  return content;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APPEL TEXTE — Cascade Agnes → Groq → OpenRouter
+   ═══════════════════════════════════════════════════════════════ */
+async function callBestText(system, user, temperature, maxTokens) {
+  try {
+    return await callAgnesText(system, user, temperature, maxTokens);
+  } catch (e1) {
+    logDebug('warn', 'FALLBACK', 'Agnes échoue, essai Groq');
+    try {
+      var r = await callGroqText(system, user, temperature, maxTokens);
+      showToast('Secours Groq utilisé', 'warn', 2000);
+      return r;
+    } catch (e2) {
+      logDebug('warn', 'FALLBACK', 'Groq échoue, essai OpenRouter');
+      try {
+        var r2 = await callOpenRouterText(system, user, temperature, maxTokens);
+        showToast('Secours OpenRouter utilisé', 'warn', 2000);
+        return r2;
+      } catch (e3) {
+        throw new Error('Tous les moteurs texte ont échoué');
+      }
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APPEL IMAGE — Agnes (principal)
+   ═══════════════════════════════════════════════════════════════ */
 async function callAgnesImage(prompt, size) {
   state.counters.imagesGenerated++;
   updateQuotaPanel();
@@ -1261,25 +1442,52 @@ async function callAgnesImage(prompt, size) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(body)
-  }, 'Image', 'image');
+  }, 'Image');
   if (!res.ok) {
     var err = await res.text();
     throw new Error('Image HTTP ' + res.status + ' : ' + err.slice(0, 200));
   }
   var data = await res.json();
   var item = data.data && data.data[0];
-  if (!item) throw new Error('Pas d\'image retournée');
+  if (!item) throw new Error('Pas d\'image');
   if (item.url) return item.url;
   if (item.b64_json) return 'data:image/png;base64,' + item.b64_json;
   throw new Error('Format image inconnu');
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   APPEL IMAGE — Pollinations (secours gratuit sans clé)
+   ═══════════════════════════════════════════════════════════════ */
+async function callPollinationsImage(prompt) {
+  state.counters.imagesGenerated++;
+  updateQuotaPanel();
+  logDebug('api', 'IMAGE', 'Pollinations (secours)');
+  var encoded = encodeURIComponent(prompt);
+  return 'https://image.pollinations.ai/prompt/' + encoded + '?width=1024&height=1792&nologo=true&model=flux';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APPEL IMAGE — Cascade Agnes → Pollinations
+   ═══════════════════════════════════════════════════════════════ */
+async function callBestImage(prompt) {
+  try {
+    return await callAgnesImage(prompt);
+  } catch (e) {
+    logDebug('warn', 'FALLBACK', 'Agnes image échoue, essai Pollinations');
+    showToast('Secours Pollinations utilisé', 'warn', 2000);
+    return await callPollinationsImage(prompt);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CRÉATION TÂCHE VIDÉO
+   ═══════════════════════════════════════════════════════════════ */
 async function createVideoTask(prompt, firstFrame, lastFrame, numFrames) {
   var now = Date.now();
   if (state.counters.videoRequestsThisMinute >= VIDEO_RPM_LIMIT) {
     var wait = Math.ceil((60000 - (now - state.counters.lastResetTime)) / 1000);
     if (wait > 0) {
-      logDebug('warn', 'RPM', 'Limite 1/min atteinte, attente ' + wait + 's');
+      logDebug('warn', 'RPM', 'Limite 1/min, attente ' + wait + 's');
       await sleep(wait * 1000);
       state.counters.videoRequestsThisMinute = 0;
       state.counters.lastResetTime = Date.now();
@@ -1298,7 +1506,7 @@ async function createVideoTask(prompt, firstFrame, lastFrame, numFrames) {
   };
   if (lastFrame) body.last_frame = lastFrame;
 
-  logDebug('api', 'VIDÉO', MODEL_VIDEO + ' · ' + numFrames + ' frames');
+  logDebug('api', 'VIDÉO', MODEL_VIDEO + ' · ' + numFrames + ' frames (' + (numFrames / FRAME_RATE).toFixed(2) + 's)');
   var res = await apiFetch(API_BASE + '/videos', {
     method: 'POST',
     headers: {
@@ -1306,16 +1514,20 @@ async function createVideoTask(prompt, firstFrame, lastFrame, numFrames) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(body)
-  }, 'Vidéo', 'video');
+  }, 'Vidéo');
   if (!res.ok) {
     var err = await res.text();
     throw new Error('Vidéo HTTP ' + res.status + ' : ' + err.slice(0, 200));
   }
   var data = await res.json();
   var id = data.video_id || data.id || data.task_id;
-  if (!id) throw new Error('Pas de video_id retourné');
+  if (!id) throw new Error('Pas de video_id');
   return id;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   POLLING VIDÉO
+   ═══════════════════════════════════════════════════════════════ */
 async function pollVideo(videoId, onProgress, numFrames) {
   var estSec = estimateGenerationTime('video', 30000 + numFrames * 500) / 1000;
   var firstWait = Math.min(VIDEO_FIRST_POLL_DELAY_SEC, Math.max(60, Math.floor(estSec * 0.75)));
@@ -1341,7 +1553,7 @@ async function pollVideo(videoId, onProgress, numFrames) {
     var res = await apiFetch(url, {
       method: 'GET',
       headers: { 'Authorization': 'Bearer ' + getApiKey() }
-    }, 'Polling', 'video');
+    }, 'Polling');
     var d = await res.json();
     var status = d.status || 'unknown';
     var progress = d.progress || 0;
@@ -1359,6 +1571,9 @@ async function pollVideo(videoId, onProgress, numFrames) {
   throw new Error('Délai maximal dépassé');
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   CHARGEMENT DES STYLES depuis styles.js
+   ═══════════════════════════════════════════════════════════════ */
 var STYLE_BANK = [];
 if (typeof STYLES_LIBRARY !== 'undefined' && STYLES_LIBRARY) {
   var allCategories = Object.keys(STYLES_LIBRARY);
@@ -1370,7 +1585,7 @@ if (typeof STYLES_LIBRARY !== 'undefined' && STYLES_LIBRARY) {
   });
   logDebug('ok', 'STYLES', STYLE_BANK.length + ' styles chargés depuis ' + allCategories.length + ' catégories');
 } else {
-  logDebug('err', 'STYLES', 'styles.js non trouvé');
+  logDebug('err', 'STYLES', 'styles.js non trouvé. Vérifie qu\'il est uploadé.');
 }
 
 var SKIN_PROMPTS = {
@@ -1380,7 +1595,8 @@ var SKIN_PROMPTS = {
   K4: 'dewy glossy skin with soft specular highlights on cheekbones',
   K5: 'matte powdered skin, soft and even, makeup finish',
   K6: 'glossy molded plastic doll skin, flawless surface, strong soft highlights',
-  K7: 'porcelain glaze skin, perfectly smooth, soft sheen'
+  K7: 'porcelain glaze skin, perfectly smooth, soft sheen',
+  K10: 'skin with fruit texture, visible seeds, fuzz or dimples matching the fruit, natural fruit colors'
 };
 var TEINT_PROMPTS = {
   T1: 'very fair skin with a pink undertone',
@@ -1402,88 +1618,195 @@ var YEUX_PROMPTS = {
   Y8: 'very expressive eyebrows, one eyebrow often raised'
 };
 
-function stylePhrases() {
-  var out = [];
+function buildStyleSuffix() {
+  var parts = [];
   (state.styles || []).forEach(function (id) {
     var s = STYLE_BANK.filter(function (x) { return x.id === id; })[0];
-    if (s && s.phrase) out.push(s.phrase);
+    if (s && s.phrase) parts.push(s.phrase);
   });
-  return out;
-}
-function buildStyleSuffix() {
-  var parts = stylePhrases();
   if (state.skin && SKIN_PROMPTS[state.skin]) parts.push(SKIN_PROMPTS[state.skin]);
   if (state.teint && TEINT_PROMPTS[state.teint]) parts.push(TEINT_PROMPTS[state.teint]);
   if (state.yeux && YEUX_PROMPTS[state.yeux]) parts.push(YEUX_PROMPTS[state.yeux]);
   return parts.length ? ' ' + parts.join('. ') + '.' : '';
 }
 
-function buildVideoPromptFromScene(scene) {
-  var parts = [];
-  if (scene.action_prompt) parts.push('Action: ' + scene.action_prompt);
-  if (scene.camera) parts.push('Camera: ' + scene.camera);
-  if (scene.light) parts.push('Lighting: ' + scene.light);
-  parts.push('Vertical 9:16, 24fps, no cuts, no text, no watermark, no music, natural ambient sound only');
-  return parts.join('. ') + buildStyleSuffix();
+/* ═══════════════════════════════════════════════════════════════
+   CONSTRUCTION DES PROMPTS (en anglais)
+   ═══════════════════════════════════════════════════════════════ */
+
+function characterToDescription(c) {
+  var parts = [c.name + ' (' + (c.role || 'personnage') + ')'];
+  if (c.age) parts.push('Age ' + c.age);
+  if (c.gender) parts.push(c.gender);
+  if (c.skin) parts.push('skin: ' + c.skin);
+  if (c.hair) parts.push('hair: ' + c.hair);
+  if (c.outfit) parts.push('outfit: ' + c.outfit);
+  if (c.distinctive) parts.push('distinctive: ' + c.distinctive);
+  if (c.expression) parts.push('default expression: ' + c.expression);
+  return parts.join('. ') + '.';
 }
-function buildImagePromptFromScene(scene) {
+
+function decorToDescription(d) {
+  var parts = [d.name];
+  if (d.description) parts.push(d.description);
+  if (d.lighting) parts.push('lighting: ' + d.lighting);
+  if (d.atmosphere) parts.push('atmosphere: ' + d.atmosphere);
+  return parts.join('. ') + '.';
+}
+
+function buildImagePrompt(scene, casting, decors) {
   var parts = [];
-  parts.push('Cinematic still of the following scene');
-  if (scene.action_prompt) parts.push(scene.action_prompt);
-  else if (scene.description) parts.push(scene.description);
-  if (scene.lieu) parts.push('Location: ' + scene.lieu);
-  if (scene.persos) parts.push('Characters: ' + scene.persos);
-  if (scene.ambiance) parts.push('Atmosphere: ' + scene.ambiance);
-  parts.push('Portrait 9:16 vertical, cinematic lighting, no text, no watermark');
+  parts.push('Cinematic still from a vertical short film.');
+  parts.push('Scene: ' + (scene.description || scene.action || ''));
+  parts.push('Framing: ' + (scene.cadrage || scene.framing || 'medium shot'));
+  if (scene.lieu) {
+    var decor = decors.filter(function (d) { return d.name && scene.lieu.toLowerCase().indexOf(d.name.toLowerCase()) >= 0; })[0];
+    if (decor) parts.push('Location: ' + decorToDescription(decor));
+    else parts.push('Location: ' + scene.lieu);
+  }
+  if (scene.persos) {
+    var names = String(scene.persos).split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
+    var descs = names.map(function (n) {
+      var c = casting.filter(function (x) { return x.name && x.name.toLowerCase() === n.toLowerCase(); })[0];
+      if (c) return characterToDescription(c);
+      return n;
+    });
+    if (descs.length) parts.push('Characters (must match exactly across all scenes): ' + descs.join(' '));
+  }
+  parts.push('Cinematic lighting, shallow depth of field, high detail');
+  parts.push('Portrait 9:16 vertical, 1080x1920, no text, no subtitles, no watermarks');
+  parts.push('Style:');
   return parts.join('. ') + buildStyleSuffix();
 }
 
-function buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount) {
-  return 'Tu es scénariste de vidéos courtes verticales (TikTok, Shorts, Reels).\n' +
-    'Idée : ' + idea + '\n' +
-    'Thème : ' + (theme || 'libre') + '\n' +
-    'Ton : ' + (tone || 'neutre') + '\n' +
-    'Durée cible : environ ' + targetSeconds + ' secondes au total (' + sceneCount + ' scènes de 6 secondes environ).\n' +
-    'Format : portrait 9:16.\n\n' +
-    'Écris un scénario complet en JSON valide. Le script doit être fluide, naturel, en français oral vivant.\n\n' +
-    'Format JSON attendu :\n' +
+function buildVideoPrompt(scene, casting) {
+  var parts = [];
+  parts.push('CRITICAL: The provided first frame is the EXACT first frame of this video.');
+  parts.push('Animate this exact image. The subject must remain IDENTICAL: same face, expression, clothing, pose, identity.');
+  parts.push('Action: ' + (scene.action || 'subtle natural movement, breathing, small gestures'));
+  parts.push('Camera: ' + (scene.camera || 'slow gentle push-in, almost imperceptible'));
+  parts.push('Movement intensity: moderate, clear but controlled motion, balanced energy');
+  parts.push('AUDIO: ABSOLUTELY NO MUSIC, no instruments, no soundtrack. Only natural ambient sounds and soft breath.');
+  parts.push('Vertical 9:16, 24fps, no text, no subtitles, no watermarks');
+  return parts.join('. ') + buildStyleSuffix();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PROMPTS DE GÉNÉRATION DE TEXTE (en anglais)
+   ═══════════════════════════════════════════════════════════════ */
+
+function buildScriptSystemPrompt() {
+  return 'You are a professional screenwriter for vertical short-form series (TikTok, YouTube Shorts, Instagram Reels). You write in French (the dialogues and descriptions), but you ALWAYS respond in valid JSON only, no markdown, no commentary.';
+}
+
+function buildScriptUserPrompt(idea, tone, theme, totalDuration, sceneCount) {
+  return 'Write a complete script for a vertical short-form series episode.\n\n' +
+    'IDEA: ' + idea + '\n' +
+    'TONE: ' + tone + '\n' +
+    'THEME: ' + theme + '\n' +
+    'TOTAL DURATION: ~' + totalDuration + ' seconds\n' +
+    'NUMBER OF SCENES: ' + sceneCount + '\n' +
+    'FORMAT: portrait 9:16 vertical\n\n' +
+    'STRUCTURE REQUIREMENTS:\n' +
+    '- Hook in the first 3 seconds (start mid-conflict, shocking line, or intriguing image — never with a greeting or presentation)\n' +
+    '- Central secret revealed progressively (3 revelations across the episode)\n' +
+    '- Structure: hook, escalation, twist, cliffhanger\n' +
+    '- End with a question or A/B choice for the audience\n' +
+    '- Each scene: 1 location, max 2 characters, one visible action, one dialogue line (max 12 words)\n\n' +
+    'FORBIDDEN: amnesia, hidden twin, "it was all a dream", characters explaining their own emotions, dialogue longer than 12 words, clichés.\n\n' +
+    'Return ONLY valid JSON matching this exact schema:\n' +
     '{\n' +
-    '  "title": "titre court",\n' +
-    '  "logline": "résumé en une phrase",\n' +
+    '  "title": "short poetic title",\n' +
+    '  "logline": "one sentence summary",\n' +
     '  "scenes": [\n' +
     '    {\n' +
     '      "scene_number": 1,\n' +
-    '      "description": "ce qui se passe dans la scène, en français",\n' +
-    '      "action_prompt": "description précise de l\'action pour l\'image en anglais",\n' +
-    '      "camera": "mouvement de caméra en anglais",\n' +
-    '      "light": "lumière en anglais",\n' +
-    '      "lieu": "lieu ou décor en français",\n' +
-    '      "persos": "personnages présents en français",\n' +
-    '      "ambiance": "ambiance en français"\n' +
+    '      "description": "visual action in French, one paragraph",\n' +
+    '      "action": "short English summary of the action",\n' +
+    '      "cadrage": "close-up / medium / wide",\n' +
+    '      "lieu": "location name in French",\n' +
+    '      "persos": "character names comma-separated",\n' +
+    '      "camera": "camera movement in English",\n' +
+    '      "replique": "dialogue line in French, max 12 words",\n' +
+    '      "qui": "character name who speaks, or empty",\n' +
+    '      "emotion": "one word in French"\n' +
     '    }\n' +
     '  ]\n' +
-    '}\n' +
-    'Réponds uniquement avec le JSON, sans texte avant ou après.';
+    '}';
 }
 
-async function generateScript(idea, tone, theme, targetSeconds, sceneCount) {
-  var sys = 'Tu réponds UNIQUEMENT en JSON valide, sans markdown ni commentaire.';
-  var user = buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount);
-  var raw = await callAgnesText(sys, user, 0.85, 4000);
-  var parsed = extractJson(raw, 'scenario');
-  if (!parsed || !parsed.scenes || !parsed.scenes.length) {
-    throw new Error('Scénario invalide après 5 tentatives');
-  }
-  return parsed;
+function buildCastingSystemPrompt() {
+  return 'You are a casting director and visual designer for vertical short-form animated series. You respond ONLY in valid JSON, no markdown, no commentary.';
 }
-  function render() {
+
+function buildCastingUserPrompt(idea, sceneDescriptions, nbPersos) {
+  return 'Based on this series idea and scene descriptions, create a complete casting with ultra-detailed visual descriptions.\n\n' +
+    'SERIES IDEA: ' + idea + '\n\n' +
+    'SCENES:\n' + sceneDescriptions + '\n\n' +
+    'REQUIREMENTS:\n' +
+    '- Identify every character mentioned or implied (max ' + nbPersos + ')\n' +
+    '- For each character, write an ULTRA-DETAILED visual description in English\n' +
+    '- Include: exact skin color (hex code if possible), hair color and style, eye color, clothing details, distinctive features\n' +
+    '- If the character is a fruit or object, describe: exact color, texture (seeds, fuzz, dimples), shape, leaves, stem\n' +
+    '- This description will be REPEATED WORD-FOR-WORD in every scene prompt, so it must be perfect\n\n' +
+    'Return ONLY valid JSON:\n' +
+    '{\n' +
+    '  "characters": [\n' +
+    '    {\n' +
+    '      "name": "Character name",\n' +
+    '      "role": "short role in French",\n' +
+    '      "age": "age or age range",\n' +
+    '      "gender": "man or woman",\n' +
+    '      "skin": "English ultra-detailed skin description with hex color",\n' +
+    '      "hair": "English hair description",\n' +
+    '      "eyes": "English eyes description",\n' +
+    '      "outfit": "English clothing description",\n' +
+    '      "distinctive": "English distinctive features description",\n' +
+    '      "expression": "default expression in English",\n' +
+    '      "voice": "voice description in French (pitch, tone, rhythm)"\n' +
+    '    }\n' +
+    '  ]\n' +
+    '}';
+}
+
+function buildDecorsSystemPrompt() {
+  return 'You are a set designer for vertical short-form animated series. You respond ONLY in valid JSON, no markdown, no commentary.';
+}
+
+function buildDecorsUserPrompt(idea, sceneDescriptions) {
+  return 'Based on this series idea and scene descriptions, create all the sets/locations.\n\n' +
+    'SERIES IDEA: ' + idea + '\n\n' +
+    'SCENES:\n' + sceneDescriptions + '\n\n' +
+    'REQUIREMENTS:\n' +
+    '- Identify every location mentioned or implied\n' +
+    '- For each location, write an ULTRA-DETAILED visual description in English\n' +
+    '- Include: furniture, materials, colors (hex codes if possible), lighting, atmosphere, style\n' +
+    '- NO characters, NO faces, NO people in these descriptions\n\n' +
+    'Return ONLY valid JSON:\n' +
+    '{\n' +
+    '  "decors": [\n' +
+    '    {\n' +
+    '      "name": "Location name in French",\n' +
+    '      "description": "English ultra-detailed description of furniture, materials, colors",\n' +
+    '      "lighting": "English lighting description",\n' +
+    '      "atmosphere": "English atmosphere description"\n' +
+    '    }\n' +
+    '  ]\n' +
+    '}';
+}
+/* ═══════════════════════════════════════════════════════════════
+   RENDU PRINCIPAL
+   ═══════════════════════════════════════════════════════════════ */
+function render() {
   var c = $('tab-content');
   if (!c) return;
   var html = '';
   if (state.tab === 'idees') html = renderIdees();
-  else if (state.tab === 'univers') html = renderUnivers();
-  else if (state.tab === 'refs') html = renderRefs();
+  else if (state.tab === 'casting') html = renderCasting();
+  else if (state.tab === 'decors') html = renderDecors();
+  else if (state.tab === 'scenes') html = renderScenes();
   else if (state.tab === 'videos') html = renderVideos();
+  else if (state.tab === 'montage') html = renderMontage();
   c.innerHTML = html;
   document.querySelectorAll('.dock button').forEach(function (b) {
     if (b.getAttribute('data-tab') === state.tab) b.setAttribute('aria-current', 'page');
@@ -1492,111 +1815,98 @@ async function generateScript(idea, tone, theme, targetSeconds, sceneCount) {
   bindTabEvents();
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   BANDEAU D'ÉTAPES
+   ═══════════════════════════════════════════════════════════════ */
 function stageInfo() {
-  var ep = state.episode;
-  var scenes = ep && ep.scenes ? ep.scenes.length : 0;
-  var refsCount = state.images.filter(function (im) { return !im.userPhoto; }).length;
-  var vidsCount = state.queue.filter(function (q) { return q.status === 'done'; }).length;
-  var vidsTotal = state.queue.length;
+  var hasIdea = has(state.idea);
+  var hasScript = state.episode && state.episode.scenes && state.episode.scenes.length > 0;
+  var hasCasting = state.casting && state.casting.length > 0;
+  var hasCastingImg = hasCasting && state.casting.every(function (c) { return c.imageUrl; });
+  var hasDecors = state.decors && state.decors.length > 0;
+  var hasDecorsImg = hasDecors && state.decors.every(function (d) { return d.imageUrl; });
+  var hasScenes = state.scenes && state.scenes.length > 0;
+  var hasScenesImg = hasScenes && state.scenes.every(function (s) { return s.imageUrl; });
+  var hasVideos = state.queue.length > 0;
+  var hasVideosDone = hasVideos && state.queue.every(function (q) { return q.status === 'done'; });
+
   var s = [
-    { k: 'Idée', v: has(state.idea) ? 'faite' : '', ok: has(state.idea), tab: 'idees' },
-    { k: 'Durée', v: state.totalDuration ? state.totalDuration + 's' : '', ok: !!state.totalDuration, tab: 'idees' },
-    { k: 'Styles', v: (state.styles || []).length ? state.styles.length + ' choisis' : '', ok: (state.styles || []).length > 0, tab: 'univers' },
-    { k: 'Script', v: scenes ? scenes + ' scènes' : '', ok: scenes > 0, tab: 'univers' },
-    { k: 'Références', v: refsCount ? refsCount + ' images' : '', ok: refsCount > 0, tab: 'refs' },
-    { k: 'Vidéos', v: vidsTotal ? vidsCount + '/' + vidsTotal : '', ok: vidsTotal > 0 && vidsCount === vidsTotal, tab: 'videos' }
+    { k: 'Idées', v: hasIdea ? 'faite' : '', ok: hasIdea, tab: 'idees' },
+    { k: 'Script', v: hasScript ? state.episode.scenes.length + ' scènes' : '', ok: hasScript, tab: 'idees' },
+    { k: 'Casting', v: hasCasting ? state.casting.length + ' perso' : '', ok: hasCastingImg, tab: 'casting' },
+    { k: 'Décors', v: hasDecors ? state.decors.length + ' lieux' : '', ok: hasDecorsImg, tab: 'decors' },
+    { k: 'Scènes', v: hasScenes ? state.scenes.length + ' img' : '', ok: hasScenesImg, tab: 'scenes' },
+    { k: 'Vidéos', v: hasVideos ? state.queue.filter(function (q) { return q.status === 'done'; }).length + '/' + state.queue.length : '', ok: hasVideosDone, tab: 'videos' }
   ];
   var found = false;
   s.forEach(function (x) { x.cur = !found && !x.ok; if (x.cur) found = true; });
   return s;
 }
+
 function stripHtml() {
   return '<div class="strip">' + stageInfo().map(function (x) {
     return '<button type="button" class="stage' + (x.ok ? ' ok' : '') + (x.cur ? ' cur' : '') + '" data-act="tab" data-v="' + x.tab + '"><small>' + (x.ok ? '✓ ' + (x.v || 'fait') : (x.v || 'à faire')) + '</small><b>' + x.k + '</b></button>';
   }).join('') + '</div>';
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   BOUTON "ÉTAPE SUIVANTE"
+   ═══════════════════════════════════════════════════════════════ */
+function nextStepHtml(step) {
+  var map = {
+    idees: { if: state.episode && state.episode.scenes && state.episode.scenes.length > 0, next: 'casting', label: 'Passer au Casting', txt: 'Le script est prêt. Génère maintenant les portraits de chaque personnage avec Agnes.' },
+    casting: { if: state.casting.length > 0 && state.casting.every(function (c) { return c.imageUrl; }), next: 'decors', label: 'Passer aux Décors', txt: 'Tous les personnages ont leur portrait. Génère maintenant les images des lieux.' },
+    decors: { if: state.decors.length > 0 && state.decors.every(function (d) { return d.imageUrl; }), next: 'scenes', label: 'Passer aux Scènes', txt: 'Tous les décors sont prêts. Génère maintenant une image par scène.' },
+    scenes: { if: state.scenes.length > 0 && state.scenes.every(function (s) { return s.imageUrl; }), next: 'videos', label: 'Passer aux Vidéos', txt: 'Toutes les scènes ont leur image. Génère maintenant les clips vidéo.' },
+    videos: { if: state.queue.length > 0 && state.queue.every(function (q) { return q.status === 'done'; }), next: 'montage', label: 'Passer au Montage', txt: 'Tous les clips sont prêts. Assemble-les dans CapCut ou attends FFmpeg.' },
+    montage: { if: false, next: null, label: '', txt: '' }
+  };
+  var m = map[step];
+  if (!m || !m.if || !m.next) return '';
+  return '<section class="glass next-step"><span class="kicker">✨ Étape suivante</span><p>' + esc(m.txt) + '</p><button type="button" class="btn next big" data-act="tab" data-v="' + m.next + '">' + esc(m.label) + ' ›</button></section>';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ONGLET 1 — IDÉES
+   ═══════════════════════════════════════════════════════════════ */
 function renderIdees() {
   var h = stripHtml();
-  h += '<header class="hero"><span class="kicker">Étape 1</span><h1>Mon idée</h1><p class="muted">Décris ton idée, choisis un ton et un thème. Puis génère un script avec Agnes.</p></header>';
+  h += '<header class="hero"><span class="kicker">Étape 1</span><h1>Mon idée</h1><p class="muted">Décris ton histoire. Agnes écrit le script complet avec les scènes.</p></header>';
 
   h += '<section class="glass card"><h2>L\'idée</h2>' +
-    '<div class="stack">' +
     '<label class="q">Décris ton idée<span class="q-hint">Une phrase suffit. Exemple : une laverie où chaque machine révèle un secret.</span></label>' +
     '<textarea id="idea-input" placeholder="Une laverie de quartier où chaque machine révèle un secret…">' + esc(state.idea) + '</textarea>' +
     '<div class="rowbtns">' +
-    '<button class="btn ghost" data-act="surprise">🎲 Surprends-moi</button>' +
+    '<button type="button" class="btn ghost" data-act="surprise">🎲 Surprends-moi</button>' +
     '</div>' +
-    '<div class="row">' +
+    '<div class="row" style="margin-top:8px">' +
     '<div style="flex:1;min-width:140px"><label class="q">Ton</label><select id="tone-select">' +
     ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'].map(function (t) {
       return '<option value="' + t + '"' + (state.tone === t ? ' selected' : '') + '>' + t + '</option>';
     }).join('') +
     '</select></div>' +
     '<div style="flex:1;min-width:140px"><label class="q">Thème</label><input type="text" id="theme-input" placeholder="famille, amitié…" value="' + esc(state.theme) + '"></div>' +
-    '</div>' +
     '</div></section>';
 
   h += '<section class="glass card"><h2>Format</h2>' +
-    '<div class="mode-toggle">' +
-    '<div class="mode-option' + (state.mode === 'serie' ? ' selected' : '') + '" data-act="mode" data-v="serie"><div class="mo-icon">📺</div><div class="mo-name">Épisode de série</div><div class="mo-desc">Au moins 61 secondes au total</div></div>' +
-    '<div class="mode-option' + (state.mode === 'hook' ? ' selected' : '') + '" data-act="mode" data-v="hook"><div class="mo-icon">⚡</div><div class="mo-name">Hook court</div><div class="mo-desc">Garde les 3 premières secondes</div></div>' +
-    '</div>' +
-    '<div class="stack" style="margin-top:12px">' +
     '<label class="q">Durée totale de la vidéo<span class="q-hint">Nombre de scènes calculé automatiquement (6 s par scène).</span></label>' +
     '<select id="total-duration">' +
     DUREES_TOTALES.map(function (d) {
-      var sceneCount = Math.ceil(d.v / 6);
-      return '<option value="' + d.v + '"' + (state.totalDuration === d.v ? ' selected' : '') + '>' + d.t + ' (~' + sceneCount + ' scènes)</option>';
+      var sc = Math.ceil(d.v / 6);
+      return '<option value="' + d.v + '"' + (state.totalDuration === d.v ? ' selected' : '') + '>' + d.t + ' (~' + sc + ' scènes)</option>';
     }).join('') +
-    '</select>' +
-    '<label class="q" style="margin-top:10px">Durée d\'un clip vidéo</label>' +
-    '<select id="duration-select">' +
-    DUREES_CLIP.map(function (d) {
-      var cur = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
-      return '<option value="' + d.frames + '"' + (cur === d.frames ? ' selected' : '') + '>' + d.t + ' (' + d.frames + ' frames)</option>';
-    }).join('') +
-    '</select>' +
-    '</div></section>';
+    '</select></section>';
 
-  h += '<section class="glass card"><h2>Modèle d\'image</h2>' +
-    '<label class="q">Modèle Agnes pour les images</label>' +
-    '<select id="image-model">' +
-    '<option value="' + MODEL_IMAGE_DEFAULT + '"' + (state.imageModel === MODEL_IMAGE_DEFAULT ? ' selected' : '') + '>agnes-image-2.1-flash (par défaut)</option>' +
-    '<option value="' + MODEL_IMAGE_ALT + '"' + (state.imageModel === MODEL_IMAGE_ALT ? ' selected' : '') + '>agnes-image-2.5-flash (alternatif)</option>' +
-    '</select>' +
-    '<p class="small muted">Tu pourras choisir plusieurs styles visuels dans l\'onglet Univers.</p></section>';
-
-  h += '<section class="glass card"><h2>Générer</h2>' +
-    '<p class="small muted">Lance la génération du script avec Agnes. Tu verras ensuite les scènes et tu pourras générer les images.</p>' +
-    '<button class="btn big" data-act="gen-script">✍️ Générer le script</button>' +
-    '<div id="script-output"></div></section>';
-
-  h += debugPanelHtml();
-  return h;
-}
-
-function renderUnivers() {
-  var ep = state.episode;
-  var h = stripHtml();
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">🌌</div><h3>Pas encore d\'univers</h3><p class="muted">Génère d\'abord un script dans l\'onglet Idées.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
-    h += debugPanelHtml();
-    return h;
-  }
-
-  h += '<header class="hero"><span class="kicker">Étape 2</span><h1>' + esc(ep.title || 'Univers') + '</h1><p class="muted">' + esc(ep.logline || '') + '</p></header>';
-
-  h += '<section class="glass card"><h2>Styles visuels (' + (state.styles || []).length + ' sélectionné' + ((state.styles || []).length > 1 ? 's' : '') + ')</h2>' +
-    '<p class="small muted">Tu peux en choisir plusieurs. Ils seront combinés dans les prompts.</p>' +
-    '<div class="chips scrollrow" id="style-chips">' +
-    STYLE_BANK.slice(0, 20).map(function (s) {
+  h += '<section class="glass card"><h2>Style visuel global</h2>' +
+    '<p class="small muted">Ces styles s\'ajouteront à toutes les images et vidéos. Tu pourras en ajouter d\'autres après.</p>' +
+    '<div class="chips scrollrow" style="margin-top:8px">' +
+    STYLE_BANK.slice(0, 15).map(function (s) {
       var sel = (state.styles || []).indexOf(s.id) >= 0;
       return '<button type="button" class="chip small" data-act="style-pick" data-v="' + s.id + '" aria-pressed="' + sel + '">' + s.emoji + ' ' + esc(s.nom) + '</button>';
     }).join('') +
     '</div>' +
     '<details class="acc" style="margin-top:12px;"><summary><div><b>Voir tous les styles (' + STYLE_BANK.length + ')</b><br><span>Clique pour cocher plusieurs styles</span></div></summary><div class="in">' +
-    '<input type="search" id="style-search" placeholder="Rechercher un style…" style="margin-bottom:8px;">' +
+    '<input type="search" id="style-search" class="api-key-input" placeholder="Rechercher un style…" style="margin-bottom:8px;">' +
     '<div class="styles-grid" id="styles-grid">' +
     STYLE_BANK.map(function (s) {
       var sel = (state.styles || []).indexOf(s.id) >= 0;
@@ -1605,139 +1915,218 @@ function renderUnivers() {
         '<div class="info"><div class="nm">' + esc(s.nom) + '</div><div class="ds">' + esc(s.cat) + '</div></div>' +
         '</div>';
     }).join('') +
-    '</div>' +
-    '</div></details>' +
-    '</section>';
+    '</div></div></details></section>';
 
   h += '<section class="glass card"><h2>Réglages fins</h2>' +
-    '<div class="fld"><label class="q">Rendu de la peau</label>' +
-    '<select id="skin-select">' +
-    '<option value="">Par défaut (choisi par Agnes)</option>' +
+    '<div class="two">' +
+    '<div><label class="q">Rendu de peau</label><select id="skin-select">' +
+    '<option value="">Par défaut</option>' +
     '<option value="K1"' + (state.skin === 'K1' ? ' selected' : '') + '>Lisse stylisée</option>' +
     '<option value="K2"' + (state.skin === 'K2' ? ' selected' : '') + '>Réaliste avec pores</option>' +
-    '<option value="K3"' + (state.skin === 'K3' ? ' selected' : '') + '>Taches de rousseur</option>' +
-    '<option value="K4"' + (state.skin === 'K4' ? ' selected' : '') + '>Brillante, glow</option>' +
-    '<option value="K5"' + (state.skin === 'K5' ? ' selected' : '') + '>Mate et poudrée</option>' +
     '<option value="K6"' + (state.skin === 'K6' ? ' selected' : '') + '>Poupée plastique brillante</option>' +
-    '<option value="K7"' + (state.skin === 'K7' ? ' selected' : '') + '>Porcelaine</option>' +
+    '<option value="K10"' + (state.skin === 'K10' ? ' selected' : '') + '>Fruit ou légume 🍓</option>' +
     '</select></div>' +
-    '<div class="fld" style="margin-top:10px"><label class="q">Teint de peau</label>' +
-    '<select id="teint-select">' +
+    '<div><label class="q">Teint de peau</label><select id="teint-select">' +
     '<option value="">Par défaut</option>' +
     '<option value="T1"' + (state.teint === 'T1' ? ' selected' : '') + '>Très clair</option>' +
     '<option value="T2"' + (state.teint === 'T2' ? ' selected' : '') + '>Clair beige</option>' +
-    '<option value="T3"' + (state.teint === 'T3' ? ' selected' : '') + '>Olive clair</option>' +
     '<option value="T4"' + (state.teint === 'T4' ? ' selected' : '') + '>Hâlé doré</option>' +
-    '<option value="T5"' + (state.teint === 'T5' ? ' selected' : '') + '>Caramel</option>' +
     '<option value="T6"' + (state.teint === 'T6' ? ' selected' : '') + '>Brun moyen</option>' +
     '<option value="T7"' + (state.teint === 'T7' ? ' selected' : '') + '>Brun profond</option>' +
     '<option value="T8"' + (state.teint === 'T8' ? ' selected' : '') + '>Ébène</option>' +
     '</select></div>' +
-    '<div class="fld" style="margin-top:10px"><label class="q">Regard et expression de base</label>' +
-    '<select id="yeux-select">' +
+    '</div>' +
+    '<div style="margin-top:10px"><label class="q">Regard et expression</label><select id="yeux-select">' +
     '<option value="">Par défaut</option>' +
     '<option value="Y1"' + (state.yeux === 'Y1' ? ' selected' : '') + '>Grands yeux ronds brillants</option>' +
-    '<option value="Y2"' + (state.yeux === 'Y2' ? ' selected' : '') + '>Paupières mi-closes</option>' +
-    '<option value="Y3"' + (state.yeux === 'Y3' ? ' selected' : '') + '>Regard en coin</option>' +
-    '<option value="Y4"' + (state.yeux === 'Y4' ? ' selected' : '') + '>Yeux écarquillés</option>' +
+    '<option value="Y4"' + (state.yeux === 'Y4' ? ' selected' : '') + '>Yeux écarquillés (choc)</option>' +
     '<option value="Y5"' + (state.yeux === 'Y5' ? ' selected' : '') + '>Yeux en amande maquillés</option>' +
     '<option value="Y6"' + (state.yeux === 'Y6' ? ' selected' : '') + '>Yeux pétillants et rieurs</option>' +
-    '<option value="Y8"' + (state.yeux === 'Y8' ? ' selected' : '') + '>Sourcils très expressifs</option>' +
-    '</select></div>' +
-    '</section>';
+    '</select></div></section>';
 
-  h += '<section class="glass card"><h2>Scènes (' + ep.scenes.length + ')</h2>';
-  ep.scenes.forEach(function (sc, i) {
-    h += '<details class="glass acc"><summary><div><b>Scène ' + (i + 1) + '</b><br><span>' + esc((sc.description || '').slice(0, 60)) + '</span></div></summary><div class="in">' +
-      '<div class="fld"><label class="q">Description</label><textarea data-path="episode.scenes.' + i + '.description" style="min-height:80px">' + esc(sc.description || '') + '</textarea></div>' +
-      '<div class="two"><div class="fld"><label class="q">Lieu</label><input type="text" data-path="episode.scenes.' + i + '.lieu" value="' + esc(sc.lieu || '') + '"></div>' +
-      '<div class="fld"><label class="q">Personnages</label><input type="text" data-path="episode.scenes.' + i + '.persos" value="' + esc(sc.persos || '') + '"></div></div>' +
-      '<div class="fld"><label class="q">Ambiance</label><input type="text" data-path="episode.scenes.' + i + '.ambiance" value="' + esc(sc.ambiance || '') + '"></div>' +
-      '<div class="fld"><label class="q">Prompt image (anglais)</label><textarea data-path="episode.scenes.' + i + '.action_prompt" style="min-height:80px">' + esc(sc.action_prompt || '') + '</textarea></div>' +
-      '</div></details>';
-  });
-  h += '</section>';
+  h += '<section class="glass card"><h2>Générer le script</h2>' +
+    '<p class="small muted">Agnes écrit le script complet avec ' + Math.ceil((state.totalDuration || 70) / 6) + ' scènes et leurs dialogues.</p>' +
+    '<button type="button" class="btn big" data-act="gen-script"' + (getApiKey() && has(state.idea) ? '' : ' disabled') + '>✍️ Écrire le script avec Agnes</button>' +
+    '<div id="script-output"></div></section>';
 
+  h += nextStepHtml('idees');
   h += debugPanelHtml();
   return h;
 }
 
-function renderRefs() {
-  var ep = state.episode;
+/* ═══════════════════════════════════════════════════════════════
+   ONGLET 2 — CASTING
+   ═══════════════════════════════════════════════════════════════ */
+function renderCasting() {
   var h = stripHtml();
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">📸</div><h3>Pas encore de références</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
+  h += '<header class="hero"><span class="kicker">Étape 2</span><h1>Casting</h1><p class="muted">Agnes crée chaque personnage avec une description ultra-détaillée et un portrait de référence.</p></header>';
+
+  if (!state.episode || !state.episode.scenes || !state.episode.scenes.length) {
+    h += '<section class="glass empty"><div class="big">🎭</div><h3>Pas encore de script</h3><p class="muted">Génère d\'abord le script dans l\'onglet Idées.</p><button type="button" class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
     h += debugPanelHtml();
     return h;
   }
 
-  h += '<header class="hero"><span class="kicker">Étape 3</span><h1>Références</h1><p class="muted">Génère une image pour chaque scène avec Agnes. Tu pourras régénérer celles qui ne te plaisent pas.</p></header>';
-
-  h += '<section class="glass card"><h2>Générer les images</h2>' +
-    '<p class="small muted">Agnes va créer une image par scène. Chaque image coûte 1 sur ton quota de 4000 par jour.</p>' +
-    '<button class="btn big" data-act="gen-refs"' + (getApiKey() ? '' : ' disabled') + '>' + (state.images.length ? '🔄 Régénérer les ' + state.images.length + ' images' : '🎨 Générer ' + ep.scenes.length + ' images') + '</button>' +
-    '<p class="small muted" id="refs-status"></p>' +
+  h += '<section class="glass card"><h2>Générer le casting</h2>' +
+    '<p class="small muted">Agnes va identifier tous les personnages du script et écrire une description ultra-détaillée pour chacun : couleur de peau exacte, coiffure, tenue, yeux, signes distinctifs, expression par défaut.</p>' +
+    '<button type="button" class="btn big" data-act="gen-casting"' + (getApiKey() ? '' : ' disabled') + '>' + (state.casting.length ? '🔄 Régénérer le casting' : '🎭 Créer le casting avec Agnes') + '</button>' +
     '</section>';
 
-  h += '<section class="glass card"><h2>Images de référence</h2>' +
-    '<p class="small muted">Chaque image est associée à sa scène. Régénère celles qui ne te plaisent pas.</p>' +
-    '<div class="images-grid" id="refs-grid">' +
-    (state.images.length ?
-      state.images.map(function (im, i) {
-        return '<div class="image-card" data-img-idx="' + i + '">' +
-          '<img src="' + esc(im.url || im.dataUri || '') + '" alt="Scène ' + (i + 1) + '">' +
-          '<button class="regen" data-act="regen-ref" data-v="' + i + '">🔄 Régénérer</button>' +
+  if (state.casting && state.casting.length) {
+    h += '<section class="glass card"><h2>Portraits (' + state.casting.filter(function (c) { return c.imageUrl; }).length + '/' + state.casting.length + ')</h2>' +
+      '<p class="small muted">Chaque portrait sert de référence pour garder le personnage cohérent dans toutes les scènes.</p>' +
+      '<div class="images-grid">' +
+      state.casting.map(function (c, i) {
+        return '<div class="image-card' + (c.imageUrl ? '' : ' loading') + '">' +
+          (c.imageUrl ? '<img src="' + esc(c.imageUrl) + '" alt="">' : '<div style="padding:40px 10px;text-align:center;font-size:.7rem;color:var(--muted);">En attente</div>') +
+          (c.imageUrl ? '<button class="regen" data-act="regen-casting" data-v="' + i + '">🔄 Régénérer</button>' : '') +
+          (c.imageUrl ? '<a class="dl" href="' + esc(c.imageUrl) + '" download="casting-' + (i + 1) + '.png" target="_blank">⬇</a>' : '') +
           '</div>';
-      }).join('') :
-      '<p class="muted small">Aucune image générée pour l\'instant.</p>') +
-    '</div></section>';
+      }).join('') +
+      '</div>' +
+      '<button type="button" class="btn big" data-act="gen-casting-images"' + (getApiKey() ? '' : ' disabled') + '>🎨 Générer tous les portraits</button>' +
+      '</section>';
 
-  h += '<section class="glass card"><h2>Ou utiliser tes propres photos</h2>' +
-    '<p class="small muted">Upload une ou plusieurs photos pour les ajouter à tes références.</p>' +
-    '<label class="upload-zone" for="refs-file-input"><input type="file" id="refs-file-input" accept="image/*" multiple><div class="icon">＋</div><div class="t1">Ajouter des photos</div><div class="t2">Elles seront utilisées comme référence pour les vidéos</div></label>' +
-    '<div class="images-grid" id="refs-user-grid">' +
-    (state.images.filter(function (im) { return im.userPhoto; }).length ?
-      state.images.filter(function (im) { return im.userPhoto; }).map(function (im) {
-        return '<div class="image-card"><img src="' + esc(im.thumbnail || im.dataUri) + '" alt=""></div>';
-      }).join('') :
-      '<p class="muted small">Aucune photo uploadée.</p>') +
-    '</div></section>';
+    h += '<section class="glass card"><h2>Détails du casting</h2>';
+    state.casting.forEach(function (c, i) {
+      h += '<details class="acc"><summary><div><b>' + esc(c.name) + '</b><br><span>' + esc(c.role || '') + '</span></div></summary><div class="in">' +
+        '<p class="small"><b>Description visuelle (EN) :</b></p>' +
+        '<pre class="fin">' + esc(characterToDescription(c)) + '</pre>' +
+        (c.voice ? '<p class="small"><b>Voix :</b> ' + esc(c.voice) + '</p>' : '') +
+        '</div></details>';
+    });
+    h += '</section>';
+  }
 
+  h += nextStepHtml('casting');
   h += debugPanelHtml();
   return h;
 }
 
-function renderVideos() {
-  var ep = state.episode;
+/* ═══════════════════════════════════════════════════════════════
+   ONGLET 3 — DÉCORS
+   ═══════════════════════════════════════════════════════════════ */
+function renderDecors() {
   var h = stripHtml();
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">🎬</div><h3>Pas encore de vidéos</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
+  h += '<header class="hero"><span class="kicker">Étape 3</span><h1>Décors</h1><p class="muted">Agnes crée chaque lieu avec une description détaillée et une image de référence.</p></header>';
+
+  if (!state.episode || !state.episode.scenes || !state.episode.scenes.length) {
+    h += '<section class="glass empty"><div class="big">🏠</div><h3>Pas encore de script</h3><p class="muted">Génère d\'abord le script.</p><button type="button" class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
     h += debugPanelHtml();
     return h;
   }
 
-  h += '<header class="hero"><span class="kicker">Étape 4</span><h1>Vidéos</h1><p class="muted">Chaque scène devient un clip vidéo avec Agnes, à partir de l\'image de référence.</p></header>';
+  h += '<section class="glass card"><h2>Générer les décors</h2>' +
+    '<p class="small muted">Agnes va identifier tous les lieux du script et écrire une description détaillée pour chacun : mobilier, matières, couleurs, lumière, ambiance.</p>' +
+    '<button type="button" class="btn big" data-act="gen-decors"' + (getApiKey() ? '' : ' disabled') + '>' + (state.decors.length ? '🔄 Régénérer les décors' : '🏠 Créer les décors avec Agnes') + '</button>' +
+    '</section>';
+
+  if (state.decors && state.decors.length) {
+    h += '<section class="glass card"><h2>Images des décors (' + state.decors.filter(function (d) { return d.imageUrl; }).length + '/' + state.decors.length + ')</h2>' +
+      '<div class="images-grid">' +
+      state.decors.map(function (d, i) {
+        return '<div class="image-card' + (d.imageUrl ? '' : ' loading') + '">' +
+          (d.imageUrl ? '<img src="' + esc(d.imageUrl) + '" alt="">' : '<div style="padding:40px 10px;text-align:center;font-size:.7rem;color:var(--muted);">En attente</div>') +
+          (d.imageUrl ? '<button class="regen" data-act="regen-decor" data-v="' + i + '">🔄 Régénérer</button>' : '') +
+          (d.imageUrl ? '<a class="dl" href="' + esc(d.imageUrl) + '" download="decor-' + (i + 1) + '.png" target="_blank">⬇</a>' : '') +
+          '</div>';
+      }).join('') +
+      '</div>' +
+      '<button type="button" class="btn big" data-act="gen-decor-images"' + (getApiKey() ? '' : ' disabled') + '>🎨 Générer toutes les images de décors</button>' +
+      '</section>';
+
+    h += '<section class="glass card"><h2>Détails des décors</h2>';
+    state.decors.forEach(function (d, i) {
+      h += '<details class="acc"><summary><div><b>' + esc(d.name) + '</b><br><span>' + esc((d.description || '').slice(0, 60)) + '</span></div></summary><div class="in">' +
+        '<pre class="fin">' + esc(decorToDescription(d)) + '</pre>' +
+        '</div></details>';
+    });
+    h += '</section>';
+  }
+
+  h += nextStepHtml('decors');
+  h += debugPanelHtml();
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ONGLET 4 — SCÈNES
+   ═══════════════════════════════════════════════════════════════ */
+function renderScenes() {
+  var h = stripHtml();
+  h += '<header class="hero"><span class="kicker">Étape 4</span><h1>Scènes</h1><p class="muted">Agnes crée une image par scène en utilisant les descriptions figées du casting et des décors.</p></header>';
+
+  if (!state.episode || !state.episode.scenes || !state.episode.scenes.length) {
+    h += '<section class="glass empty"><div class="big">🎬</div><h3>Pas encore de script</h3><p class="muted">Génère d\'abord le script.</p><button type="button" class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
+    h += debugPanelHtml();
+    return h;
+  }
+  if (!state.casting.length || !state.casting.every(function (c) { return c.imageUrl; })) {
+    h += '<section class="glass warnbox"><h3>Casting manquant</h3><p>Il faut d\'abord générer tous les portraits du casting.</p><button type="button" class="btn" data-act="tab" data-v="casting">Aller au Casting</button></section>';
+    h += debugPanelHtml();
+    return h;
+  }
+  if (!state.decors.length || !state.decors.every(function (d) { return d.imageUrl; })) {
+    h += '<section class="glass warnbox"><h3>Décors manquants</h3><p>Il faut d\'abord générer toutes les images de décors.</p><button type="button" class="btn" data-act="tab" data-v="decors">Aller aux Décors</button></section>';
+    h += debugPanelHtml();
+    return h;
+  }
+
+  h += '<section class="glass card"><h2>Générer les images de scènes</h2>' +
+    '<p class="small muted">Agnes va utiliser les descriptions figées du casting et des décors pour générer une image cohérente par scène.</p>' +
+    '<button type="button" class="btn big" data-act="gen-scenes"' + (getApiKey() ? '' : ' disabled') + '>' + (state.scenes.length ? '🔄 Régénérer les ' + state.scenes.length + ' scènes' : '🎬 Générer ' + state.episode.scenes.length + ' images de scènes') + '</button>' +
+    '</section>';
+
+  if (state.scenes && state.scenes.length) {
+    h += '<section class="glass card"><h2>Images des scènes (' + state.scenes.filter(function (s) { return s.imageUrl; }).length + '/' + state.scenes.length + ')</h2>' +
+      '<div class="images-grid">' +
+      state.scenes.map(function (s, i) {
+        return '<div class="image-card' + (s.imageUrl ? '' : ' loading') + '">' +
+          (s.imageUrl ? '<img src="' + esc(s.imageUrl) + '" alt="">' : '<div style="padding:40px 10px;text-align:center;font-size:.7rem;color:var(--muted);">Scène ' + (i + 1) + '</div>') +
+          (s.imageUrl ? '<button class="regen" data-act="regen-scene" data-v="' + i + '">🔄 Régénérer</button>' : '') +
+          (s.imageUrl ? '<a class="dl" href="' + esc(s.imageUrl) + '" download="scene-' + (i + 1) + '.png" target="_blank">⬇</a>' : '') +
+          '</div>';
+      }).join('') +
+      '</div></section>';
+  }
+
+  h += nextStepHtml('scenes');
+  h += debugPanelHtml();
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ONGLET 5 — VIDÉOS
+   ═══════════════════════════════════════════════════════════════ */
+function renderVideos() {
+  var h = stripHtml();
+  h += '<header class="hero"><span class="kicker">Étape 5</span><h1>Vidéos</h1><p class="muted">Agnes anime chaque image de scène avec un mouvement.</p></header>';
+
+  if (!state.scenes.length || !state.scenes.every(function (s) { return s.imageUrl; })) {
+    h += '<section class="glass empty"><div class="big">🎥</div><h3>Images de scènes manquantes</h3><p class="muted">Génère d\'abord toutes les images de scènes.</p><button type="button" class="btn" data-act="tab" data-v="scenes">Aller aux Scènes</button></section>';
+    h += debugPanelHtml();
+    return h;
+  }
 
   h += '<section class="glass card"><h2>Générer les clips</h2>' +
-    '<p class="small muted">Chaque clip coûte ' + (state.durationFrames / FRAME_RATE).toFixed(1) + ' secondes sur ton quota de 500 par jour. Le premier poll commence après 80 secondes.</p>' +
+    '<p class="small muted">Chaque clip coûte ' + (state.durationFrames / FRAME_RATE).toFixed(1) + ' secondes sur ton quota. Le premier poll commence après 80 s.</p>' +
     '<label class="q">Durée d\'un clip</label>' +
-    '<select id="video-duration">' +
+    '<select id="duration-select">' +
     DUREES_CLIP.map(function (d) {
-      return '<option value="' + d.frames + '"' + (state.durationFrames === d.frames ? ' selected' : '') + '>' + d.t + ' (' + d.frames + ' frames)</option>';
+      return '<option value="' + d.frames + '"' + (state.durationFrames === d.frames ? ' selected' : '') + '>' + d.t + '</option>';
     }).join('') +
     '</select>' +
-    '<button class="btn big" data-act="start-videos"' + (getApiKey() && state.images.filter(function (im) { return !im.userPhoto; }).length >= ep.scenes.length ? '' : ' disabled') + '>🚀 Générer les ' + ep.scenes.length + ' clips</button>' +
-    (state.images.filter(function (im) { return !im.userPhoto; }).length < ep.scenes.length ? '<div class="warnbox"><h3>Images manquantes</h3><p class="small">Il manque ' + (ep.scenes.length - state.images.filter(function (im) { return !im.userPhoto; }).length) + ' image(s) de référence. Va dans l\'onglet Références pour les générer.</p></div>' : '') +
-    '<button class="btn ghost" data-act="stop-videos" style="display:' + (state.isRunning ? 'block' : 'none') + '">⏹ Arrêter</button>' +
+    '<button type="button" class="btn big" data-act="start-videos"' + (getApiKey() ? '' : ' disabled') + '>🚀 Générer ' + state.scenes.length + ' clips</button>' +
+    '<button type="button" class="btn ghost big" data-act="stop-videos" style="display:' + (state.isRunning ? 'block' : 'none') + ';margin-top:8px">⏹ Arrêter</button>' +
     '</section>';
 
   if (state.queue.length) {
     h += '<section class="glass card"><h2>File d\'attente</h2>' + renderQueue() + '</section>';
   }
 
-  h += '<section class="glass card"><h2>Galerie des clips</h2>' +
-    '<div class="gallery-grid" id="gallery-grid">' +
-    (state.queue.filter(function (q) { return q.status === 'done'; }).length ?
+  if (state.queue.some(function (q) { return q.status === 'done'; })) {
+    h += '<section class="glass card"><h2>Galerie des clips</h2>' +
+      '<div class="gallery-grid">' +
       state.queue.filter(function (q) { return q.status === 'done'; }).map(function (q) {
         return '<div class="gallery-item">' +
           '<video src="' + esc(q.videoUrl) + '" controls preload="metadata" playsinline muted></video>' +
@@ -1746,32 +2135,60 @@ function renderVideos() {
           '<button data-act="regen-video" data-v="' + q.index + '">🔄 Régénérer</button>' +
           '<a href="' + esc(q.videoUrl) + '" download="scene-' + (q.index + 1) + '.mp4" target="_blank" rel="noopener">⬇ Télécharger</a>' +
           '</div></div>';
-      }).join('') :
-      '<p class="muted small">Aucun clip généré pour l\'instant.</p>') +
-    '</div></section>';
+      }).join('') +
+      '</div></section>';
+  }
 
-  h += '<section class="glass card"><h2>Montage final</h2>' +
-    '<p class="small muted">Assemble tous les clips en une seule vidéo avec FFmpeg (fonctionne dans ton navigateur, sans installation).</p>' +
-    '<button class="btn big" data-act="montage" disabled>🎬 Monter la vidéo (bientôt disponible)</button>' +
-    '<p class="small muted">En attendant, tu peux télécharger chaque clip et les assembler dans CapCut ou VN Editor.</p>' +
+  h += nextStepHtml('videos');
+  h += debugPanelHtml();
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ONGLET 6 — MONTAGE
+   ═══════════════════════════════════════════════════════════════ */
+function renderMontage() {
+  var h = stripHtml();
+  h += '<header class="hero"><span class="kicker">Étape 6</span><h1>Montage</h1><p class="muted">Assemble tous les clips en une seule vidéo.</p></header>';
+
+  if (!state.queue.length || !state.queue.every(function (q) { return q.status === 'done'; })) {
+    h += '<section class="glass empty"><div class="big">🎞️</div><h3>Clips manquants</h3><p class="muted">Génère d\'abord tous les clips vidéo.</p><button type="button" class="btn" data-act="tab" data-v="videos">Aller aux Vidéos</button></section>';
+    h += debugPanelHtml();
+    return h;
+  }
+
+  h += '<section class="glass card"><h2>Bientôt : montage automatique</h2>' +
+    '<p class="small muted">FFmpeg sera intégré dans une prochaine version. En attendant, tu peux télécharger chaque clip et les assembler dans CapCut ou VN Editor.</p>' +
+    '<button type="button" class="btn big" data-act="download-all">⬇ Télécharger tous les clips</button>' +
     '</section>';
+
+  h += '<section class="glass card"><h2>Guide CapCut</h2>' +
+    '<ol style="padding-left:20px;font-size:.88rem;line-height:1.7">' +
+    '<li>Ouvre CapCut et crée un nouveau projet.</li>' +
+    '<li>Importe tous les clips téléchargés.</li>' +
+    '<li>Glisse-les dans l\'ordre : scène 1, scène 2, scène 3…</li>' +
+    '<li>Le hook idéal dure 3 secondes : garde les 3 premières secondes de la scène 1.</li>' +
+    '<li>Ajoute des sous-titres (bouton "Texte" → "Sous-titres automatiques").</li>' +
+    '<li>Ajoute une musique libre de droits (Pixabay, YouTube Audio Library).</li>' +
+    '<li>Exporte en 1080×1920, 30 fps, MP4.</li>' +
+    '</ol></section>';
 
   h += debugPanelHtml();
   return h;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   FILE D'ATTENTE
+   ═══════════════════════════════════════════════════════════════ */
 function renderQueue() {
   if (!state.queue.length) return '';
   var total = state.queue.length;
   var done = state.queue.filter(function (q) { return q.status === 'done'; }).length;
   var failed = state.queue.filter(function (q) { return q.status === 'failed'; }).length;
-  var processing = state.queue.filter(function (q) { return q.status === 'processing' || q.status === 'creating'; }).length;
-  var h = '<div class="queue-summary">' +
-    '<span class="progress-text">' + done + ' / ' + total + ' prêts</span>' +
-    (failed ? '<span style="color:#9E1F2B">' + failed + ' échec' + (failed > 1 ? 's' : '') + '</span>' : '') +
-    (processing ? '<span>' + processing + ' en cours</span>' : '') +
+  var h = '<div class="queue-summary"><span class="progress-text">' + done + ' / ' + total + ' prêts</span>' +
+    (failed ? '<span style="color:var(--error)">' + failed + ' échec' + (failed > 1 ? 's' : '') + '</span>' : '') +
     '</div><div class="queue">';
-  state.queue.slice(0, 30).forEach(function (q) {
+  state.queue.forEach(function (q) {
     var cls = 'pending', icon = '○', label = 'En file';
     if (q.status === 'creating') { cls = 'creating'; icon = '◐'; label = 'Préparation…'; }
     else if (q.status === 'processing') { cls = 'processing'; icon = '◐'; label = q.progress || 'En cours…'; }
@@ -1787,180 +2204,55 @@ function renderQueue() {
   return h;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PANNEAU DEBUG
+   ═══════════════════════════════════════════════════════════════ */
 function debugPanelHtml() {
   return '<section class="glass debug-panel collapsed" id="debug-wrap">' +
     '<div class="debug-header" data-act="toggle-debug">' +
-    '<span class="debug-title">🖥️ Console de débogage <span class="debug-count" id="debug-count">0</span></span>' +
+    '<span class="debug-title">🖥️ Console de débogage <span class="debug-count" id="debug-count">' + debugCount + '</span></span>' +
     '<div class="debug-actions">' +
-    '<button data-act="clear-debug" type="button">Effacer</button>' +
-    '<button data-act="toggle-debug" type="button">▾</button>' +
+    '<button type="button" data-act="clear-debug">Effacer</button>' +
+    '<button type="button" data-act="toggle-debug">▾</button>' +
     '</div>' +
     '</div>' +
     '<div class="debug-body" id="debug-body"></div>' +
     '</section>';
 }
-
-function bindTabEvents() {
-  var wrap = $('tab-content');
-  if (!wrap) return;
-  if (!wrap.__bound) {
-    wrap.__bound = true;
-    wrap.addEventListener('click', onTabClick);
-    wrap.addEventListener('change', onTabChange);
-    wrap.addEventListener('input', onTabInput);
-  }
-  var searchInput = $('style-search');
-  if (searchInput && !searchInput.__bound) {
-    searchInput.__bound = true;
-    searchInput.addEventListener('input', function () {
-      var q = searchInput.value.toLowerCase().trim();
-      var cards = document.querySelectorAll('#styles-grid .style-card');
-      cards.forEach(function (card) {
-        var nm = card.querySelector('.nm') ? card.querySelector('.nm').textContent.toLowerCase() : '';
-        card.style.display = (!q || nm.indexOf(q) >= 0) ? '' : 'none';
-      });
-    });
-  }
-}
-
-function onTabClick(e) {
-  var b = e.target.closest('[data-act]');
-  if (!b) return;
-  var act = b.getAttribute('data-act');
-  var v = b.getAttribute('data-v');
-
-  if (act === 'stop') {
-    state.stopRequested = true;
-    state.busy = null; overlay();
-    return;
-  }
-  else if (act === 'mode') {
-    state.mode = v; saveState(); render();
-  }
-  else if (act === 'surprise') {
-    var tones = ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'];
-    var themes = ['famille', 'amitié', 'mystère', 'rue', 'école', 'travail', 'amour', 'voyage', 'secret'];
-    state.tone = randomItem(tones);
-    state.theme = randomItem(themes);
-    saveState(); render();
-    showToast('Ambiance tirée : ' + state.tone + ', ' + state.theme, 'success');
-  }
-  else if (act === 'gen-script') { doGenerateScript(); }
-  else if (act === 'style-pick') {
-    if (!state.styles) state.styles = [];
-    var si = state.styles.indexOf(v);
-    if (si >= 0) state.styles.splice(si, 1);
-    else state.styles.push(v);
-    saveState(); render();
-    var s = STYLE_BANK.filter(function (x) { return x.id === v; })[0];
-    if (s) showToast((state.styles.indexOf(v) >= 0 ? '✓ Ajouté : ' : '✗ Retiré : ') + s.emoji + ' ' + s.nom, 'success', 1500);
-  }
-  else if (act === 'gen-refs') { doGenerateRefs(); }
-  else if (act === 'regen-ref') { regenerateRef(parseInt(v, 10)); }
-  else if (act === 'start-videos') { startVideoGeneration(); }
-  else if (act === 'stop-videos') { state.stopRequested = true; showToast('Arrêt demandé…', 'warn'); }
-  else if (act === 'regen-video') { regenerateVideo(parseInt(v, 10)); }
-  else if (act === 'montage') { showToast('Montage FFmpeg bientôt disponible', 'warn'); }
-  else if (act === 'tab') { go(v); }
-  else if (act === 'toggle-debug') {
-    var panel = $('debug-wrap');
-    if (panel) panel.classList.toggle('collapsed');
-  }
-  else if (act === 'clear-debug') { clearDebug(); }
-}
-
-function onTabChange(e) {
-  var id = e.target.id;
-  if (id === 'total-duration') {
-    state.totalDuration = parseInt(e.target.value, 10);
-    saveState(); render();
-  }
-  else if (id === 'duration-select') {
-    var f = parseInt(e.target.value, 10);
-    if (state.mode === 'hook') state.durationFramesHook = f;
-    else state.durationFrames = f;
-    saveState(); render();
-  }
-  else if (id === 'video-duration') {
-    state.durationFrames = parseInt(e.target.value, 10);
-    saveState(); render();
-  }
-  else if (id === 'image-model') {
-    state.imageModel = e.target.value;
-    saveState();
-  }
-  else if (id === 'tone-select') {
-    state.tone = e.target.value;
-    saveState();
-  }
-  else if (id === 'skin-select') { state.skin = e.target.value; saveState(); render(); }
-  else if (id === 'teint-select') { state.teint = e.target.value; saveState(); render(); }
-  else if (id === 'yeux-select') { state.yeux = e.target.value; saveState(); render(); }
-}
-
-function onTabInput(e) {
-  var id = e.target.id;
-  var path = e.target.getAttribute('data-path');
-  if (id === 'idea-input') { state.idea = e.target.value; saveState(); }
-  else if (id === 'theme-input') { state.theme = e.target.value; saveState(); }
-  else if (path) {
-    setPath(state, path, e.target.value);
-    saveState();
-  }
-}
-
-function setPath(obj, path, value) {
-  var parts = path.split('.');
-  var o = obj;
-  for (var i = 0; i < parts.length - 1; i++) {
-    if (!o[parts[i]]) o[parts[i]] = {};
-    o = o[parts[i]];
-  }
-  o[parts[parts.length - 1]] = value;
-}
-
-function go(tab) {
-  state.tab = tab;
-  render();
-  window.scrollTo(0, 0);
-}
-
+ /* ═══════════════════════════════════════════════════════════════
+   GÉNÉRATION DU SCRIPT
+   ═══════════════════════════════════════════════════════════════ */
 async function doGenerateScript() {
-  if (!state.idea || state.idea.trim().length < 5) {
-    showToast('Il manque ton idée (au moins 5 caractères)', 'error', 4000);
-    return;
-  }
-  if (!getApiKey()) {
-    showToast('Ajoute ta clé Agnes en haut de la page', 'error', 4000);
-    return;
-  }
-
-  var totalSec = state.totalDuration || 70;
-  if (state.mode === 'hook') totalSec = 30;
-  if (state.mode === 'serie' && totalSec < 61) totalSec = 70;
-  var sceneDuration = 6;
-  var scenes = Math.max(3, Math.ceil(totalSec / sceneDuration));
-
-  setStatus('Génération du script…');
-  state.busy = { label: 'Agnes écrit le script…', sub: scenes + ' scènes attendues (' + totalSec + ' s)' };
+  if (!has(state.idea)) { showToast('Décris d\'abord ton idée', 'error'); return; }
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes en haut', 'error'); return; }
+  var totalDuration = state.totalDuration || 70;
+  var sceneCount = Math.ceil(totalDuration / 6);
+  state.busy = { label: 'Agnes écrit le script…', sub: sceneCount + ' scènes attendues' };
   overlay();
-  logDebug('info', 'SCRIPT', 'Idée : ' + state.idea.slice(0, 80) + ' — ' + scenes + ' scènes de ' + sceneDuration + 's');
+  setStatus('Génération du script…');
+  logDebug('info', 'SCRIPT', 'Idée : ' + state.idea.slice(0, 80));
 
   try {
-    var parsed = await generateScript(state.idea, state.tone, state.theme, totalSec, scenes);
+    var sys = buildScriptSystemPrompt();
+    var user = buildScriptUserPrompt(state.idea, state.tone, state.theme, totalDuration, sceneCount);
+    var raw = await callBestText(sys, user, 0.85, 4000);
+    var parsed = extractJson(raw, 'scenario');
+    if (!parsed || !parsed.scenes || !parsed.scenes.length) throw new Error('Scénario invalide après 5 tentatives');
     state.episode = {
       title: parsed.title || 'Épisode sans titre',
       logline: parsed.logline || '',
       scenes: parsed.scenes,
-      targetSeconds: totalSec
+      targetDuration: totalDuration
     };
-    state.images = [];
+    state.casting = [];
+    state.decors = [];
+    state.scenes = [];
     state.queue = [];
     saveState();
     state.busy = null; overlay();
     setStatus(null);
     showToast('Script généré : ' + parsed.scenes.length + ' scènes', 'success', 3000);
-    state.tab = 'univers';
+    logDebug('ok', 'SCRIPT', parsed.scenes.length + ' scènes prêtes');
     render();
   } catch (e) {
     state.busy = null; overlay();
@@ -1970,82 +2262,284 @@ async function doGenerateScript() {
   }
 }
 
-async function doGenerateRefs() {
-  if (!state.episode) { showToast('Pas d\'épisode', 'error'); return; }
+/* ═══════════════════════════════════════════════════════════════
+   GÉNÉRATION DU CASTING (descriptions)
+   ═══════════════════════════════════════════════════════════════ */
+async function doGenerateCasting() {
+  if (!state.episode || !state.episode.scenes) { showToast('Pas de script', 'error'); return; }
   if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+  state.busy = { label: 'Agnes crée le casting…', sub: 'Identification des personnages et descriptions ultra-détaillées' };
+  overlay();
+  setStatus('Génération du casting…');
+  logDebug('info', 'CASTING', 'Analyse du script');
 
-  var status = $('refs-status');
-  if (status) status.textContent = 'Préparation…';
-  setStatus('Génération des images…');
-  state.busy = { label: 'Génération des images', sub: state.episode.scenes.length + ' scènes à illustrer' };
+  try {
+    var sceneDescriptions = state.episode.scenes.map(function (s, i) {
+      return 'Scene ' + (i + 1) + ': ' + (s.description || '') + ' | characters: ' + (s.persos || '');
+    }).join('\n');
+    var sys = buildCastingSystemPrompt();
+    var user = buildCastingUserPrompt(state.idea, sceneDescriptions, 6);
+    var raw = await callBestText(sys, user, 0.85, 4000);
+    var parsed = extractJson(raw, 'casting');
+    if (!parsed || !parsed.characters || !parsed.characters.length) throw new Error('Casting invalide');
+    state.casting = parsed.characters.map(function (c) {
+      return {
+        id: newId(),
+        name: c.name || 'Personnage',
+        role: c.role || '',
+        age: c.age || '',
+        gender: c.gender || '',
+        skin: c.skin || '',
+        hair: c.hair || '',
+        eyes: c.eyes || '',
+        outfit: c.outfit || '',
+        distinctive: c.distinctive || '',
+        expression: c.expression || '',
+        voice: c.voice || '',
+        imageUrl: null
+      };
+    });
+    saveState();
+    state.busy = null; overlay();
+    setStatus(null);
+    showToast(state.casting.length + ' personnage(s) créé(s)', 'success', 3000);
+    logDebug('ok', 'CASTING', state.casting.length + ' personnages');
+    render();
+  } catch (e) {
+    state.busy = null; overlay();
+    setStatus(null);
+    logDebug('err', 'CASTING', e.message);
+    showToast('Erreur : ' + e.message.slice(0, 70), 'error', 4000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GÉNÉRATION DES IMAGES DE CASTING
+   ═══════════════════════════════════════════════════════════════ */
+async function doGenerateCastingImages() {
+  if (!state.casting.length) { showToast('Pas de casting', 'error'); return; }
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+  state.busy = { label: 'Génération des portraits…', sub: state.casting.length + ' personnages' };
   overlay();
   state.stopRequested = false;
 
-  var refsOnly = state.images.filter(function (im) { return !im.userPhoto; });
-  for (var i = 0; i < state.episode.scenes.length; i++) {
+  for (var i = 0; i < state.casting.length; i++) {
     if (state.stopRequested) break;
-    var sc = state.episode.scenes[i];
-    var prompt = buildImagePromptFromScene(sc);
-
-    if (status) status.textContent = 'Image ' + (i + 1) + ' / ' + state.episode.scenes.length + '…';
-    logDebug('api', 'IMAGE', 'Scène ' + (i + 1) + '…');
-
+    var c = state.casting[i];
+    var prompt = 'Character reference sheet, full body, front view, neutral friendly expression, standing, plain light grey background, no text, vertical format, consistent character design. ' + characterToDescription(c) + buildStyleSuffix();
+    setStatus('Portrait ' + (i + 1) + '/' + state.casting.length + '…');
+    logDebug('api', 'CASTING IMG', c.name);
     try {
-      var url = await callAgnesImage(prompt);
-      var userImages = state.images.filter(function (im) { return im.userPhoto; });
-      var aiImages = state.images.filter(function (im) { return !im.userPhoto; });
-      aiImages[i] = { url: url, sceneIndex: i };
-      state.images = aiImages.concat(userImages);
-      logDebug('ok', 'IMAGE', 'Scène ' + (i + 1) + ' OK');
+      var url = await callBestImage(prompt);
+      state.casting[i].imageUrl = url;
+      saveState();
+      render();
+      logDebug('ok', 'CASTING IMG', c.name + ' OK');
     } catch (e) {
-      logDebug('err', 'IMAGE', 'Scène ' + (i + 1) + ' échec : ' + e.message);
+      logDebug('err', 'CASTING IMG', c.name + ' : ' + e.message);
     }
     await sleep(IMAGE_INTERVAL_MS);
-    if (state.tab === 'refs') render();
   }
 
   state.busy = null; overlay();
   setStatus(null);
-  showToast('Images générées', 'success');
+  showToast('Portraits générés', 'success');
   render();
 }
 
-async function regenerateRef(i) {
-  if (!state.episode || !state.episode.scenes[i]) return;
-  var sc = state.episode.scenes[i];
-  setStatus('Régénération de l\'image ' + (i + 1) + '…');
-  logDebug('api', 'IMAGE-REGEN', 'Scène ' + (i + 1));
-
+async function regenerateCastingImage(i) {
+  if (!state.casting[i]) return;
+  var c = state.casting[i];
+  setStatus('Régénération du portrait…');
   try {
-    var prompt = buildImagePromptFromScene(sc);
-    var url = await callAgnesImage(prompt);
-    state.images[i] = { url: url, sceneIndex: i };
-    showToast('Image ' + (i + 1) + ' régénérée', 'success');
-    logDebug('ok', 'IMAGE-REGEN', 'Scène ' + (i + 1) + ' OK');
+    var prompt = 'Character reference sheet, full body, front view, neutral friendly expression, standing, plain light grey background, no text, vertical format, consistent character design. ' + characterToDescription(c) + buildStyleSuffix();
+    var url = await callBestImage(prompt);
+    state.casting[i].imageUrl = url;
+    saveState();
+    showToast('Portrait régénéré', 'success');
   } catch (e) {
-    logDebug('err', 'IMAGE-REGEN', 'Scène ' + (i + 1) + ' : ' + e.message);
-    showToast('Erreur : ' + e.message.slice(0, 60), 'error');
+    showToast('Erreur : ' + e.message.slice(0, 50), 'error');
   }
   setStatus(null);
   render();
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   GÉNÉRATION DES DÉCORS (descriptions)
+   ═══════════════════════════════════════════════════════════════ */
+async function doGenerateDecors() {
+  if (!state.episode || !state.episode.scenes) { showToast('Pas de script', 'error'); return; }
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+  state.busy = { label: 'Agnes crée les décors…', sub: 'Identification des lieux et descriptions détaillées' };
+  overlay();
+  setStatus('Génération des décors…');
+  logDebug('info', 'DECORS', 'Analyse du script');
+
+  try {
+    var sceneDescriptions = state.episode.scenes.map(function (s, i) {
+      return 'Scene ' + (i + 1) + ': ' + (s.description || '') + ' | location: ' + (s.lieu || '');
+    }).join('\n');
+    var sys = buildDecorsSystemPrompt();
+    var user = buildDecorsUserPrompt(state.idea, sceneDescriptions);
+    var raw = await callBestText(sys, user, 0.85, 4000);
+    var parsed = extractJson(raw, 'decors');
+    if (!parsed || !parsed.decors || !parsed.decors.length) throw new Error('Décors invalides');
+    state.decors = parsed.decors.map(function (d) {
+      return {
+        id: newId(),
+        name: d.name || 'Lieu',
+        description: d.description || '',
+        lighting: d.lighting || '',
+        atmosphere: d.atmosphere || '',
+        imageUrl: null
+      };
+    });
+    saveState();
+    state.busy = null; overlay();
+    setStatus(null);
+    showToast(state.decors.length + ' décor(s) créé(s)', 'success', 3000);
+    logDebug('ok', 'DECORS', state.decors.length + ' lieux');
+    render();
+  } catch (e) {
+    state.busy = null; overlay();
+    setStatus(null);
+    logDebug('err', 'DECORS', e.message);
+    showToast('Erreur : ' + e.message.slice(0, 70), 'error', 4000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GÉNÉRATION DES IMAGES DE DÉCORS
+   ═══════════════════════════════════════════════════════════════ */
+async function doGenerateDecorImages() {
+  if (!state.decors.length) { showToast('Pas de décors', 'error'); return; }
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+  state.busy = { label: 'Génération des décors…', sub: state.decors.length + ' lieux' };
+  overlay();
+  state.stopRequested = false;
+
+  for (var i = 0; i < state.decors.length; i++) {
+    if (state.stopRequested) break;
+    var d = state.decors[i];
+    var prompt = 'Empty location plate, no characters, no people. ' + decorToDescription(d) + ' Wide establishing shot, eye level, no text, no logo, portrait 9:16 vertical.' + buildStyleSuffix();
+    setStatus('Décor ' + (i + 1) + '/' + state.decors.length + '…');
+    logDebug('api', 'DECOR IMG', d.name);
+    try {
+      var url = await callBestImage(prompt);
+      state.decors[i].imageUrl = url;
+      saveState();
+      render();
+      logDebug('ok', 'DECOR IMG', d.name + ' OK');
+    } catch (e) {
+      logDebug('err', 'DECOR IMG', d.name + ' : ' + e.message);
+    }
+    await sleep(IMAGE_INTERVAL_MS);
+  }
+
+  state.busy = null; overlay();
+  setStatus(null);
+  showToast('Décors générés', 'success');
+  render();
+}
+
+async function regenerateDecorImage(i) {
+  if (!state.decors[i]) return;
+  var d = state.decors[i];
+  setStatus('Régénération du décor…');
+  try {
+    var prompt = 'Empty location plate, no characters, no people. ' + decorToDescription(d) + ' Wide establishing shot, eye level, no text, no logo, portrait 9:16 vertical.' + buildStyleSuffix();
+    var url = await callBestImage(prompt);
+    state.decors[i].imageUrl = url;
+    saveState();
+    showToast('Décor régénéré', 'success');
+  } catch (e) {
+    showToast('Erreur : ' + e.message.slice(0, 50), 'error');
+  }
+  setStatus(null);
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GÉNÉRATION DES IMAGES DE SCÈNES
+   ═══════════════════════════════════════════════════════════════ */
+async function doGenerateScenes() {
+  if (!state.episode || !state.episode.scenes) { showToast('Pas de script', 'error'); return; }
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+  state.busy = { label: 'Génération des scènes…', sub: state.episode.scenes.length + ' images à créer' };
+  overlay();
+  state.stopRequested = false;
+
+  state.scenes = state.episode.scenes.map(function (s, i) {
+    return { index: i, scene: s, imageUrl: null };
+  });
+
+  for (var i = 0; i < state.scenes.length; i++) {
+    if (state.stopRequested) break;
+    var scene = state.scenes[i].scene;
+    var prompt = buildImagePrompt(scene, state.casting, state.decors);
+    setStatus('Scène ' + (i + 1) + '/' + state.scenes.length + '…');
+    logDebug('api', 'SCENE IMG', 'Scène ' + (i + 1));
+    try {
+      var url = await callBestImage(prompt);
+      state.scenes[i].imageUrl = url;
+      saveState();
+      render();
+      logDebug('ok', 'SCENE IMG', 'Scène ' + (i + 1) + ' OK');
+    } catch (e) {
+      logDebug('err', 'SCENE IMG', 'Scène ' + (i + 1) + ' : ' + e.message);
+    }
+    await sleep(IMAGE_INTERVAL_MS);
+  }
+
+  state.busy = null; overlay();
+  setStatus(null);
+  showToast('Scènes générées', 'success');
+  render();
+}
+
+async function regenerateSceneImage(i) {
+  if (!state.scenes[i]) return;
+  var scene = state.scenes[i].scene;
+  setStatus('Régénération de la scène…');
+  try {
+    var prompt = buildImagePrompt(scene, state.casting, state.decors);
+    var url = await callBestImage(prompt);
+    state.scenes[i].imageUrl = url;
+    saveState();
+    showToast('Scène régénérée', 'success');
+  } catch (e) {
+    showToast('Erreur : ' + e.message.slice(0, 50), 'error');
+  }
+  setStatus(null);
+  render();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GÉNÉRATION DES VIDÉOS
+   ═══════════════════════════════════════════════════════════════ */
 async function startVideoGeneration() {
   if (state.isRunning) return;
   if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
-  if (!state.episode) { showToast('Pas d\'épisode', 'error'); return; }
-
+  if (!state.scenes.length || !state.scenes.every(function (s) { return s.imageUrl; })) {
+    showToast('Images de scènes manquantes', 'error');
+    return;
+  }
   state.isRunning = true;
   state.stopRequested = false;
   state.completed = 0;
   state.failed = 0;
-  state.queue = state.episode.scenes.map(function (sc, i) {
+  state.queue = state.scenes.map(function (s, i) {
     return {
-      index: i, scene: sc, status: 'pending', progress: null,
-      videoId: null, videoUrl: null, startTime: null
+      index: i,
+      scene: s.scene,
+      imageUrl: s.imageUrl,
+      status: 'pending',
+      progress: null,
+      videoId: null,
+      videoUrl: null,
+      startTime: null
     };
   });
-
   checkQuotaWarn(state.durationFrames, state.queue.length);
   setStatus('Génération des clips…');
   render();
@@ -2057,23 +2551,13 @@ async function startVideoGeneration() {
     try {
       item.status = 'creating';
       render();
-
-      var refImg = state.images[i] ? (state.images[i].url || state.images[i].dataUri) : null;
-      if (!refImg) {
-        item.status = 'failed';
-        item.progress = 'Image manquante';
-        state.failed++;
-        render();
-        continue;
-      }
-
-      var prompt = buildVideoPromptFromScene(item.scene);
-      var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
+      var prompt = buildVideoPrompt(item.scene, state.casting);
+      var id = await createVideoTask(prompt, item.imageUrl, null, state.durationFrames);
       item.videoId = id;
       item.startTime = Date.now();
       item.status = 'processing';
       render();
-
+      logDebug('ok', 'VIDÉO', 'Scène ' + (i + 1) + ' tâche créée : ' + id);
       pollingTasks.push(pollTaskAndDisplay(item));
 
       if (i < state.queue.length - 1 && !state.stopRequested) {
@@ -2111,7 +2595,6 @@ async function pollTaskAndDisplay(item) {
       item.progress = progress;
       render();
     }, state.durationFrames);
-
     var elapsed = Date.now() - item.startTime;
     recordGenerationTime('video', elapsed);
     item.status = 'done';
@@ -2130,17 +2613,14 @@ async function pollTaskAndDisplay(item) {
 }
 
 async function regenerateVideo(i) {
-  if (!state.episode || !state.episode.scenes[i]) return;
   var item = state.queue[i];
-  if (!item) return;
-  setStatus('Régénération du clip ' + (i + 1) + '…');
+  if (!item || !item.imageUrl) return;
+  setStatus('Régénération du clip…');
   try {
     item.status = 'creating';
     render();
-    var refImg = state.images[i] ? (state.images[i].url || state.images[i].dataUri) : null;
-    if (!refImg) throw new Error('Image manquante');
-    var prompt = buildVideoPromptFromScene(state.episode.scenes[i]);
-    var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
+    var prompt = buildVideoPrompt(item.scene, state.casting);
+    var id = await createVideoTask(prompt, item.imageUrl, null, state.durationFrames);
     item.videoId = id;
     item.startTime = Date.now();
     item.status = 'processing';
@@ -2156,461 +2636,48 @@ async function regenerateVideo(i) {
   setStatus(null);
 }
 
-function processImageFile(file) {
-  return new Promise(function (resolve) {
-    if (!file.type.startsWith('image/')) { resolve(null); return; }
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var dataUri = e.target.result;
-      var img = new Image();
-      img.onload = function () {
-        try {
-          var c = document.createElement('canvas');
-          var ratio = img.height / img.width;
-          var w = 200;
-          c.width = w;
-          c.height = Math.round(w * ratio);
-          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-          var thumb = c.toDataURL('image/jpeg', 0.7);
-          resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: thumb, userPhoto: true });
-        } catch (err) { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri, userPhoto: true }); }
-      };
-      img.onerror = function () { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri, userPhoto: true }); };
-      img.src = dataUri;
-    };
-    reader.onerror = function () { resolve(null); };
-    reader.readAsDataURL(file);
+/* ═══════════════════════════════════════════════════════════════
+   TÉLÉCHARGEMENT DE TOUS LES CLIPS
+   ═══════════════════════════════════════════════════════════════ */
+async function downloadAllClips() {
+  var done = state.queue.filter(function (q) { return q.status === 'done' && q.videoUrl; });
+  if (!done.length) { showToast('Aucun clip à télécharger', 'warn'); return; }
+  showToast('Ouverture des téléchargements…', 'success');
+  for (var i = 0; i < done.length; i++) {
+    var a = document.createElement('a');
+    a.href = done[i].videoUrl;
+    a.download = 'scene-' + (done[i].index + 1) + '.mp4';
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    await sleep(500);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TRAITEMENT DES FICHIERS UPLOADÉS (photos manuelles)
+   ═══════════════════════════════════════════════════════════════ */
+function fileToDataUri(file) {
+  return new Promise(function (resolve, reject) {
+    var r = new FileReader();
+    r.onload = function (e) { resolve(e.target.result); };
+    r.onerror = function () { reject(new Error('Erreur lecture')); };
+    r.readAsDataURL(file);
   });
 }
-async function handleFiles(files) {
-  var list = Array.prototype.slice.call(files).filter(function (f) { return f.type.startsWith('image/'); });
-  if (!list.length) return;
-  showToast('Chargement de ' + list.length + ' photo' + (list.length > 1 ? 's' : '') + '…', 'warn');
-  for (var i = 0; i < list.length; i++) {
-    var im = await processImageFile(list[i]);
-    if (im) state.images.push(im);
-  }
-  render();
-  showToast('Photo' + (list.length > 1 ? 's' : '') + ' ajoutée' + (list.length > 1 ? 's' : ''), 'success');
-}
 
-function init() {
-  document.querySelectorAll('.dock button').forEach(function (b) {
-    b.addEventListener('click', function () {
-      state.tab = b.getAttribute('data-tab');
-      render();
-      window.scrollTo(0, 0);
-    });
-  });
-
-  var saveBtn = $('api-save-btn');
-  if (saveBtn) saveBtn.addEventListener('click', saveApiKey);
-  var clearBtn = $('api-clear-btn');
-  if (clearBtn) clearBtn.addEventListener('click', clearAllKeys);
-  var apiInp = $('api-key-input');
-  if (apiInp) {
-    apiInp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); }
-    });
-  }
-
-  var groqInput = $('groq-key');
-  if (groqInput) {
-    try { groqInput.value = localStorage.getItem('groq_key') || ''; } catch (e) {}
-    groqInput.addEventListener('input', function () {
-      try { localStorage.setItem('groq_key', groqInput.value.trim()); } catch (e) {}
-    });
-  }
-  var orInput = $('openrouter-key');
-  if (orInput) {
-    try { orInput.value = localStorage.getItem('openrouter_key') || ''; } catch (e) {}
-    orInput.addEventListener('input', function () {
-      try { localStorage.setItem('openrouter_key', orInput.value.trim()); } catch (e) {}
-    });
-  }
-
-  var wakeBtn = $('wake-toggle-btn');
-  if (wakeBtn) wakeBtn.addEventListener('click', toggleWakeLock);
-
-  document.addEventListener('change', function (e) {
-    if (e.target && e.target.id === 'refs-file-input') {
-      handleFiles(e.target.files);
-      e.target.value = '';
-    }
-  });
-
-  try {
-    if (localStorage.getItem(WAKE_LOCK_PREF) === '1') {
-      state.wakeEnabled = true;
-      activateWakeLock().then(updateWakeStatus);
-    }
-  } catch (e) {}
-
-  loadState();
-  if (!state.styles) state.styles = [];
-  if (!state.totalDuration) state.totalDuration = 70;
-  updateApiPanel();
-  updateApiPanelVisibility();
-  updateQuotaPanel();
-  updateWakeStatus();
-  render();
-  logDebug('ok', 'INIT', 'Fabrique de séries · Agnes prête');
-  logDebug('info', 'INIT', 'Modèles : ' + MODEL_TEXT + ' / ' + MODEL_IMAGE_DEFAULT + ' / ' + MODEL_VIDEO);
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
-
-</script>
-</body>
-</html>function render() {
-  var c = $('tab-content');
-  if (!c) return;
-  var html = '';
-  if (state.tab === 'idees') html = renderIdees();
-  else if (state.tab === 'univers') html = renderUnivers();
-  else if (state.tab === 'refs') html = renderRefs();
-  else if (state.tab === 'videos') html = renderVideos();
-  c.innerHTML = html;
-  document.querySelectorAll('.dock button').forEach(function (b) {
-    if (b.getAttribute('data-tab') === state.tab) b.setAttribute('aria-current', 'page');
-    else b.removeAttribute('aria-current');
-  });
-  bindTabEvents();
-}
-
-function stageInfo() {
-  var ep = state.episode;
-  var scenes = ep && ep.scenes ? ep.scenes.length : 0;
-  var refsCount = state.images.filter(function (im) { return !im.userPhoto; }).length;
-  var vidsCount = state.queue.filter(function (q) { return q.status === 'done'; }).length;
-  var vidsTotal = state.queue.length;
-  var s = [
-    { k: 'Idée', v: has(state.idea) ? 'faite' : '', ok: has(state.idea), tab: 'idees' },
-    { k: 'Durée', v: state.totalDuration ? state.totalDuration + 's' : '', ok: !!state.totalDuration, tab: 'idees' },
-    { k: 'Styles', v: (state.styles || []).length ? state.styles.length + ' choisis' : '', ok: (state.styles || []).length > 0, tab: 'univers' },
-    { k: 'Script', v: scenes ? scenes + ' scènes' : '', ok: scenes > 0, tab: 'univers' },
-    { k: 'Références', v: refsCount ? refsCount + ' images' : '', ok: refsCount > 0, tab: 'refs' },
-    { k: 'Vidéos', v: vidsTotal ? vidsCount + '/' + vidsTotal : '', ok: vidsTotal > 0 && vidsCount === vidsTotal, tab: 'videos' }
-  ];
-  var found = false;
-  s.forEach(function (x) { x.cur = !found && !x.ok; if (x.cur) found = true; });
-  return s;
-}
-function stripHtml() {
-  return '<div class="strip">' + stageInfo().map(function (x) {
-    return '<button type="button" class="stage' + (x.ok ? ' ok' : '') + (x.cur ? ' cur' : '') + '" data-act="tab" data-v="' + x.tab + '"><small>' + (x.ok ? '✓ ' + (x.v || 'fait') : (x.v || 'à faire')) + '</small><b>' + x.k + '</b></button>';
-  }).join('') + '</div>';
-}
-
-function renderIdees() {
-  var h = stripHtml();
-  h += '<header class="hero"><span class="kicker">Étape 1</span><h1>Mon idée</h1><p class="muted">Décris ton idée, choisis un ton et un thème. Puis génère un script avec Agnes.</p></header>';
-
-  h += '<section class="glass card"><h2>L\'idée</h2>' +
-    '<div class="stack">' +
-    '<label class="q">Décris ton idée<span class="q-hint">Une phrase suffit. Exemple : une laverie où chaque machine révèle un secret.</span></label>' +
-    '<textarea id="idea-input" placeholder="Une laverie de quartier où chaque machine révèle un secret…">' + esc(state.idea) + '</textarea>' +
-    '<div class="rowbtns">' +
-    '<button class="btn ghost" data-act="surprise">🎲 Surprends-moi</button>' +
-    '</div>' +
-    '<div class="row">' +
-    '<div style="flex:1;min-width:140px"><label class="q">Ton</label><select id="tone-select">' +
-    ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'].map(function (t) {
-      return '<option value="' + t + '"' + (state.tone === t ? ' selected' : '') + '>' + t + '</option>';
-    }).join('') +
-    '</select></div>' +
-    '<div style="flex:1;min-width:140px"><label class="q">Thème</label><input type="text" id="theme-input" placeholder="famille, amitié…" value="' + esc(state.theme) + '"></div>' +
-    '</div>' +
-    '</div></section>';
-
-  h += '<section class="glass card"><h2>Format</h2>' +
-    '<div class="mode-toggle">' +
-    '<div class="mode-option' + (state.mode === 'serie' ? ' selected' : '') + '" data-act="mode" data-v="serie"><div class="mo-icon">📺</div><div class="mo-name">Épisode de série</div><div class="mo-desc">Au moins 61 secondes au total</div></div>' +
-    '<div class="mode-option' + (state.mode === 'hook' ? ' selected' : '') + '" data-act="mode" data-v="hook"><div class="mo-icon">⚡</div><div class="mo-name">Hook court</div><div class="mo-desc">Garde les 3 premières secondes</div></div>' +
-    '</div>' +
-    '<div class="stack" style="margin-top:12px">' +
-    '<label class="q">Durée totale de la vidéo<span class="q-hint">Nombre de scènes calculé automatiquement (6 s par scène).</span></label>' +
-    '<select id="total-duration">' +
-    DUREES_TOTALES.map(function (d) {
-      var sceneCount = Math.ceil(d.v / 6);
-      return '<option value="' + d.v + '"' + (state.totalDuration === d.v ? ' selected' : '') + '>' + d.t + ' (~' + sceneCount + ' scènes)</option>';
-    }).join('') +
-    '</select>' +
-    '<label class="q" style="margin-top:10px">Durée d\'un clip vidéo</label>' +
-    '<select id="duration-select">' +
-    DUREES_CLIP.map(function (d) {
-      var cur = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
-      return '<option value="' + d.frames + '"' + (cur === d.frames ? ' selected' : '') + '>' + d.t + ' (' + d.frames + ' frames)</option>';
-    }).join('') +
-    '</select>' +
-    '</div></section>';
-
-  h += '<section class="glass card"><h2>Modèle d\'image</h2>' +
-    '<label class="q">Modèle Agnes pour les images</label>' +
-    '<select id="image-model">' +
-    '<option value="' + MODEL_IMAGE_DEFAULT + '"' + (state.imageModel === MODEL_IMAGE_DEFAULT ? ' selected' : '') + '>agnes-image-2.1-flash (par défaut)</option>' +
-    '<option value="' + MODEL_IMAGE_ALT + '"' + (state.imageModel === MODEL_IMAGE_ALT ? ' selected' : '') + '>agnes-image-2.5-flash (alternatif)</option>' +
-    '</select>' +
-    '<p class="small muted">Tu pourras choisir plusieurs styles visuels dans l\'onglet Univers.</p></section>';
-
-  h += '<section class="glass card"><h2>Générer</h2>' +
-    '<p class="small muted">Lance la génération du script avec Agnes. Tu verras ensuite les scènes et tu pourras générer les images.</p>' +
-    '<button class="btn big" data-act="gen-script">✍️ Générer le script</button>' +
-    '<div id="script-output"></div></section>';
-
-  h += debugPanelHtml();
-  return h;
-}
-
-function renderUnivers() {
-  var ep = state.episode;
-  var h = stripHtml();
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">🌌</div><h3>Pas encore d\'univers</h3><p class="muted">Génère d\'abord un script dans l\'onglet Idées.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
-    h += debugPanelHtml();
-    return h;
-  }
-
-  h += '<header class="hero"><span class="kicker">Étape 2</span><h1>' + esc(ep.title || 'Univers') + '</h1><p class="muted">' + esc(ep.logline || '') + '</p></header>';
-
-  h += '<section class="glass card"><h2>Styles visuels (' + (state.styles || []).length + ' sélectionné' + ((state.styles || []).length > 1 ? 's' : '') + ')</h2>' +
-    '<p class="small muted">Tu peux en choisir plusieurs. Ils seront combinés dans les prompts.</p>' +
-    '<div class="chips scrollrow" id="style-chips">' +
-    STYLE_BANK.slice(0, 20).map(function (s) {
-      var sel = (state.styles || []).indexOf(s.id) >= 0;
-      return '<button type="button" class="chip small" data-act="style-pick" data-v="' + s.id + '" aria-pressed="' + sel + '">' + s.emoji + ' ' + esc(s.nom) + '</button>';
-    }).join('') +
-    '</div>' +
-    '<details class="acc" style="margin-top:12px;"><summary><div><b>Voir tous les styles (' + STYLE_BANK.length + ')</b><br><span>Clique pour cocher plusieurs styles</span></div></summary><div class="in">' +
-    '<input type="search" id="style-search" placeholder="Rechercher un style…" style="margin-bottom:8px;">' +
-    '<div class="styles-grid" id="styles-grid">' +
-    STYLE_BANK.map(function (s) {
-      var sel = (state.styles || []).indexOf(s.id) >= 0;
-      return '<div class="style-card' + (sel ? ' selected' : '') + '" data-act="style-pick" data-v="' + s.id + '">' +
-        '<span class="emoji">' + s.emoji + '</span>' +
-        '<div class="info"><div class="nm">' + esc(s.nom) + '</div><div class="ds">' + esc(s.cat) + '</div></div>' +
-        '</div>';
-    }).join('') +
-    '</div>' +
-    '</div></details>' +
-    '</section>';
-
-  h += '<section class="glass card"><h2>Réglages fins</h2>' +
-    '<div class="fld"><label class="q">Rendu de la peau</label>' +
-    '<select id="skin-select">' +
-    '<option value="">Par défaut (choisi par Agnes)</option>' +
-    '<option value="K1"' + (state.skin === 'K1' ? ' selected' : '') + '>Lisse stylisée</option>' +
-    '<option value="K2"' + (state.skin === 'K2' ? ' selected' : '') + '>Réaliste avec pores</option>' +
-    '<option value="K3"' + (state.skin === 'K3' ? ' selected' : '') + '>Taches de rousseur</option>' +
-    '<option value="K4"' + (state.skin === 'K4' ? ' selected' : '') + '>Brillante, glow</option>' +
-    '<option value="K5"' + (state.skin === 'K5' ? ' selected' : '') + '>Mate et poudrée</option>' +
-    '<option value="K6"' + (state.skin === 'K6' ? ' selected' : '') + '>Poupée plastique brillante</option>' +
-    '<option value="K7"' + (state.skin === 'K7' ? ' selected' : '') + '>Porcelaine</option>' +
-    '</select></div>' +
-    '<div class="fld" style="margin-top:10px"><label class="q">Teint de peau</label>' +
-    '<select id="teint-select">' +
-    '<option value="">Par défaut</option>' +
-    '<option value="T1"' + (state.teint === 'T1' ? ' selected' : '') + '>Très clair</option>' +
-    '<option value="T2"' + (state.teint === 'T2' ? ' selected' : '') + '>Clair beige</option>' +
-    '<option value="T3"' + (state.teint === 'T3' ? ' selected' : '') + '>Olive clair</option>' +
-    '<option value="T4"' + (state.teint === 'T4' ? ' selected' : '') + '>Hâlé doré</option>' +
-    '<option value="T5"' + (state.teint === 'T5' ? ' selected' : '') + '>Caramel</option>' +
-    '<option value="T6"' + (state.teint === 'T6' ? ' selected' : '') + '>Brun moyen</option>' +
-    '<option value="T7"' + (state.teint === 'T7' ? ' selected' : '') + '>Brun profond</option>' +
-    '<option value="T8"' + (state.teint === 'T8' ? ' selected' : '') + '>Ébène</option>' +
-    '</select></div>' +
-    '<div class="fld" style="margin-top:10px"><label class="q">Regard et expression de base</label>' +
-    '<select id="yeux-select">' +
-    '<option value="">Par défaut</option>' +
-    '<option value="Y1"' + (state.yeux === 'Y1' ? ' selected' : '') + '>Grands yeux ronds brillants</option>' +
-    '<option value="Y2"' + (state.yeux === 'Y2' ? ' selected' : '') + '>Paupières mi-closes</option>' +
-    '<option value="Y3"' + (state.yeux === 'Y3' ? ' selected' : '') + '>Regard en coin</option>' +
-    '<option value="Y4"' + (state.yeux === 'Y4' ? ' selected' : '') + '>Yeux écarquillés</option>' +
-    '<option value="Y5"' + (state.yeux === 'Y5' ? ' selected' : '') + '>Yeux en amande maquillés</option>' +
-    '<option value="Y6"' + (state.yeux === 'Y6' ? ' selected' : '') + '>Yeux pétillants et rieurs</option>' +
-    '<option value="Y8"' + (state.yeux === 'Y8' ? ' selected' : '') + '>Sourcils très expressifs</option>' +
-    '</select></div>' +
-    '</section>';
-
-  h += '<section class="glass card"><h2>Scènes (' + ep.scenes.length + ')</h2>';
-  ep.scenes.forEach(function (sc, i) {
-    h += '<details class="glass acc"><summary><div><b>Scène ' + (i + 1) + '</b><br><span>' + esc((sc.description || '').slice(0, 60)) + '</span></div></summary><div class="in">' +
-      '<div class="fld"><label class="q">Description</label><textarea data-path="episode.scenes.' + i + '.description" style="min-height:80px">' + esc(sc.description || '') + '</textarea></div>' +
-      '<div class="two"><div class="fld"><label class="q">Lieu</label><input type="text" data-path="episode.scenes.' + i + '.lieu" value="' + esc(sc.lieu || '') + '"></div>' +
-      '<div class="fld"><label class="q">Personnages</label><input type="text" data-path="episode.scenes.' + i + '.persos" value="' + esc(sc.persos || '') + '"></div></div>' +
-      '<div class="fld"><label class="q">Ambiance</label><input type="text" data-path="episode.scenes.' + i + '.ambiance" value="' + esc(sc.ambiance || '') + '"></div>' +
-      '<div class="fld"><label class="q">Prompt image (anglais)</label><textarea data-path="episode.scenes.' + i + '.action_prompt" style="min-height:80px">' + esc(sc.action_prompt || '') + '</textarea></div>' +
-      '</div></details>';
-  });
-  h += '</section>';
-
-  h += debugPanelHtml();
-  return h;
-}
-
-function renderRefs() {
-  var ep = state.episode;
-  var h = stripHtml();
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">📸</div><h3>Pas encore de références</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
-    h += debugPanelHtml();
-    return h;
-  }
-
-  h += '<header class="hero"><span class="kicker">Étape 3</span><h1>Références</h1><p class="muted">Génère une image pour chaque scène avec Agnes. Tu pourras régénérer celles qui ne te plaisent pas.</p></header>';
-
-  h += '<section class="glass card"><h2>Générer les images</h2>' +
-    '<p class="small muted">Agnes va créer une image par scène. Chaque image coûte 1 sur ton quota de 4000 par jour.</p>' +
-    '<button class="btn big" data-act="gen-refs"' + (getApiKey() ? '' : ' disabled') + '>' + (state.images.length ? '🔄 Régénérer les ' + state.images.length + ' images' : '🎨 Générer ' + ep.scenes.length + ' images') + '</button>' +
-    '<p class="small muted" id="refs-status"></p>' +
-    '</section>';
-
-  h += '<section class="glass card"><h2>Images de référence</h2>' +
-    '<p class="small muted">Chaque image est associée à sa scène. Régénère celles qui ne te plaisent pas.</p>' +
-    '<div class="images-grid" id="refs-grid">' +
-    (state.images.length ?
-      state.images.map(function (im, i) {
-        return '<div class="image-card" data-img-idx="' + i + '">' +
-          '<img src="' + esc(im.url || im.dataUri || '') + '" alt="Scène ' + (i + 1) + '">' +
-          '<button class="regen" data-act="regen-ref" data-v="' + i + '">🔄 Régénérer</button>' +
-          '</div>';
-      }).join('') :
-      '<p class="muted small">Aucune image générée pour l\'instant.</p>') +
-    '</div></section>';
-
-  h += '<section class="glass card"><h2>Ou utiliser tes propres photos</h2>' +
-    '<p class="small muted">Upload une ou plusieurs photos pour les ajouter à tes références.</p>' +
-    '<label class="upload-zone" for="refs-file-input"><input type="file" id="refs-file-input" accept="image/*" multiple><div class="icon">＋</div><div class="t1">Ajouter des photos</div><div class="t2">Elles seront utilisées comme référence pour les vidéos</div></label>' +
-    '<div class="images-grid" id="refs-user-grid">' +
-    (state.images.filter(function (im) { return im.userPhoto; }).length ?
-      state.images.filter(function (im) { return im.userPhoto; }).map(function (im) {
-        return '<div class="image-card"><img src="' + esc(im.thumbnail || im.dataUri) + '" alt=""></div>';
-      }).join('') :
-      '<p class="muted small">Aucune photo uploadée.</p>') +
-    '</div></section>';
-
-  h += debugPanelHtml();
-  return h;
-}
-
-function renderVideos() {
-  var ep = state.episode;
-  var h = stripHtml();
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">🎬</div><h3>Pas encore de vidéos</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
-    h += debugPanelHtml();
-    return h;
-  }
-
-  h += '<header class="hero"><span class="kicker">Étape 4</span><h1>Vidéos</h1><p class="muted">Chaque scène devient un clip vidéo avec Agnes, à partir de l\'image de référence.</p></header>';
-
-  h += '<section class="glass card"><h2>Générer les clips</h2>' +
-    '<p class="small muted">Chaque clip coûte ' + (state.durationFrames / FRAME_RATE).toFixed(1) + ' secondes sur ton quota de 500 par jour. Le premier poll commence après 80 secondes.</p>' +
-    '<label class="q">Durée d\'un clip</label>' +
-    '<select id="video-duration">' +
-    DUREES_CLIP.map(function (d) {
-      return '<option value="' + d.frames + '"' + (state.durationFrames === d.frames ? ' selected' : '') + '>' + d.t + ' (' + d.frames + ' frames)</option>';
-    }).join('') +
-    '</select>' +
-    '<button class="btn big" data-act="start-videos"' + (getApiKey() && state.images.filter(function (im) { return !im.userPhoto; }).length >= ep.scenes.length ? '' : ' disabled') + '>🚀 Générer les ' + ep.scenes.length + ' clips</button>' +
-    (state.images.filter(function (im) { return !im.userPhoto; }).length < ep.scenes.length ? '<div class="warnbox"><h3>Images manquantes</h3><p class="small">Il manque ' + (ep.scenes.length - state.images.filter(function (im) { return !im.userPhoto; }).length) + ' image(s) de référence. Va dans l\'onglet Références pour les générer.</p></div>' : '') +
-    '<button class="btn ghost" data-act="stop-videos" style="display:' + (state.isRunning ? 'block' : 'none') + '">⏹ Arrêter</button>' +
-    '</section>';
-
-  if (state.queue.length) {
-    h += '<section class="glass card"><h2>File d\'attente</h2>' + renderQueue() + '</section>';
-  }
-
-  h += '<section class="glass card"><h2>Galerie des clips</h2>' +
-    '<div class="gallery-grid" id="gallery-grid">' +
-    (state.queue.filter(function (q) { return q.status === 'done'; }).length ?
-      state.queue.filter(function (q) { return q.status === 'done'; }).map(function (q) {
-        return '<div class="gallery-item">' +
-          '<video src="' + esc(q.videoUrl) + '" controls preload="metadata" playsinline muted></video>' +
-          '<div class="g-caption"><div class="g-style">Scène ' + (q.index + 1) + '</div></div>' +
-          '<div class="g-actions">' +
-          '<button data-act="regen-video" data-v="' + q.index + '">🔄 Régénérer</button>' +
-          '<a href="' + esc(q.videoUrl) + '" download="scene-' + (q.index + 1) + '.mp4" target="_blank" rel="noopener">⬇ Télécharger</a>' +
-          '</div></div>';
-      }).join('') :
-      '<p class="muted small">Aucun clip généré pour l\'instant.</p>') +
-    '</div></section>';
-
-  h += '<section class="glass card"><h2>Montage final</h2>' +
-    '<p class="small muted">Assemble tous les clips en une seule vidéo avec FFmpeg (fonctionne dans ton navigateur, sans installation).</p>' +
-    '<button class="btn big" data-act="montage" disabled>🎬 Monter la vidéo (bientôt disponible)</button>' +
-    '<p class="small muted">En attendant, tu peux télécharger chaque clip et les assembler dans CapCut ou VN Editor.</p>' +
-    '</section>';
-
-  h += debugPanelHtml();
-  return h;
-}
-
-function renderQueue() {
-  if (!state.queue.length) return '';
-  var total = state.queue.length;
-  var done = state.queue.filter(function (q) { return q.status === 'done'; }).length;
-  var failed = state.queue.filter(function (q) { return q.status === 'failed'; }).length;
-  var processing = state.queue.filter(function (q) { return q.status === 'processing' || q.status === 'creating'; }).length;
-  var h = '<div class="queue-summary">' +
-    '<span class="progress-text">' + done + ' / ' + total + ' prêts</span>' +
-    (failed ? '<span style="color:#9E1F2B">' + failed + ' échec' + (failed > 1 ? 's' : '') + '</span>' : '') +
-    (processing ? '<span>' + processing + ' en cours</span>' : '') +
-    '</div><div class="queue">';
-  state.queue.slice(0, 30).forEach(function (q) {
-    var cls = 'pending', icon = '○', label = 'En file';
-    if (q.status === 'creating') { cls = 'creating'; icon = '◐'; label = 'Préparation…'; }
-    else if (q.status === 'processing') { cls = 'processing'; icon = '◐'; label = q.progress || 'En cours…'; }
-    else if (q.status === 'done') { cls = 'done'; icon = '●'; label = 'Prêt'; }
-    else if (q.status === 'failed') { cls = 'failed'; icon = '✕'; label = q.progress || 'Échec'; }
-    h += '<div class="queue-item ' + cls + '">' +
-      '<div class="q-icon">' + icon + '</div>' +
-      '<div class="q-name">Scène ' + (q.index + 1) + '</div>' +
-      '<div class="q-status">' + esc(label) + '</div>' +
-      '</div>';
-  });
-  h += '</div>';
-  return h;
-}
-
-function debugPanelHtml() {
-  return '<section class="glass debug-panel collapsed" id="debug-wrap">' +
-    '<div class="debug-header" data-act="toggle-debug">' +
-    '<span class="debug-title">🖥️ Console de débogage <span class="debug-count" id="debug-count">0</span></span>' +
-    '<div class="debug-actions">' +
-    '<button data-act="clear-debug" type="button">Effacer</button>' +
-    '<button data-act="toggle-debug" type="button">▾</button>' +
-    '</div>' +
-    '</div>' +
-    '<div class="debug-body" id="debug-body"></div>' +
-    '</section>';
-}
-
+/* ═══════════════════════════════════════════════════════════════
+   ÉVÉNEMENTS — CLIC
+   ═══════════════════════════════════════════════════════════════ */
 function bindTabEvents() {
   var wrap = $('tab-content');
   if (!wrap) return;
-  if (!wrap.__bound) {
-    wrap.__bound = true;
-    wrap.addEventListener('click', onTabClick);
-    wrap.addEventListener('change', onTabChange);
-    wrap.addEventListener('input', onTabInput);
-  }
-  var searchInput = $('style-search');
-  if (searchInput && !searchInput.__bound) {
-    searchInput.__bound = true;
-    searchInput.addEventListener('input', function () {
-      var q = searchInput.value.toLowerCase().trim();
-      var cards = document.querySelectorAll('#styles-grid .style-card');
-      cards.forEach(function (card) {
-        var nm = card.querySelector('.nm') ? card.querySelector('.nm').textContent.toLowerCase() : '';
-        card.style.display = (!q || nm.indexOf(q) >= 0) ? '' : 'none';
-      });
-    });
-  }
+  if (wrap.__bound) return;
+  wrap.__bound = true;
+  wrap.addEventListener('click', onTabClick);
+  wrap.addEventListener('change', onTabChange);
+  wrap.addEventListener('input', onTabInput);
 }
 
 function onTabClick(e) {
@@ -2619,14 +2686,8 @@ function onTabClick(e) {
   var act = b.getAttribute('data-act');
   var v = b.getAttribute('data-v');
 
-  if (act === 'stop') {
-    state.stopRequested = true;
-    state.busy = null; overlay();
-    return;
-  }
-  else if (act === 'mode') {
-    state.mode = v; saveState(); render();
-  }
+  if (act === 'stop') { state.stopRequested = true; state.busy = null; overlay(); return; }
+  else if (act === 'tab') { state.tab = v; render(); window.scrollTo(0, 0); }
   else if (act === 'surprise') {
     var tones = ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'];
     var themes = ['famille', 'amitié', 'mystère', 'rue', 'école', 'travail', 'amour', 'voyage', 'secret'];
@@ -2636,6 +2697,23 @@ function onTabClick(e) {
     showToast('Ambiance tirée : ' + state.tone + ', ' + state.theme, 'success');
   }
   else if (act === 'gen-script') { doGenerateScript(); }
+  else if (act === 'gen-casting') { doGenerateCasting(); }
+  else if (act === 'gen-casting-images') { doGenerateCastingImages(); }
+  else if (act === 'regen-casting') { regenerateCastingImage(parseInt(v, 10)); }
+  else if (act === 'gen-decors') { doGenerateDecors(); }
+  else if (act === 'gen-decor-images') { doGenerateDecorImages(); }
+  else if (act === 'regen-decor') { regenerateDecorImage(parseInt(v, 10)); }
+  else if (act === 'gen-scenes') { doGenerateScenes(); }
+  else if (act === 'regen-scene') { regenerateSceneImage(parseInt(v, 10)); }
+  else if (act === 'start-videos') { startVideoGeneration(); }
+  else if (act === 'stop-videos') { state.stopRequested = true; showToast('Arrêt demandé…', 'warn'); }
+  else if (act === 'regen-video') { regenerateVideo(parseInt(v, 10)); }
+  else if (act === 'download-all') { downloadAllClips(); }
+  else if (act === 'toggle-debug') {
+    var panel = $('debug-wrap');
+    if (panel) panel.classList.toggle('collapsed');
+  }
+  else if (act === 'clear-debug') { clearDebug(); }
   else if (act === 'style-pick') {
     if (!state.styles) state.styles = [];
     var si = state.styles.indexOf(v);
@@ -2643,411 +2721,187 @@ function onTabClick(e) {
     else state.styles.push(v);
     saveState(); render();
     var s = STYLE_BANK.filter(function (x) { return x.id === v; })[0];
-    if (s) showToast((state.styles.indexOf(v) >= 0 ? '✓ Ajouté : ' : '✗ Retiré : ') + s.emoji + ' ' + s.nom, 'success', 1500);
+    if (s) showToast((state.styles.indexOf(v) >= 0 ? '✓ ' : '✗ ') + s.emoji + ' ' + s.nom, 'success', 1200);
   }
-  else if (act === 'gen-refs') { doGenerateRefs(); }
-  else if (act === 'regen-ref') { regenerateRef(parseInt(v, 10)); }
-  else if (act === 'start-videos') { startVideoGeneration(); }
-  else if (act === 'stop-videos') { state.stopRequested = true; showToast('Arrêt demandé…', 'warn'); }
-  else if (act === 'regen-video') { regenerateVideo(parseInt(v, 10)); }
-  else if (act === 'montage') { showToast('Montage FFmpeg bientôt disponible', 'warn'); }
-  else if (act === 'tab') { go(v); }
-  else if (act === 'toggle-debug') {
-    var panel = $('debug-wrap');
-    if (panel) panel.classList.toggle('collapsed');
-  }
-  else if (act === 'clear-debug') { clearDebug(); }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ÉVÉNEMENTS — CHANGEMENT (select)
+   ═══════════════════════════════════════════════════════════════ */
 function onTabChange(e) {
   var id = e.target.id;
-  if (id === 'total-duration') {
-    state.totalDuration = parseInt(e.target.value, 10);
-    saveState(); render();
-  }
-  else if (id === 'duration-select') {
-    var f = parseInt(e.target.value, 10);
-    if (state.mode === 'hook') state.durationFramesHook = f;
-    else state.durationFrames = f;
-    saveState(); render();
-  }
-  else if (id === 'video-duration') {
-    state.durationFrames = parseInt(e.target.value, 10);
-    saveState(); render();
-  }
-  else if (id === 'image-model') {
-    state.imageModel = e.target.value;
-    saveState();
-  }
-  else if (id === 'tone-select') {
-    state.tone = e.target.value;
-    saveState();
-  }
-  else if (id === 'skin-select') { state.skin = e.target.value; saveState(); render(); }
-  else if (id === 'teint-select') { state.teint = e.target.value; saveState(); render(); }
-  else if (id === 'yeux-select') { state.yeux = e.target.value; saveState(); render(); }
+  if (id === 'total-duration') { state.totalDuration = parseInt(e.target.value, 10); saveState(); }
+  else if (id === 'duration-select') { state.durationFrames = parseInt(e.target.value, 10); saveState(); }
+  else if (id === 'tone-select') { state.tone = e.target.value; saveState(); }
+  else if (id === 'skin-select') { state.skin = e.target.value; saveState(); }
+  else if (id === 'teint-select') { state.teint = e.target.value; saveState(); }
+  else if (id === 'yeux-select') { state.yeux = e.target.value; saveState(); }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ÉVÉNEMENTS — SAISIE (input)
+   ═══════════════════════════════════════════════════════════════ */
 function onTabInput(e) {
   var id = e.target.id;
-  var path = e.target.getAttribute('data-path');
-  if (id === 'idea-input') { state.idea = e.target.value; saveState(); }
+  if (id === 'idea-input') { state.idea = e.target.value; saveState(); updateIdeesButton(); }
   else if (id === 'theme-input') { state.theme = e.target.value; saveState(); }
-  else if (path) {
-    setPath(state, path, e.target.value);
-    saveState();
+  else if (id === 'style-search') {
+    var q = e.target.value.toLowerCase().trim();
+    var cards = document.querySelectorAll('#styles-grid .style-card');
+    cards.forEach(function (card) {
+      var nm = card.querySelector('.nm') ? card.querySelector('.nm').textContent.toLowerCase() : '';
+      card.style.display = (!q || nm.indexOf(q) >= 0) ? '' : 'none';
+    });
   }
 }
 
-function setPath(obj, path, value) {
-  var parts = path.split('.');
-  var o = obj;
-  for (var i = 0; i < parts.length - 1; i++) {
-    if (!o[parts[i]]) o[parts[i]] = {};
-    o = o[parts[i]];
-  }
-  o[parts[parts.length - 1]] = value;
+function updateIdeesButton() {
+  var btn = document.querySelector('[data-act="gen-script"]');
+  if (btn) btn.disabled = !(getApiKey() && has(state.idea));
 }
+ /* ═══════════════════════════════════════════════════════════════
+   PARTIE E — INITIALISATION ET FERMETURE
+   ═══════════════════════════════════════════════════════════════ */
 
-function go(tab) {
-  state.tab = tab;
-  render();
-  window.scrollTo(0, 0);
-}
+/* ─── Clés de secours intégrées (facultatif) ───
+   Tu peux coller ici des clés Groq / OpenRouter de secours.
+   Elles ne servent QUE si l'utilisateur n'a pas saisi les siennes.
+   ⚠️ Ne commit jamais ce fichier avec de vraies clés dedans. */
+var FALLBACK_KEYS = {
+  groq: '',        // ex: 'gsk_...'
+  openrouter: ''   // ex: 'sk-or-v1-...'
+};
 
-async function doGenerateScript() {
-  if (!state.idea || state.idea.trim().length < 5) {
-    showToast('Il manque ton idée (au moins 5 caractères)', 'error', 4000);
-    return;
-  }
-  if (!getApiKey()) {
-    showToast('Ajoute ta clé Agnes en haut de la page', 'error', 4000);
-    return;
-  }
-
-  var totalSec = state.totalDuration || 70;
-  if (state.mode === 'hook') totalSec = 30;
-  if (state.mode === 'serie' && totalSec < 61) totalSec = 70;
-  var sceneDuration = 6;
-  var scenes = Math.max(3, Math.ceil(totalSec / sceneDuration));
-
-  setStatus('Génération du script…');
-  state.busy = { label: 'Agnes écrit le script…', sub: scenes + ' scènes attendues (' + totalSec + ' s)' };
-  overlay();
-  logDebug('info', 'SCRIPT', 'Idée : ' + state.idea.slice(0, 80) + ' — ' + scenes + ' scènes de ' + sceneDuration + 's');
-
+/* ─── Chargement des clés de secours ─── */
+function loadFallbackKeys() {
   try {
-    var parsed = await generateScript(state.idea, state.tone, state.theme, totalSec, scenes);
-    state.episode = {
-      title: parsed.title || 'Épisode sans titre',
-      logline: parsed.logline || '',
-      scenes: parsed.scenes,
-      targetSeconds: totalSec
-    };
-    state.images = [];
-    state.queue = [];
-    saveState();
-    state.busy = null; overlay();
-    setStatus(null);
-    showToast('Script généré : ' + parsed.scenes.length + ' scènes', 'success', 3000);
-    state.tab = 'univers';
-    render();
-  } catch (e) {
-    state.busy = null; overlay();
-    setStatus(null);
-    logDebug('err', 'SCRIPT', e.message);
-    showToast('Erreur : ' + e.message.slice(0, 70), 'error', 4000);
-  }
-}
-
-async function doGenerateRefs() {
-  if (!state.episode) { showToast('Pas d\'épisode', 'error'); return; }
-  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
-
-  var status = $('refs-status');
-  if (status) status.textContent = 'Préparation…';
-  setStatus('Génération des images…');
-  state.busy = { label: 'Génération des images', sub: state.episode.scenes.length + ' scènes à illustrer' };
-  overlay();
-  state.stopRequested = false;
-
-  var refsOnly = state.images.filter(function (im) { return !im.userPhoto; });
-  for (var i = 0; i < state.episode.scenes.length; i++) {
-    if (state.stopRequested) break;
-    var sc = state.episode.scenes[i];
-    var prompt = buildImagePromptFromScene(sc);
-
-    if (status) status.textContent = 'Image ' + (i + 1) + ' / ' + state.episode.scenes.length + '…';
-    logDebug('api', 'IMAGE', 'Scène ' + (i + 1) + '…');
-
-    try {
-      var url = await callAgnesImage(prompt);
-      var userImages = state.images.filter(function (im) { return im.userPhoto; });
-      var aiImages = state.images.filter(function (im) { return !im.userPhoto; });
-      aiImages[i] = { url: url, sceneIndex: i };
-      state.images = aiImages.concat(userImages);
-      logDebug('ok', 'IMAGE', 'Scène ' + (i + 1) + ' OK');
-    } catch (e) {
-      logDebug('err', 'IMAGE', 'Scène ' + (i + 1) + ' échec : ' + e.message);
+    var groq = (localStorage.getItem('groq_key') || '').trim();
+    var or = (localStorage.getItem('openrouter_key') || '').trim();
+    if (!groq && FALLBACK_KEYS.groq) {
+      localStorage.setItem('groq_key', FALLBACK_KEYS.groq);
+      logDebug('info', 'INIT', 'Clé Groq de secours chargée');
     }
-    await sleep(IMAGE_INTERVAL_MS);
-    if (state.tab === 'refs') render();
-  }
-
-  state.busy = null; overlay();
-  setStatus(null);
-  showToast('Images générées', 'success');
-  render();
-}
-
-async function regenerateRef(i) {
-  if (!state.episode || !state.episode.scenes[i]) return;
-  var sc = state.episode.scenes[i];
-  setStatus('Régénération de l\'image ' + (i + 1) + '…');
-  logDebug('api', 'IMAGE-REGEN', 'Scène ' + (i + 1));
-
-  try {
-    var prompt = buildImagePromptFromScene(sc);
-    var url = await callAgnesImage(prompt);
-    state.images[i] = { url: url, sceneIndex: i };
-    showToast('Image ' + (i + 1) + ' régénérée', 'success');
-    logDebug('ok', 'IMAGE-REGEN', 'Scène ' + (i + 1) + ' OK');
-  } catch (e) {
-    logDebug('err', 'IMAGE-REGEN', 'Scène ' + (i + 1) + ' : ' + e.message);
-    showToast('Erreur : ' + e.message.slice(0, 60), 'error');
-  }
-  setStatus(null);
-  render();
-}
-
-async function startVideoGeneration() {
-  if (state.isRunning) return;
-  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
-  if (!state.episode) { showToast('Pas d\'épisode', 'error'); return; }
-
-  state.isRunning = true;
-  state.stopRequested = false;
-  state.completed = 0;
-  state.failed = 0;
-  state.queue = state.episode.scenes.map(function (sc, i) {
-    return {
-      index: i, scene: sc, status: 'pending', progress: null,
-      videoId: null, videoUrl: null, startTime: null
-    };
-  });
-
-  checkQuotaWarn(state.durationFrames, state.queue.length);
-  setStatus('Génération des clips…');
-  render();
-
-  var pollingTasks = [];
-  for (var i = 0; i < state.queue.length; i++) {
-    if (state.stopRequested) break;
-    var item = state.queue[i];
-    try {
-      item.status = 'creating';
-      render();
-
-      var refImg = state.images[i] ? (state.images[i].url || state.images[i].dataUri) : null;
-      if (!refImg) {
-        item.status = 'failed';
-        item.progress = 'Image manquante';
-        state.failed++;
-        render();
-        continue;
-      }
-
-      var prompt = buildVideoPromptFromScene(item.scene);
-      var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
-      item.videoId = id;
-      item.startTime = Date.now();
-      item.status = 'processing';
-      render();
-
-      pollingTasks.push(pollTaskAndDisplay(item));
-
-      if (i < state.queue.length - 1 && !state.stopRequested) {
-        var wait = Math.ceil(VIDEO_INTERVAL_SAFE / 1000);
-        for (var r = wait; r > 0; r--) {
-          if (state.stopRequested) break;
-          setStatus('Prochain clip dans ' + r + ' s…');
-          await sleep(1000);
-        }
-      }
-    } catch (e) {
-      item.status = 'failed';
-      item.progress = e.message.slice(0, 60);
-      state.failed++;
-      logDebug('err', 'VIDÉO', 'Scène ' + (i + 1) + ' : ' + e.message);
-      render();
+    if (!or && FALLBACK_KEYS.openrouter) {
+      localStorage.setItem('openrouter_key', FALLBACK_KEYS.openrouter);
+      logDebug('info', 'INIT', 'Clé OpenRouter de secours chargée');
     }
-  }
-
-  if (pollingTasks.length) {
-    setStatus('Finalisation…');
-    await Promise.allSettled(pollingTasks);
-  }
-
-  state.isRunning = false;
-  state.stopRequested = false;
-  setStatus(null);
-  showToast(state.completed + ' clip' + (state.completed > 1 ? 's' : '') + ' prêt' + (state.completed > 1 ? 's' : ''), 'success');
-  render();
-}
-
-async function pollTaskAndDisplay(item) {
-  try {
-    var vurl = await pollVideo(item.videoId, function (progress) {
-      item.progress = progress;
-      render();
-    }, state.durationFrames);
-
-    var elapsed = Date.now() - item.startTime;
-    recordGenerationTime('video', elapsed);
-    item.status = 'done';
-    item.videoUrl = vurl;
-    item.progress = 'Prêt en ' + Math.round(elapsed / 1000) + 's';
-    state.completed++;
-    render();
-    logDebug('ok', 'VIDÉO', 'Scène ' + (item.index + 1) + ' prête en ' + (elapsed / 1000).toFixed(1) + 's');
   } catch (e) {
-    item.status = 'failed';
-    item.progress = e.message.slice(0, 60);
-    state.failed++;
-    render();
-    logDebug('err', 'VIDÉO', 'Scène ' + (item.index + 1) + ' : ' + e.message);
+    logDebug('warn', 'INIT', 'Impossible de charger les clés de secours');
   }
 }
 
-async function regenerateVideo(i) {
-  if (!state.episode || !state.episode.scenes[i]) return;
-  var item = state.queue[i];
-  if (!item) return;
-  setStatus('Régénération du clip ' + (i + 1) + '…');
-  try {
-    item.status = 'creating';
-    render();
-    var refImg = state.images[i] ? (state.images[i].url || state.images[i].dataUri) : null;
-    if (!refImg) throw new Error('Image manquante');
-    var prompt = buildVideoPromptFromScene(state.episode.scenes[i]);
-    var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
-    item.videoId = id;
-    item.startTime = Date.now();
-    item.status = 'processing';
-    render();
-    await pollTaskAndDisplay(item);
-  } catch (e) {
-    item.status = 'failed';
-    item.progress = e.message.slice(0, 60);
-    state.failed++;
-    logDebug('err', 'VIDÉO-REGEN', 'Scène ' + (i + 1) + ' : ' + e.message);
-    render();
-  }
-  setStatus(null);
-}
+/* ─── Branchements globaux (dock, API panel, wake lock, debug) ─── */
+function bindGlobalEvents() {
 
-function processImageFile(file) {
-  return new Promise(function (resolve) {
-    if (!file.type.startsWith('image/')) { resolve(null); return; }
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var dataUri = e.target.result;
-      var img = new Image();
-      img.onload = function () {
-        try {
-          var c = document.createElement('canvas');
-          var ratio = img.height / img.width;
-          var w = 200;
-          c.width = w;
-          c.height = Math.round(w * ratio);
-          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-          var thumb = c.toDataURL('image/jpeg', 0.7);
-          resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: thumb, userPhoto: true });
-        } catch (err) { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri, userPhoto: true }); }
-      };
-      img.onerror = function () { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri, userPhoto: true }); };
-      img.src = dataUri;
-    };
-    reader.onerror = function () { resolve(null); };
-    reader.readAsDataURL(file);
-  });
-}
-async function handleFiles(files) {
-  var list = Array.prototype.slice.call(files).filter(function (f) { return f.type.startsWith('image/'); });
-  if (!list.length) return;
-  showToast('Chargement de ' + list.length + ' photo' + (list.length > 1 ? 's' : '') + '…', 'warn');
-  for (var i = 0; i < list.length; i++) {
-    var im = await processImageFile(list[i]);
-    if (im) state.images.push(im);
-  }
-  render();
-  showToast('Photo' + (list.length > 1 ? 's' : '') + ' ajoutée' + (list.length > 1 ? 's' : ''), 'success');
-}
-
-function init() {
+  /* Dock de navigation */
   document.querySelectorAll('.dock button').forEach(function (b) {
     b.addEventListener('click', function () {
-      state.tab = b.getAttribute('data-tab');
-      render();
-      window.scrollTo(0, 0);
+      var t = b.getAttribute('data-tab');
+      if (t) { state.tab = t; saveState(); render(); window.scrollTo(0, 0); }
     });
   });
 
+  /* Bouton "Enregistrer la clé" */
   var saveBtn = $('api-save-btn');
   if (saveBtn) saveBtn.addEventListener('click', saveApiKey);
+
+  /* Bouton "Effacer mes clés" */
   var clearBtn = $('api-clear-btn');
   if (clearBtn) clearBtn.addEventListener('click', clearAllKeys);
-  var apiInp = $('api-key-input');
-  if (apiInp) {
-    apiInp.addEventListener('keydown', function (e) {
+
+  /* Champ clé Agnes : Entrée = enregistrer */
+  var keyInp = $('api-key-input');
+  if (keyInp) {
+    keyInp.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); }
     });
   }
 
-  var groqInput = $('groq-key');
-  if (groqInput) {
-    try { groqInput.value = localStorage.getItem('groq_key') || ''; } catch (e) {}
-    groqInput.addEventListener('input', function () {
-      try { localStorage.setItem('groq_key', groqInput.value.trim()); } catch (e) {}
+  /* Champs clés de secours (Groq / OpenRouter) */
+  var groqInp = $('groq-key');
+  if (groqInp) {
+    groqInp.addEventListener('change', function () {
+      try { localStorage.setItem('groq_key', groqInp.value.trim()); } catch (e) {}
     });
+    try { groqInp.value = localStorage.getItem('groq_key') || ''; } catch (e) {}
   }
-  var orInput = $('openrouter-key');
-  if (orInput) {
-    try { orInput.value = localStorage.getItem('openrouter_key') || ''; } catch (e) {}
-    orInput.addEventListener('input', function () {
-      try { localStorage.setItem('openrouter_key', orInput.value.trim()); } catch (e) {}
+  var orInp = $('openrouter-key');
+  if (orInp) {
+    orInp.addEventListener('change', function () {
+      try { localStorage.setItem('openrouter_key', orInp.value.trim()); } catch (e) {}
     });
+    try { orInp.value = localStorage.getItem('openrouter_key') || ''; } catch (e) {}
   }
 
+  /* Wake Lock */
   var wakeBtn = $('wake-toggle-btn');
   if (wakeBtn) wakeBtn.addEventListener('click', toggleWakeLock);
 
-  document.addEventListener('change', function (e) {
-    if (e.target && e.target.id === 'refs-file-input') {
-      handleFiles(e.target.files);
-      e.target.value = '';
+  /* Reprise du wake lock quand l'onglet redevient visible */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && state.wakeEnabled && !wakeLockSentinel) {
+      activateWakeLock().then(updateWakeStatus);
     }
   });
 
-  try {
-    if (localStorage.getItem(WAKE_LOCK_PREF) === '1') {
-      state.wakeEnabled = true;
-      activateWakeLock().then(updateWakeStatus);
-    }
-  } catch (e) {}
+  /* Sauvegarde avant fermeture */
+  window.addEventListener('beforeunload', function () {
+    try { saveState(); } catch (e) {}
+  });
 
+  /* Raccourci : Ctrl/Cmd + Entrée = générer le script (si onglet Idées) */
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if (state.tab === 'idees') {
+        e.preventDefault();
+        var btn = document.querySelector('[data-act="gen-script"]');
+        if (btn && !btn.disabled) doGenerateScript();
+      }
+    }
+  });
+}
+
+/* ─── Initialisation principale ─── */
+function init() {
+
+  /* 1. Restaurer l'état sauvegardé */
   loadState();
-  if (!state.styles) state.styles = [];
-  if (!state.totalDuration) state.totalDuration = 70;
+
+  /* 2. Charger les clés de secours éventuelles */
+  loadFallbackKeys();
+
+  /* 3. Restaurer la préférence wake lock */
+  try {
+    state.wakeEnabled = localStorage.getItem(WAKE_LOCK_PREF) === '1';
+  } catch (e) { state.wakeEnabled = false; }
+
+  /* 4. Afficher / masquer le panneau API + quotas */
   updateApiPanel();
   updateApiPanelVisibility();
   updateQuotaPanel();
   updateWakeStatus();
+
+  /* 5. Brancher tous les événements globaux */
+  bindGlobalEvents();
+
+  /* 6. Premier rendu de l'onglet courant */
   render();
-  logDebug('ok', 'INIT', 'Fabrique de séries · Agnes prête');
-  logDebug('info', 'INIT', 'Modèles : ' + MODEL_TEXT + ' / ' + MODEL_IMAGE_DEFAULT + ' / ' + MODEL_VIDEO);
+
+  /* 7. Réactiver le wake lock si l'utilisateur l'avait demandé */
+  if (state.wakeEnabled) {
+    activateWakeLock().then(updateWakeStatus);
+  }
+
+  /* 8. Message de bienvenue */
+  logDebug('ok', 'INIT', 'Fabrique de séries prête · ' + STYLE_BANK.length + ' styles chargés');
+  if (!getApiKey()) {
+    showToast('Ajoute ta clé Agnes pour commencer', 'warn', 3500);
+  } else {
+    showToast('Prêt ✨', 'success', 1800);
+  }
 }
 
+/* ─── Démarrage ─── */
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
@@ -3056,4 +2910,4 @@ if (document.readyState === 'loading') {
 
 </script>
 </body>
-</html>
+</html> 
