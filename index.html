@@ -1007,8 +1007,10 @@ function clearAllKeys() {
   showToast('Clés effacées', 'warn');
 }
 function updateApiPanel() {
+  var line = $('api-status-line'), txt = $('api-status-text'), inp = $('api-key-input');
   var sel = $('engine-select');
   if (sel) sel.value = state.imageEngine || 'pollinations';
+  if (!line || !txt || !inp) return;
   var k = getApiKey();
   if (k) {
     line.classList.add('ok');
@@ -1468,7 +1470,7 @@ async function callPollinationsImage(prompt) {
   updateQuotaPanel();
   logDebug('api', 'IMAGE', 'Pollinations (secours)');
   var encoded = encodeURIComponent(prompt);
-  return 'https://image.pollinations.ai/prompt/' + encoded + '?width=1024&height=1792&nologo=true&model=flux';
+  return 'https://image.pollinations.ai/prompt/' + encoded + '?width=1024&height=1792&nologo=true&model=flux&enhance=true&private=true';
 }
 
 /* ═══════════════════════════════════════════════════════════════
