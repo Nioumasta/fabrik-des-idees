@@ -2636,7 +2636,7 @@ async function doGenerateScript() {
     logDebug('err', 'SCRIPT', 'Config service externe incomplète');
     return;
   }
-  }
+  
   var frames = state.durationFrames;
   var totalSec = state.mode === 'serie' ? Math.max(HOOK_MIN_SECONDS, 65) : 30;
   var scenes = Math.max(3, Math.ceil(totalSec / (frames / FRAME_RATE)));
