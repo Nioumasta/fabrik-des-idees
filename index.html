@@ -961,7 +961,7 @@ function loadState() {
 function saveState() {
   try {
     var d = {};
-    ['mode','tab','idea','theme','tone','totalDuration','durationFrames','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','casting','decors','scenes','episode','queue','uid'].forEach(function (k) {
+     ['mode','idea','theme','tone','totalDuration','durationFrames','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','casting','decors','scenes','episode','uid']
       d[k] = state[k];
     });
     localStorage.setItem(STORE, JSON.stringify(d));
