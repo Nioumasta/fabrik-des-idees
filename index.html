@@ -1,3 +1,4 @@
+=== DÉBUT PARTIE A ===
 <!doctype html>
 <html lang="fr">
 <head>
@@ -686,11 +687,9 @@ pre.fin {
 
 /* ============================================================
    FABRIQUE DE SÉRIES · AGNES
-   Moteur JavaScript
-   Constantes Agnes, délais, parsers, API
+   Moteur JavaScript — Constantes, API, parsers
    ============================================================ */
 
-/* ---------- CONSTANTES AGNES ---------- */
 var API_BASE = 'https://apihub.agnes-ai.com/v1';
 var POLL_BASE = 'https://apihub.agnes-ai.com/agnesapi';
 var MODEL_TEXT = 'agnes-2.5-flash';
@@ -717,33 +716,40 @@ var VIDEO_RPM_LIMIT = 1;
 var RETRY_429 = [10, 20, 35, 50, 75, 100, 150];
 var RETRY_503 = [5, 10, 15, 20, 30, 45];
 
-var DUREES = [
-  { v: 30, pl: 6, t: "30 s" },
-  { v: 45, pl: 9, t: "45 s" },
-  { v: 60, pl: 12, t: "60 s" },
-  { v: 70, pl: 14, t: "70 s" },
-  { v: 90, pl: 18, t: "90 s" },
-  { v: 120, pl: 24, t: "2 min" }
+var DUREES_TOTALES = [
+  { v: 30, t: '30 s' },
+  { v: 45, t: '45 s' },
+  { v: 60, t: '60 s' },
+  { v: 70, t: '70 s' },
+  { v: 90, t: '90 s' },
+  { v: 120, t: '2 min' }
 ];
+
+var DUREES_CLIP = [
+  { frames: 121, s: 5.04, t: '5 s' },
+  { frames: 145, s: 6.04, t: '6 s' },
+  { frames: 169, s: 7.04, t: '7 s' },
+  { frames: 193, s: 8.04, t: '8 s' },
+  { frames: 241, s: 10.04, t: '10 s' }
+];
+
 var NBS = [1, 2, 3, 4, 5, 6, 8, 10];
 
-var STORE = 'fabrique_agnes_v1';
+var STORE = 'fabrique_agnes_v2';
 var API_KEY_STORAGE = 'fabrique_agnes_key';
 var EXTERNAL_KEY_STORAGE = 'fabrique_agnes_ext';
 var WAKE_LOCK_PREF = 'fabrique_agnes_wakelock';
 var TIMING_CACHE_KEY = 'fabrique_agnes_timing';
 var PREFS_KEY = 'fabrique_agnes_prefs';
 
-/* ============================================================
-   ÉTAT GLOBAL
-   ============================================================ */
 var state = {
   tab: 'idees',
   mode: 'serie',
   idea: '',
   tone: 'neutre',
   theme: '',
-  durationFrames: 241,
+  totalDuration: 70,
+  durationFrames: 169,
   durationFramesHook: 121,
   imageModel: MODEL_IMAGE_DEFAULT,
   textProvider: 'agnes',
@@ -751,6 +757,10 @@ var state = {
   externalUrl: 'https://api.openai.com/v1/chat/completions',
   externalModel: 'gpt-4o-mini',
   externalKey: '',
+  styles: [],
+  skin: '',
+  teint: '',
+  yeux: '',
   images: [],
   selectedImages: [],
   episode: null,
@@ -768,12 +778,10 @@ var state = {
   },
   wakeEnabled: false,
   fallbackMode: null,
-  apiKeyPanelShown: false
+  apiKeyPanelShown: false,
+  busy: null
 };
 
-/* ============================================================
-   UTILITAIRES
-   ============================================================ */
 function $(id) { return document.getElementById(id); }
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 function esc(s) {
@@ -782,22 +790,15 @@ function esc(s) {
   });
 }
 function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function formatEta(sec) {
-  if (sec < 60) return Math.round(sec) + 's';
-  var m = Math.floor(sec / 60), s = Math.round(sec % 60);
-  return m + 'm' + (s > 0 ? ' ' + s + 's' : '');
-}
 function nowTime() {
   var d = new Date();
   return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 function has(v) { return String(v || '').trim().length > 0; }
-function norm(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); }
 function sentence(t) { t = String(t || '').trim(); return t && !/[.!?]$/.test(t) ? t + '.' : t; }
 function uid() { return state.uid = (state.uid || 1) + 1; }
 function byId(arr, id) { return (arr || []).filter(function (x) { return x.id === id; })[0]; }
 
-/* ---------- Toast ---------- */
 var toastTimer = null;
 function showToast(msg, type, dur) {
   type = type || 'success';
@@ -811,7 +812,6 @@ function showToast(msg, type, dur) {
   toastTimer = setTimeout(function () { t.classList.remove('visible'); }, dur);
 }
 
-/* ---------- Statut ---------- */
 function setStatus(text) {
   var bar = $('status-bar'), txt = $('status-text');
   if (!bar || !txt) return;
@@ -819,7 +819,6 @@ function setStatus(text) {
   else bar.classList.remove('visible');
 }
 
-/* ---------- Console debug ---------- */
 var debugCount = 0;
 function logDebug(level, category, msg, data) {
   var body = $('debug-body');
@@ -847,59 +846,36 @@ function clearDebug() {
   if (dc) dc.textContent = '0';
 }
 
-/* ---------- Overlay de chargement ---------- */
 function overlay() {
   var o = $('overlay');
   if (!o) return;
   if (!state.busy) { o.innerHTML = ''; return; }
-  o.innerHTML = '<div class="busy"><div class="glass"><div class="spin"></div><b>' + esc(state.busy.label || 'Génération en cours…') + '</b><p class="small muted">' + esc(state.busy.sub || '') + '</p><button type="button" class="btn ghost big" data-act="stop">Arrêter</button></div></div>';
+  o.innerHTML = '<div class="busy"><div class="glass"><div class="spin"></div><b>' + esc(state.busy.label || 'Génération…') + '</b><p class="small muted">' + esc(state.busy.sub || '') + '</p><button type="button" class="btn ghost big" data-act="stop">Arrêter</button></div></div>';
 }
 
-/* ============================================================
-   STOCKAGE LOCAL
-   ============================================================ */
 function loadState() {
   try {
     var raw = localStorage.getItem(STORE);
     if (raw) {
       var d = JSON.parse(raw);
       if (d && typeof d === 'object') {
-        if (d.mode) state.mode = d.mode;
-        if (d.idea) state.idea = d.idea;
-        if (d.theme) state.theme = d.theme;
-        if (d.tone) state.tone = d.tone;
-        if (d.durationFrames) state.durationFrames = d.durationFrames;
-        if (d.durationFramesHook) state.durationFramesHook = d.durationFramesHook;
-        if (d.imageModel) state.imageModel = d.imageModel;
-        if (d.textProvider) state.textProvider = d.textProvider;
-        if (d.externalService) state.externalService = d.externalService;
-        if (d.externalUrl) state.externalUrl = d.externalUrl;
-        if (d.externalModel) state.externalModel = d.externalModel;
+        for (var k in state) {
+          if (d[k] !== undefined && typeof d[k] !== 'function') state[k] = d[k];
+        }
       }
     }
   } catch (e) {}
 }
 function saveState() {
   try {
-    localStorage.setItem(STORE, JSON.stringify({
-      mode: state.mode,
-      idea: state.idea,
-      theme: state.theme,
-      tone: state.tone,
-      durationFrames: state.durationFrames,
-      durationFramesHook: state.durationFramesHook,
-      imageModel: state.imageModel,
-      textProvider: state.textProvider,
-      externalService: state.externalService,
-      externalUrl: state.externalUrl,
-      externalModel: state.externalModel
-    }));
+    var d = {};
+    ['mode','idea','theme','tone','totalDuration','durationFrames','durationFramesHook','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','episode'].forEach(function (k) {
+      d[k] = state[k];
+    });
+    localStorage.setItem(STORE, JSON.stringify(d));
   } catch (e) {}
 }
 
-/* ============================================================
-   CLÉS API
-   ============================================================ */
 function getApiKey() {
   try { return (localStorage.getItem(API_KEY_STORAGE) || '').trim(); }
   catch (e) { return ''; }
@@ -910,16 +886,14 @@ function saveApiKey() {
   var k = inp.value.trim();
   if (!k) {
     try { localStorage.removeItem(API_KEY_STORAGE); } catch (e) {}
-    updateApiPanel();
-    updateApiPanelVisibility();
+    updateApiPanel(); updateApiPanelVisibility();
     showToast('Clé effacée', 'warn');
     return;
   }
   try {
     localStorage.setItem(API_KEY_STORAGE, k);
     try { localStorage.setItem(PREFS_KEY, '1'); } catch (e) {}
-    updateApiPanel();
-    updateApiPanelVisibility();
+    updateApiPanel(); updateApiPanelVisibility();
     showToast('Clé Agnes enregistrée', 'success');
     inp.blur();
   } catch (e) { showToast('Sauvegarde impossible', 'error'); }
@@ -933,9 +907,7 @@ function clearAllKeys() {
   } catch (e) {}
   var inp = $('api-key-input');
   if (inp) inp.value = '';
-  state.externalKey = '';
-  updateApiPanel();
-  updateApiPanelVisibility();
+  updateApiPanel(); updateApiPanelVisibility();
   showToast('Clés effacées', 'warn');
 }
 function updateApiPanel() {
@@ -945,13 +917,15 @@ function updateApiPanel() {
   if (k) {
     line.style.background = 'var(--ok-bg)';
     line.style.color = 'var(--ok)';
-    line.querySelector('span:first-child').style.background = 'var(--ok)';
+    var dot = line.querySelector('span:first-child');
+    if (dot) dot.style.background = 'var(--ok)';
     txt.textContent = 'Clé Agnes active · ' + k.slice(0, 8) + '…' + k.slice(-4);
     inp.value = k;
   } else {
     line.style.background = 'var(--code-bg)';
     line.style.color = 'var(--muted)';
-    line.querySelector('span:first-child').style.background = 'var(--muted)';
+    var dot2 = line.querySelector('span:first-child');
+    if (dot2) dot2.style.background = 'var(--muted)';
     txt.textContent = 'Aucune clé Agnes enregistrée';
     inp.value = '';
   }
@@ -962,25 +936,14 @@ function updateApiPanelVisibility() {
   var hasKey = !!getApiKey();
   var seen = false;
   try { seen = localStorage.getItem(PREFS_KEY) === '1'; } catch (e) {}
-  if (!hasKey && !seen) {
-    panel.style.display = 'flex';
-    state.apiKeyPanelShown = true;
-  } else {
-    panel.style.display = 'none';
-    state.apiKeyPanelShown = false;
-  }
+  if (!hasKey && !seen) { panel.style.display = 'flex'; state.apiKeyPanelShown = true; }
+  else { panel.style.display = 'none'; state.apiKeyPanelShown = false; }
 }
 
-/* ============================================================
-   QUOTAS
-   ============================================================ */
 function updateQuotaPanel() {
   var c = state.counters;
   var now = Date.now();
-  if (now - c.lastResetTime > 60000) {
-    c.videoRequestsThisMinute = 0;
-    c.lastResetTime = now;
-  }
+  if (now - c.lastResetTime > 60000) { c.videoRequestsThisMinute = 0; c.lastResetTime = now; }
   var el;
   el = $('quota-text'); if (el) el.textContent = c.textRequests;
   el = $('quota-image'); if (el) el.textContent = c.imagesGenerated;
@@ -995,9 +958,6 @@ function checkQuotaWarn(frames, count) {
   }
 }
 
-/* ============================================================
-   VITESSE MESURÉE
-   ============================================================ */
 function loadTimingCache() {
   try { return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY) || '{}'); }
   catch (e) { return {}; }
@@ -1033,9 +993,6 @@ function updateSpeedDisplay() {
   el.textContent = (avg / 1000).toFixed(1) + ' s en moyenne';
 }
 
-/* ============================================================
-   WAKE LOCK
-   ============================================================ */
 var wakeLockSentinel = null;
 var canvasStream = null;
 var canvasInterval = null;
@@ -1048,8 +1005,7 @@ async function requestWakeLockAPI() {
   try {
     wakeLockSentinel = await navigator.wakeLock.request('screen');
     wakeLockSentinel.addEventListener('release', function () {
-      wakeLockSentinel = null;
-      updateWakeStatus();
+      wakeLockSentinel = null; updateWakeStatus();
     });
     return true;
   } catch (e) { return false; }
@@ -1068,8 +1024,7 @@ function startCanvasStream() {
     if (!canvas || !video) return false;
     var ctx = canvas.getContext('2d');
     if (!ctx) return false;
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (typeof canvas.captureStream !== 'function') return false;
     canvasStream = canvas.captureStream(1);
     var toggle = false;
@@ -1079,10 +1034,8 @@ function startCanvasStream() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }, 1000);
     video.srcObject = canvasStream;
-    video.muted = true;
-    video.playsInline = true;
-    var p = video.play();
-    if (p && p.catch) p.catch(function () {});
+    video.muted = true; video.playsInline = true;
+    var p = video.play(); if (p && p.catch) p.catch(function () {});
     return true;
   } catch (e) { return false; }
 }
@@ -1102,39 +1055,29 @@ async function activateWakeLock() {
   return ok;
 }
 async function deactivateWakeLock() {
-  await releaseWakeLockAPI();
-  stopCanvasStream();
+  await releaseWakeLockAPI(); stopCanvasStream();
 }
 function updateWakeStatus() {
   var el = $('wake-status'), txt = $('wake-status-text'), btn = $('wake-toggle-btn');
   if (!el || !txt || !btn) return;
-  el.classList.remove('active', 'warn');
   var canvas = $('noSleepCanvas');
   var hasIt = isWakeLockSupported() || (canvas && canvas.captureStream);
   if (!hasIt) {
-    el.style.background = 'var(--warn-bg)';
-    el.style.color = 'var(--warn)';
-    txt.textContent = '⚠️ Non supporté par ce navigateur';
-    btn.style.display = 'none';
+    el.style.background = 'var(--warn-bg)'; el.style.color = 'var(--warn)';
+    txt.textContent = '⚠️ Non supporté'; btn.style.display = 'none';
     return;
   }
   btn.style.display = 'inline-block';
   var active = wakeLockSentinel !== null || canvasStream !== null;
   if (state.wakeEnabled && active) {
-    el.style.background = 'var(--ok-bg)';
-    el.style.color = 'var(--ok)';
-    txt.textContent = '✅ Écran reste allumé';
-    btn.textContent = 'Désactiver';
+    el.style.background = 'var(--ok-bg)'; el.style.color = 'var(--ok)';
+    txt.textContent = '✅ Écran reste allumé'; btn.textContent = 'Désactiver';
   } else if (state.wakeEnabled && !active) {
-    el.style.background = 'var(--warn-bg)';
-    el.style.color = 'var(--warn)';
-    txt.textContent = '⏳ En attente';
-    btn.textContent = 'Désactiver';
+    el.style.background = 'var(--warn-bg)'; el.style.color = 'var(--warn)';
+    txt.textContent = '⏳ En attente'; btn.textContent = 'Désactiver';
   } else {
-    el.style.background = 'var(--code-bg)';
-    el.style.color = 'var(--muted)';
-    txt.textContent = '💤 Veille automatique';
-    btn.textContent = "Garder l'écran allumé";
+    el.style.background = 'var(--code-bg)'; el.style.color = 'var(--muted)';
+    txt.textContent = '💤 Veille automatique'; btn.textContent = "Garder l'écran allumé";
   }
 }
 async function toggleWakeLock() {
@@ -1147,14 +1090,11 @@ async function toggleWakeLock() {
     state.wakeEnabled = true;
     var ok = await activateWakeLock();
     try { localStorage.setItem(WAKE_LOCK_PREF, '1'); } catch (e) {}
-    showToast(ok ? "L'écran va rester allumé" : 'Active-le manuellement dans les réglages', ok ? 'success' : 'warn');
+    showToast(ok ? "L'écran va rester allumé" : 'Active-le manuellement', ok ? 'success' : 'warn');
   }
   updateWakeStatus();
 }
 
-/* ============================================================
-   PARSEUR JSON À 5 STRATÉGIES
-   ============================================================ */
 function escapeControlCharsInStrings(text) {
   var result = '', inString = false, escape = false, i, ch, code;
   for (i = 0; i < text.length; i++) {
@@ -1216,44 +1156,27 @@ function extractJson(text, kind) {
   var fb = c.indexOf('{');
   if (fb < 0) { logDebug('err', 'PARSE', 'Pas de { trouvé'); return null; }
   c = c.slice(fb);
-
-  try {
-    var r1 = JSON.parse(c);
-    logDebug('ok', 'PARSE', 'Stratégie 1 (directe) OK');
-    return r1;
-  } catch (e1) { logDebug('warn', 'PARSE', 'Stratégie 1 échouée'); }
-  try {
-    var r2 = JSON.parse(escapeControlCharsInStrings(c));
-    logDebug('ok', 'PARSE', 'Stratégie 2 (échappement) OK');
-    return r2;
-  } catch (e2) { logDebug('warn', 'PARSE', 'Stratégie 2 échouée'); }
+  try { var r1 = JSON.parse(c); logDebug('ok', 'PARSE', 'Stratégie 1 OK'); return r1; }
+  catch (e1) { logDebug('warn', 'PARSE', 'Stratégie 1 échouée'); }
+  try { var r2 = JSON.parse(escapeControlCharsInStrings(c)); logDebug('ok', 'PARSE', 'Stratégie 2 OK'); return r2; }
+  catch (e2) { logDebug('warn', 'PARSE', 'Stratégie 2 échouée'); }
   try {
     var lb = c.lastIndexOf('}');
     if (lb > 0) {
       var r3 = JSON.parse(escapeControlCharsInStrings(c.slice(0, lb + 1)));
-      logDebug('ok', 'PARSE', 'Stratégie 3 (troncature) OK');
-      return r3;
+      logDebug('ok', 'PARSE', 'Stratégie 3 OK'); return r3;
     }
   } catch (e3) { logDebug('warn', 'PARSE', 'Stratégie 3 échouée'); }
-  try {
-    var r4 = JSON.parse(balanceJson(escapeControlCharsInStrings(c)));
-    logDebug('ok', 'PARSE', 'Stratégie 4 (équilibrage) OK');
-    return r4;
-  } catch (e4) { logDebug('warn', 'PARSE', 'Stratégie 4 échouée'); }
+  try { var r4 = JSON.parse(balanceJson(escapeControlCharsInStrings(c))); logDebug('ok', 'PARSE', 'Stratégie 4 OK'); return r4; }
+  catch (e4) { logDebug('warn', 'PARSE', 'Stratégie 4 échouée'); }
   try {
     var salv = salvageScenario(c);
-    if (salv && salv.scenes.length) {
-      logDebug('ok', 'PARSE', 'Stratégie 5 (regex) OK : ' + salv.scenes.length + ' scènes');
-      return salv;
-    }
+    if (salv && salv.scenes.length) { logDebug('ok', 'PARSE', 'Stratégie 5 OK : ' + salv.scenes.length + ' scènes'); return salv; }
   } catch (e5) { logDebug('err', 'PARSE', 'Stratégie 5 échouée'); }
   logDebug('err', 'PARSE', 'Aucune stratégie n\'a fonctionné');
   return null;
 }
 
-/* ============================================================
-   APPELS API (fetch avec retry)
-   ============================================================ */
 async function apiFetch(url, options, label, kind) {
   options = options || {};
   label = label || 'API';
@@ -1288,9 +1211,6 @@ async function apiFetch(url, options, label, kind) {
   throw new Error(label + ' : échec après 7 tentatives');
 }
 
-/* ============================================================
-   CALL TEXTE : Agnes
-   ============================================================ */
 async function callAgnesText(system, user, temperature, maxTokens) {
   state.counters.textRequests++;
   updateQuotaPanel();
@@ -1322,9 +1242,6 @@ async function callAgnesText(system, user, temperature, maxTokens) {
   return content;
 }
 
-/* ============================================================
-   CALL IMAGE
-   ============================================================ */
 async function callAgnesImage(prompt, size) {
   state.counters.imagesGenerated++;
   updateQuotaPanel();
@@ -1357,9 +1274,6 @@ async function callAgnesImage(prompt, size) {
   throw new Error('Format image inconnu');
 }
 
-/* ============================================================
-   CALL VIDEO
-   ============================================================ */
 async function createVideoTask(prompt, firstFrame, lastFrame, numFrames) {
   var now = Date.now();
   if (state.counters.videoRequestsThisMinute >= VIDEO_RPM_LIMIT) {
@@ -1410,8 +1324,7 @@ async function pollVideo(videoId, onProgress, numFrames) {
   while (r > 0) {
     if (state.stopRequested) throw new Error('Arrêt demandé');
     onProgress('Préparation (' + r + ' s)…');
-    await sleep(1000);
-    r--;
+    await sleep(1000); r--;
   }
   for (var attempt = 0; attempt < VIDEO_MAX_POLL_ATTEMPTS; attempt++) {
     if (state.stopRequested) throw new Error('Arrêt demandé');
@@ -1421,8 +1334,7 @@ async function pollVideo(videoId, onProgress, numFrames) {
       while (iv > 0) {
         if (state.stopRequested) throw new Error('Arrêt demandé');
         onProgress('L\'image prend vie (' + iv + ' s)…');
-        await sleep(1000);
-        iv--;
+        await sleep(1000); iv--;
       }
     }
     var url = POLL_BASE + '?video_id=' + encodeURIComponent(videoId) + '&model_name=' + encodeURIComponent(MODEL_VIDEO);
@@ -1447,9 +1359,6 @@ async function pollVideo(videoId, onProgress, numFrames) {
   throw new Error('Délai maximal dépassé');
 }
 
-/* ============================================================
-   CHARGEMENT DES STYLES (styles.js)
-   ============================================================ */
 var STYLE_BANK = [];
 if (typeof STYLES_LIBRARY !== 'undefined' && STYLES_LIBRARY) {
   var allCategories = Object.keys(STYLES_LIBRARY);
@@ -1461,19 +1370,72 @@ if (typeof STYLES_LIBRARY !== 'undefined' && STYLES_LIBRARY) {
   });
   logDebug('ok', 'STYLES', STYLE_BANK.length + ' styles chargés depuis ' + allCategories.length + ' catégories');
 } else {
-  logDebug('err', 'STYLES', 'styles.js non trouvé. Vérifie qu\'il est bien uploadé.');
+  logDebug('err', 'STYLES', 'styles.js non trouvé');
 }
 
-/* ============================================================
-   CONSTRUCTION DU PROMPT VIDÉO
-   ============================================================ */
+var SKIN_PROMPTS = {
+  K1: 'smooth stylized skin with soft subsurface glow, no visible pores',
+  K2: 'realistic skin with visible pores, fine natural texture, peach fuzz',
+  K3: 'freckles across nose and cheeks, natural slightly uneven skin tone',
+  K4: 'dewy glossy skin with soft specular highlights on cheekbones',
+  K5: 'matte powdered skin, soft and even, makeup finish',
+  K6: 'glossy molded plastic doll skin, flawless surface, strong soft highlights',
+  K7: 'porcelain glaze skin, perfectly smooth, soft sheen'
+};
+var TEINT_PROMPTS = {
+  T1: 'very fair skin with a pink undertone',
+  T2: 'light beige skin with a neutral undertone',
+  T3: 'light olive skin',
+  T4: 'golden tan skin',
+  T5: 'warm caramel skin',
+  T6: 'medium brown skin with a warm undertone',
+  T7: 'deep brown skin with a warm undertone',
+  T8: 'deep ebony skin with a cool blue undertone'
+};
+var YEUX_PROMPTS = {
+  Y1: 'big round glossy expressive eyes',
+  Y2: 'half-lidded bored eyes, unimpressed look',
+  Y3: 'side-eye glance, eyes looking sideways',
+  Y4: 'cartoonishly wide white oval eyes when shocked',
+  Y5: 'almond-shaped eyes with bold winged eyeliner and long lashes',
+  Y6: 'sparkling crinkled smiling eyes',
+  Y8: 'very expressive eyebrows, one eyebrow often raised'
+};
+
+function stylePhrases() {
+  var out = [];
+  (state.styles || []).forEach(function (id) {
+    var s = STYLE_BANK.filter(function (x) { return x.id === id; })[0];
+    if (s && s.phrase) out.push(s.phrase);
+  });
+  return out;
+}
+function buildStyleSuffix() {
+  var parts = stylePhrases();
+  if (state.skin && SKIN_PROMPTS[state.skin]) parts.push(SKIN_PROMPTS[state.skin]);
+  if (state.teint && TEINT_PROMPTS[state.teint]) parts.push(TEINT_PROMPTS[state.teint]);
+  if (state.yeux && YEUX_PROMPTS[state.yeux]) parts.push(YEUX_PROMPTS[state.yeux]);
+  return parts.length ? ' ' + parts.join('. ') + '.' : '';
+}
+
 function buildVideoPromptFromScene(scene) {
   var parts = [];
   if (scene.action_prompt) parts.push('Action: ' + scene.action_prompt);
   if (scene.camera) parts.push('Camera: ' + scene.camera);
   if (scene.light) parts.push('Lighting: ' + scene.light);
-  parts.push('Vertical 9:16, 24fps, no cuts, no text, no watermark, no music, natural ambient sound only.');
-  return parts.join('. ');
+  parts.push('Vertical 9:16, 24fps, no cuts, no text, no watermark, no music, natural ambient sound only');
+  return parts.join('. ') + buildStyleSuffix();
+}
+function buildImagePromptFromScene(scene) {
+  var parts = [];
+  parts.push('Cinematic still of the following scene');
+  if (scene.action_prompt) parts.push(scene.action_prompt);
+  else if (scene.description) parts.push(scene.description);
+  if (scene.lieu) parts.push('Location: ' + scene.lieu);
+  if (scene.persos) parts.push('Characters: ' + scene.persos);
+  if (scene.ambiance) parts.push('Atmosphere: ' + scene.ambiance);
+  parts.push('Portrait 9:16 vertical, cinematic lighting, no text, no watermark');
+  return parts.join('. ') + buildStyleSuffix();
 }
 
 function buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount) {
@@ -1481,7 +1443,7 @@ function buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount) {
     'Idée : ' + idea + '\n' +
     'Thème : ' + (theme || 'libre') + '\n' +
     'Ton : ' + (tone || 'neutre') + '\n' +
-    'Durée cible : environ ' + targetSeconds + ' secondes au total (' + sceneCount + ' scènes).\n' +
+    'Durée cible : environ ' + targetSeconds + ' secondes au total (' + sceneCount + ' scènes de 6 secondes environ).\n' +
     'Format : portrait 9:16.\n\n' +
     'Écris un scénario complet en JSON valide. Le script doit être fluide, naturel, en français oral vivant.\n\n' +
     'Format JSON attendu :\n' +
@@ -1507,22 +1469,14 @@ function buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount) {
 async function generateScript(idea, tone, theme, targetSeconds, sceneCount) {
   var sys = 'Tu réponds UNIQUEMENT en JSON valide, sans markdown ni commentaire.';
   var user = buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount);
-  var raw;
-  if (state.textProvider === 'agnes') {
-    raw = await callAgnesText(sys, user, 0.85, 4000);
-  } else {
-    throw new Error('Mode non supporté dans cette version');
-  }
+  var raw = await callAgnesText(sys, user, 0.85, 4000);
   var parsed = extractJson(raw, 'scenario');
   if (!parsed || !parsed.scenes || !parsed.scenes.length) {
     throw new Error('Scénario invalide après 5 tentatives');
   }
   return parsed;
 }
-  /* ============================================================
-   RENDU DES ONGLETS
-   ============================================================ */
-function render() {
+  function render() {
   var c = $('tab-content');
   if (!c) return;
   var html = '';
@@ -1538,21 +1492,17 @@ function render() {
   bindTabEvents();
 }
 
-/* ============================================================
-   BANDEAU PROGRESSION
-   ============================================================ */
 function stageInfo() {
   var ep = state.episode;
   var scenes = ep && ep.scenes ? ep.scenes.length : 0;
-  var hasScript = !!scenes;
-  var refsCount = state.images.length;
+  var refsCount = state.images.filter(function (im) { return !im.userPhoto; }).length;
   var vidsCount = state.queue.filter(function (q) { return q.status === 'done'; }).length;
   var vidsTotal = state.queue.length;
   var s = [
     { k: 'Idée', v: has(state.idea) ? 'faite' : '', ok: has(state.idea), tab: 'idees' },
-    { k: 'Format', v: state.durationFrames ? (state.durationFrames / FRAME_RATE).toFixed(1) + 's' : '', ok: !!state.durationFrames, tab: 'idees' },
-    { k: 'Style', v: state.imageModel ? 'choisi' : '', ok: !!state.imageModel, tab: 'idees' },
-    { k: 'Script', v: hasScript ? scenes + ' scènes' : '', ok: hasScript, tab: 'univers' },
+    { k: 'Durée', v: state.totalDuration ? state.totalDuration + 's' : '', ok: !!state.totalDuration, tab: 'idees' },
+    { k: 'Styles', v: (state.styles || []).length ? state.styles.length + ' choisis' : '', ok: (state.styles || []).length > 0, tab: 'univers' },
+    { k: 'Script', v: scenes ? scenes + ' scènes' : '', ok: scenes > 0, tab: 'univers' },
     { k: 'Références', v: refsCount ? refsCount + ' images' : '', ok: refsCount > 0, tab: 'refs' },
     { k: 'Vidéos', v: vidsTotal ? vidsCount + '/' + vidsTotal : '', ok: vidsTotal > 0 && vidsCount === vidsTotal, tab: 'videos' }
   ];
@@ -1566,9 +1516,6 @@ function stripHtml() {
   }).join('') + '</div>';
 }
 
-/* ============================================================
-   ONGLET IDÉES
-   ============================================================ */
 function renderIdees() {
   var h = stripHtml();
   h += '<header class="hero"><span class="kicker">Étape 1</span><h1>Mon idée</h1><p class="muted">Décris ton idée, choisis un ton et un thème. Puis génère un script avec Agnes.</p></header>';
@@ -1596,12 +1543,18 @@ function renderIdees() {
     '<div class="mode-option' + (state.mode === 'hook' ? ' selected' : '') + '" data-act="mode" data-v="hook"><div class="mo-icon">⚡</div><div class="mo-name">Hook court</div><div class="mo-desc">Garde les 3 premières secondes</div></div>' +
     '</div>' +
     '<div class="stack" style="margin-top:12px">' +
-    '<label class="q">Durée d\'un clip</label>' +
+    '<label class="q">Durée totale de la vidéo<span class="q-hint">Nombre de scènes calculé automatiquement (6 s par scène).</span></label>' +
+    '<select id="total-duration">' +
+    DUREES_TOTALES.map(function (d) {
+      var sceneCount = Math.ceil(d.v / 6);
+      return '<option value="' + d.v + '"' + (state.totalDuration === d.v ? ' selected' : '') + '>' + d.t + ' (~' + sceneCount + ' scènes)</option>';
+    }).join('') +
+    '</select>' +
+    '<label class="q" style="margin-top:10px">Durée d\'un clip vidéo</label>' +
     '<select id="duration-select">' +
-    DUREES.map(function (d) {
-      var frames = Math.round(d.v * FRAME_RATE);
+    DUREES_CLIP.map(function (d) {
       var cur = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
-      return '<option value="' + frames + '"' + (cur === frames ? ' selected' : '') + '>' + d.t + ' (' + frames + ' frames)</option>';
+      return '<option value="' + d.frames + '"' + (cur === d.frames ? ' selected' : '') + '>' + d.t + ' (' + d.frames + ' frames)</option>';
     }).join('') +
     '</select>' +
     '</div></section>';
@@ -1612,7 +1565,7 @@ function renderIdees() {
     '<option value="' + MODEL_IMAGE_DEFAULT + '"' + (state.imageModel === MODEL_IMAGE_DEFAULT ? ' selected' : '') + '>agnes-image-2.1-flash (par défaut)</option>' +
     '<option value="' + MODEL_IMAGE_ALT + '"' + (state.imageModel === MODEL_IMAGE_ALT ? ' selected' : '') + '>agnes-image-2.5-flash (alternatif)</option>' +
     '</select>' +
-    '<p class="small muted">Tu pourras choisir un style visuel plus tard dans l\'onglet Univers.</p></section>';
+    '<p class="small muted">Tu pourras choisir plusieurs styles visuels dans l\'onglet Univers.</p></section>';
 
   h += '<section class="glass card"><h2>Générer</h2>' +
     '<p class="small muted">Lance la génération du script avec Agnes. Tu verras ensuite les scènes et tu pourras générer les images.</p>' +
@@ -1623,9 +1576,6 @@ function renderIdees() {
   return h;
 }
 
-/* ============================================================
-   ONGLET UNIVERS
-   ============================================================ */
 function renderUnivers() {
   var ep = state.episode;
   var h = stripHtml();
@@ -1637,24 +1587,63 @@ function renderUnivers() {
 
   h += '<header class="hero"><span class="kicker">Étape 2</span><h1>' + esc(ep.title || 'Univers') + '</h1><p class="muted">' + esc(ep.logline || '') + '</p></header>';
 
-  h += '<section class="glass card"><h2>Style visuel</h2>' +
-    '<label class="q">Choisis un style pour toute la série<span class="q-hint">' + STYLE_BANK.length + ' styles disponibles dans le catalogue.</span></label>' +
+  h += '<section class="glass card"><h2>Styles visuels (' + (state.styles || []).length + ' sélectionné' + ((state.styles || []).length > 1 ? 's' : '') + ')</h2>' +
+    '<p class="small muted">Tu peux en choisir plusieurs. Ils seront combinés dans les prompts.</p>' +
     '<div class="chips scrollrow" id="style-chips">' +
     STYLE_BANK.slice(0, 20).map(function (s) {
-      return '<button type="button" class="chip small" data-act="style-pick" data-v="' + s.id + '" aria-pressed="' + (state.style === s.id) + '">' + s.emoji + ' ' + esc(s.nom) + '</button>';
+      var sel = (state.styles || []).indexOf(s.id) >= 0;
+      return '<button type="button" class="chip small" data-act="style-pick" data-v="' + s.id + '" aria-pressed="' + sel + '">' + s.emoji + ' ' + esc(s.nom) + '</button>';
     }).join('') +
     '</div>' +
-    '<details class="acc" style="margin-top:12px;"><summary><div><b>Voir les ' + STYLE_BANK.length + ' styles</b><br><span>Catégories : 3D, 2D, Matières, Personnages, Réaliste, Époques, Viral, Action, Danse, Musique, Pouvoir, Nature, Sport, Véhicules, Gaming, Éducation, Business, Voyage, Sciences, Fantastique, Cinéma, Illusions, Effets, Caméra, Cut</span></div></summary><div class="in">' +
+    '<details class="acc" style="margin-top:12px;"><summary><div><b>Voir tous les styles (' + STYLE_BANK.length + ')</b><br><span>Clique pour cocher plusieurs styles</span></div></summary><div class="in">' +
     '<input type="search" id="style-search" placeholder="Rechercher un style…" style="margin-bottom:8px;">' +
     '<div class="styles-grid" id="styles-grid">' +
     STYLE_BANK.map(function (s) {
-      return '<div class="style-card' + (state.style === s.id ? ' selected' : '') + '" data-act="style-pick" data-v="' + s.id + '">' +
+      var sel = (state.styles || []).indexOf(s.id) >= 0;
+      return '<div class="style-card' + (sel ? ' selected' : '') + '" data-act="style-pick" data-v="' + s.id + '">' +
         '<span class="emoji">' + s.emoji + '</span>' +
         '<div class="info"><div class="nm">' + esc(s.nom) + '</div><div class="ds">' + esc(s.cat) + '</div></div>' +
         '</div>';
     }).join('') +
     '</div>' +
     '</div></details>' +
+    '</section>';
+
+  h += '<section class="glass card"><h2>Réglages fins</h2>' +
+    '<div class="fld"><label class="q">Rendu de la peau</label>' +
+    '<select id="skin-select">' +
+    '<option value="">Par défaut (choisi par Agnes)</option>' +
+    '<option value="K1"' + (state.skin === 'K1' ? ' selected' : '') + '>Lisse stylisée</option>' +
+    '<option value="K2"' + (state.skin === 'K2' ? ' selected' : '') + '>Réaliste avec pores</option>' +
+    '<option value="K3"' + (state.skin === 'K3' ? ' selected' : '') + '>Taches de rousseur</option>' +
+    '<option value="K4"' + (state.skin === 'K4' ? ' selected' : '') + '>Brillante, glow</option>' +
+    '<option value="K5"' + (state.skin === 'K5' ? ' selected' : '') + '>Mate et poudrée</option>' +
+    '<option value="K6"' + (state.skin === 'K6' ? ' selected' : '') + '>Poupée plastique brillante</option>' +
+    '<option value="K7"' + (state.skin === 'K7' ? ' selected' : '') + '>Porcelaine</option>' +
+    '</select></div>' +
+    '<div class="fld" style="margin-top:10px"><label class="q">Teint de peau</label>' +
+    '<select id="teint-select">' +
+    '<option value="">Par défaut</option>' +
+    '<option value="T1"' + (state.teint === 'T1' ? ' selected' : '') + '>Très clair</option>' +
+    '<option value="T2"' + (state.teint === 'T2' ? ' selected' : '') + '>Clair beige</option>' +
+    '<option value="T3"' + (state.teint === 'T3' ? ' selected' : '') + '>Olive clair</option>' +
+    '<option value="T4"' + (state.teint === 'T4' ? ' selected' : '') + '>Hâlé doré</option>' +
+    '<option value="T5"' + (state.teint === 'T5' ? ' selected' : '') + '>Caramel</option>' +
+    '<option value="T6"' + (state.teint === 'T6' ? ' selected' : '') + '>Brun moyen</option>' +
+    '<option value="T7"' + (state.teint === 'T7' ? ' selected' : '') + '>Brun profond</option>' +
+    '<option value="T8"' + (state.teint === 'T8' ? ' selected' : '') + '>Ébène</option>' +
+    '</select></div>' +
+    '<div class="fld" style="margin-top:10px"><label class="q">Regard et expression de base</label>' +
+    '<select id="yeux-select">' +
+    '<option value="">Par défaut</option>' +
+    '<option value="Y1"' + (state.yeux === 'Y1' ? ' selected' : '') + '>Grands yeux ronds brillants</option>' +
+    '<option value="Y2"' + (state.yeux === 'Y2' ? ' selected' : '') + '>Paupières mi-closes</option>' +
+    '<option value="Y3"' + (state.yeux === 'Y3' ? ' selected' : '') + '>Regard en coin</option>' +
+    '<option value="Y4"' + (state.yeux === 'Y4' ? ' selected' : '') + '>Yeux écarquillés</option>' +
+    '<option value="Y5"' + (state.yeux === 'Y5' ? ' selected' : '') + '>Yeux en amande maquillés</option>' +
+    '<option value="Y6"' + (state.yeux === 'Y6' ? ' selected' : '') + '>Yeux pétillants et rieurs</option>' +
+    '<option value="Y8"' + (state.yeux === 'Y8' ? ' selected' : '') + '>Sourcils très expressifs</option>' +
+    '</select></div>' +
     '</section>';
 
   h += '<section class="glass card"><h2>Scènes (' + ep.scenes.length + ')</h2>';
@@ -1673,9 +1662,6 @@ function renderUnivers() {
   return h;
 }
 
-/* ============================================================
-   ONGLET RÉFÉRENCES
-   ============================================================ */
 function renderRefs() {
   var ep = state.episode;
   var h = stripHtml();
@@ -1707,11 +1693,11 @@ function renderRefs() {
     '</div></section>';
 
   h += '<section class="glass card"><h2>Ou utiliser tes propres photos</h2>' +
-    '<p class="small muted">Upload une photo de référence pour une scène.</p>' +
+    '<p class="small muted">Upload une ou plusieurs photos pour les ajouter à tes références.</p>' +
     '<label class="upload-zone" for="refs-file-input"><input type="file" id="refs-file-input" accept="image/*" multiple><div class="icon">＋</div><div class="t1">Ajouter des photos</div><div class="t2">Elles seront utilisées comme référence pour les vidéos</div></label>' +
     '<div class="images-grid" id="refs-user-grid">' +
     (state.images.filter(function (im) { return im.userPhoto; }).length ?
-      state.images.filter(function (im) { return im.userPhoto; }).map(function (im, i) {
+      state.images.filter(function (im) { return im.userPhoto; }).map(function (im) {
         return '<div class="image-card"><img src="' + esc(im.thumbnail || im.dataUri) + '" alt=""></div>';
       }).join('') :
       '<p class="muted small">Aucune photo uploadée.</p>') +
@@ -1721,9 +1707,6 @@ function renderRefs() {
   return h;
 }
 
-/* ============================================================
-   ONGLET VIDÉOS
-   ============================================================ */
 function renderVideos() {
   var ep = state.episode;
   var h = stripHtml();
@@ -1736,16 +1719,15 @@ function renderVideos() {
   h += '<header class="hero"><span class="kicker">Étape 4</span><h1>Vidéos</h1><p class="muted">Chaque scène devient un clip vidéo avec Agnes, à partir de l\'image de référence.</p></header>';
 
   h += '<section class="glass card"><h2>Générer les clips</h2>' +
-    '<p class="small muted">Chaque clip coûte ' + (state.durationFrames / FRAME_RATE).toFixed(1) + ' secondes sur ton quota de 500 par jour. Le premier poll commence après 80 secondes, puis toutes les 8 secondes.</p>' +
+    '<p class="small muted">Chaque clip coûte ' + (state.durationFrames / FRAME_RATE).toFixed(1) + ' secondes sur ton quota de 500 par jour. Le premier poll commence après 80 secondes.</p>' +
     '<label class="q">Durée d\'un clip</label>' +
     '<select id="video-duration">' +
-    DUREES.map(function (d) {
-      var frames = Math.round(d.v * FRAME_RATE);
-      return '<option value="' + frames + '"' + (state.durationFrames === frames ? ' selected' : '') + '>' + d.t + ' (' + frames + ' frames)</option>';
+    DUREES_CLIP.map(function (d) {
+      return '<option value="' + d.frames + '"' + (state.durationFrames === d.frames ? ' selected' : '') + '>' + d.t + ' (' + d.frames + ' frames)</option>';
     }).join('') +
     '</select>' +
-    '<button class="btn big" data-act="start-videos"' + (getApiKey() && state.images.length >= ep.scenes.length ? '' : ' disabled') + '>🚀 Générer les ' + ep.scenes.length + ' clips</button>' +
-    (state.images.length < ep.scenes.length ? '<div class="warnbox"><h3>Images manquantes</h3><p class="small">Il manque ' + (ep.scenes.length - state.images.length) + ' image(s) de référence. Va dans l\'onglet Références pour les générer.</p></div>' : '') +
+    '<button class="btn big" data-act="start-videos"' + (getApiKey() && state.images.filter(function (im) { return !im.userPhoto; }).length >= ep.scenes.length ? '' : ' disabled') + '>🚀 Générer les ' + ep.scenes.length + ' clips</button>' +
+    (state.images.filter(function (im) { return !im.userPhoto; }).length < ep.scenes.length ? '<div class="warnbox"><h3>Images manquantes</h3><p class="small">Il manque ' + (ep.scenes.length - state.images.filter(function (im) { return !im.userPhoto; }).length) + ' image(s) de référence. Va dans l\'onglet Références pour les générer.</p></div>' : '') +
     '<button class="btn ghost" data-act="stop-videos" style="display:' + (state.isRunning ? 'block' : 'none') + '">⏹ Arrêter</button>' +
     '</section>';
 
@@ -1778,9 +1760,6 @@ function renderVideos() {
   return h;
 }
 
-/* ============================================================
-   FILE D'ATTENTE
-   ============================================================ */
 function renderQueue() {
   if (!state.queue.length) return '';
   var total = state.queue.length;
@@ -1808,9 +1787,6 @@ function renderQueue() {
   return h;
 }
 
-/* ============================================================
-   PANNEAU DEBUG
-   ============================================================ */
 function debugPanelHtml() {
   return '<section class="glass debug-panel collapsed" id="debug-wrap">' +
     '<div class="debug-header" data-act="toggle-debug">' +
@@ -1824,9 +1800,6 @@ function debugPanelHtml() {
     '</section>';
 }
 
-/* ============================================================
-   ÉVÉNEMENTS
-   ============================================================ */
 function bindTabEvents() {
   var wrap = $('tab-content');
   if (!wrap) return;
@@ -1856,9 +1829,13 @@ function onTabClick(e) {
   var act = b.getAttribute('data-act');
   var v = b.getAttribute('data-v');
 
-  if (act === 'mode') {
-    state.mode = v;
-    saveState(); render();
+  if (act === 'stop') {
+    state.stopRequested = true;
+    state.busy = null; overlay();
+    return;
+  }
+  else if (act === 'mode') {
+    state.mode = v; saveState(); render();
   }
   else if (act === 'surprise') {
     var tones = ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'];
@@ -1870,10 +1847,13 @@ function onTabClick(e) {
   }
   else if (act === 'gen-script') { doGenerateScript(); }
   else if (act === 'style-pick') {
-    state.style = state.style === v ? '' : v;
+    if (!state.styles) state.styles = [];
+    var si = state.styles.indexOf(v);
+    if (si >= 0) state.styles.splice(si, 1);
+    else state.styles.push(v);
     saveState(); render();
-    var s = STYLE_BANK.filter(function (x) { return x.id === state.style; })[0];
-    if (s) showToast('Style choisi : ' + s.emoji + ' ' + s.nom, 'success');
+    var s = STYLE_BANK.filter(function (x) { return x.id === v; })[0];
+    if (s) showToast((state.styles.indexOf(v) >= 0 ? '✓ Ajouté : ' : '✗ Retiré : ') + s.emoji + ' ' + s.nom, 'success', 1500);
   }
   else if (act === 'gen-refs') { doGenerateRefs(); }
   else if (act === 'regen-ref') { regenerateRef(parseInt(v, 10)); }
@@ -1891,15 +1871,19 @@ function onTabClick(e) {
 
 function onTabChange(e) {
   var id = e.target.id;
-  if (id === 'duration-select') {
+  if (id === 'total-duration') {
+    state.totalDuration = parseInt(e.target.value, 10);
+    saveState(); render();
+  }
+  else if (id === 'duration-select') {
     var f = parseInt(e.target.value, 10);
     if (state.mode === 'hook') state.durationFramesHook = f;
     else state.durationFrames = f;
-    saveState();
+    saveState(); render();
   }
   else if (id === 'video-duration') {
     state.durationFrames = parseInt(e.target.value, 10);
-    saveState();
+    saveState(); render();
   }
   else if (id === 'image-model') {
     state.imageModel = e.target.value;
@@ -1909,6 +1893,9 @@ function onTabChange(e) {
     state.tone = e.target.value;
     saveState();
   }
+  else if (id === 'skin-select') { state.skin = e.target.value; saveState(); render(); }
+  else if (id === 'teint-select') { state.teint = e.target.value; saveState(); render(); }
+  else if (id === 'yeux-select') { state.yeux = e.target.value; saveState(); render(); }
 }
 
 function onTabInput(e) {
@@ -1932,18 +1919,12 @@ function setPath(obj, path, value) {
   o[parts[parts.length - 1]] = value;
 }
 
-/* ============================================================
-   NAVIGATION
-   ============================================================ */
 function go(tab) {
   state.tab = tab;
   render();
   window.scrollTo(0, 0);
 }
 
-/* ============================================================
-   GÉNÉRATION DE SCRIPT
-   ============================================================ */
 async function doGenerateScript() {
   if (!state.idea || state.idea.trim().length < 5) {
     showToast('Il manque ton idée (au moins 5 caractères)', 'error', 4000);
@@ -1954,16 +1935,16 @@ async function doGenerateScript() {
     return;
   }
 
-  var totalSec = state.mode === 'serie' ? Math.max(61, 65) : 30;
-  var scenes = Math.max(3, Math.ceil(totalSec / (state.durationFrames / FRAME_RATE)));
-  if (state.mode === 'serie') {
-    while (scenes * (state.durationFrames / FRAME_RATE) < 61) scenes++;
-  }
+  var totalSec = state.totalDuration || 70;
+  if (state.mode === 'hook') totalSec = 30;
+  if (state.mode === 'serie' && totalSec < 61) totalSec = 70;
+  var sceneDuration = 6;
+  var scenes = Math.max(3, Math.ceil(totalSec / sceneDuration));
 
   setStatus('Génération du script…');
-  state.busy = { label: 'Agnes écrit le script…', sub: scenes + ' scènes attendues' };
+  state.busy = { label: 'Agnes écrit le script…', sub: scenes + ' scènes attendues (' + totalSec + ' s)' };
   overlay();
-  logDebug('info', 'SCRIPT', 'Idée : ' + state.idea.slice(0, 80));
+  logDebug('info', 'SCRIPT', 'Idée : ' + state.idea.slice(0, 80) + ' — ' + scenes + ' scènes de ' + sceneDuration + 's');
 
   try {
     var parsed = await generateScript(state.idea, state.tone, state.theme, totalSec, scenes);
@@ -1973,6 +1954,8 @@ async function doGenerateScript() {
       scenes: parsed.scenes,
       targetSeconds: totalSec
     };
+    state.images = [];
+    state.queue = [];
     saveState();
     state.busy = null; overlay();
     setStatus(null);
@@ -1987,9 +1970,6 @@ async function doGenerateScript() {
   }
 }
 
-/* ============================================================
-   GÉNÉRATION D'IMAGES (références)
-   ============================================================ */
 async function doGenerateRefs() {
   if (!state.episode) { showToast('Pas d\'épisode', 'error'); return; }
   if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
@@ -1999,28 +1979,23 @@ async function doGenerateRefs() {
   setStatus('Génération des images…');
   state.busy = { label: 'Génération des images', sub: state.episode.scenes.length + ' scènes à illustrer' };
   overlay();
+  state.stopRequested = false;
 
+  var refsOnly = state.images.filter(function (im) { return !im.userPhoto; });
   for (var i = 0; i < state.episode.scenes.length; i++) {
     if (state.stopRequested) break;
     var sc = state.episode.scenes[i];
-    var prompt = 'Cinematic still of the following scene. ' +
-      (sc.action_prompt || sc.description || '') + '. ' +
-      (sc.lieu ? 'Location: ' + sc.lieu + '. ' : '') +
-      (sc.persos ? 'Characters: ' + sc.persos + '. ' : '') +
-      (sc.ambiance ? 'Atmosphere: ' + sc.ambiance + '. ' : '') +
-      'Portrait 9:16 vertical, cinematic lighting, no text, no watermark.';
-
-    if (state.style) {
-      var s = STYLE_BANK.filter(function (x) { return x.id === state.style; })[0];
-      if (s) prompt += ' ' + s.phrase;
-    }
+    var prompt = buildImagePromptFromScene(sc);
 
     if (status) status.textContent = 'Image ' + (i + 1) + ' / ' + state.episode.scenes.length + '…';
     logDebug('api', 'IMAGE', 'Scène ' + (i + 1) + '…');
 
     try {
       var url = await callAgnesImage(prompt);
-      state.images[i] = { url: url, sceneIndex: i };
+      var userImages = state.images.filter(function (im) { return im.userPhoto; });
+      var aiImages = state.images.filter(function (im) { return !im.userPhoto; });
+      aiImages[i] = { url: url, sceneIndex: i };
+      state.images = aiImages.concat(userImages);
       logDebug('ok', 'IMAGE', 'Scène ' + (i + 1) + ' OK');
     } catch (e) {
       logDebug('err', 'IMAGE', 'Scène ' + (i + 1) + ' échec : ' + e.message);
@@ -2031,7 +2006,7 @@ async function doGenerateRefs() {
 
   state.busy = null; overlay();
   setStatus(null);
-  showToast(state.images.length + ' image' + (state.images.length > 1 ? 's' : '') + ' générée' + (state.images.length > 1 ? 's' : ''), 'success');
+  showToast('Images générées', 'success');
   render();
 }
 
@@ -2042,16 +2017,7 @@ async function regenerateRef(i) {
   logDebug('api', 'IMAGE-REGEN', 'Scène ' + (i + 1));
 
   try {
-    var prompt = 'Cinematic still of the following scene. ' +
-      (sc.action_prompt || sc.description || '') + '. ' +
-      (sc.lieu ? 'Location: ' + sc.lieu + '. ' : '') +
-      (sc.persos ? 'Characters: ' + sc.persos + '. ' : '') +
-      (sc.ambiance ? 'Atmosphere: ' + sc.ambiance + '. ' : '') +
-      'Portrait 9:16 vertical, cinematic lighting, no text, no watermark.';
-    if (state.style) {
-      var s = STYLE_BANK.filter(function (x) { return x.id === state.style; })[0];
-      if (s) prompt += ' ' + s.phrase;
-    }
+    var prompt = buildImagePromptFromScene(sc);
     var url = await callAgnesImage(prompt);
     state.images[i] = { url: url, sceneIndex: i };
     showToast('Image ' + (i + 1) + ' régénérée', 'success');
@@ -2064,9 +2030,6 @@ async function regenerateRef(i) {
   render();
 }
 
-/* ============================================================
-   GÉNÉRATION DE VIDÉOS
-   ============================================================ */
 async function startVideoGeneration() {
   if (state.isRunning) return;
   if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
@@ -2078,13 +2041,8 @@ async function startVideoGeneration() {
   state.failed = 0;
   state.queue = state.episode.scenes.map(function (sc, i) {
     return {
-      index: i,
-      scene: sc,
-      status: 'pending',
-      progress: null,
-      videoId: null,
-      videoUrl: null,
-      startTime: null
+      index: i, scene: sc, status: 'pending', progress: null,
+      videoId: null, videoUrl: null, startTime: null
     };
   });
 
@@ -2103,18 +2061,13 @@ async function startVideoGeneration() {
       var refImg = state.images[i] ? (state.images[i].url || state.images[i].dataUri) : null;
       if (!refImg) {
         item.status = 'failed';
-        item.progress = 'Image de référence manquante';
+        item.progress = 'Image manquante';
         state.failed++;
         render();
         continue;
       }
 
       var prompt = buildVideoPromptFromScene(item.scene);
-      if (state.style) {
-        var s = STYLE_BANK.filter(function (x) { return x.id === state.style; })[0];
-        if (s) prompt += ' ' + s.phrase;
-      }
-
       var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
       item.videoId = id;
       item.startTime = Date.now();
@@ -2203,9 +2156,6 @@ async function regenerateVideo(i) {
   setStatus(null);
 }
 
-/* ============================================================
-   TRAITEMENT DES FICHIERS UPLOADÉS
-   ============================================================ */
 function processImageFile(file) {
   return new Promise(function (resolve) {
     if (!file.type.startsWith('image/')) { resolve(null); return; }
@@ -2241,12 +2191,9 @@ async function handleFiles(files) {
     if (im) state.images.push(im);
   }
   render();
-  showToast(state.images.length + ' photo' + (state.images.length > 1 ? 's' : '') + ' ajoutée' + (state.images.length > 1 ? 's' : ''), 'success');
+  showToast('Photo' + (list.length > 1 ? 's' : '') + ' ajoutée' + (list.length > 1 ? 's' : ''), 'success');
 }
 
-/* ============================================================
-   INITIALISATION
-   ============================================================ */
 function init() {
   document.querySelectorAll('.dock button').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -2299,12 +2246,9 @@ function init() {
     }
   } catch (e) {}
 
-  try {
-    var ek = localStorage.getItem(EXTERNAL_KEY_STORAGE);
-    if (ek) state.externalKey = ek;
-  } catch (e) {}
-
   loadState();
+  if (!state.styles) state.styles = [];
+  if (!state.totalDuration) state.totalDuration = 70;
   updateApiPanel();
   updateApiPanelVisibility();
   updateQuotaPanel();
@@ -2312,7 +2256,796 @@ function init() {
   render();
   logDebug('ok', 'INIT', 'Fabrique de séries · Agnes prête');
   logDebug('info', 'INIT', 'Modèles : ' + MODEL_TEXT + ' / ' + MODEL_IMAGE_DEFAULT + ' / ' + MODEL_VIDEO);
-  logDebug('info', 'INIT', 'Délais : 62 s min entre créations, premier poll 80 s, poll 8/8/12/12/20/20/25');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+</script>
+</body>
+</html>function render() {
+  var c = $('tab-content');
+  if (!c) return;
+  var html = '';
+  if (state.tab === 'idees') html = renderIdees();
+  else if (state.tab === 'univers') html = renderUnivers();
+  else if (state.tab === 'refs') html = renderRefs();
+  else if (state.tab === 'videos') html = renderVideos();
+  c.innerHTML = html;
+  document.querySelectorAll('.dock button').forEach(function (b) {
+    if (b.getAttribute('data-tab') === state.tab) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  bindTabEvents();
+}
+
+function stageInfo() {
+  var ep = state.episode;
+  var scenes = ep && ep.scenes ? ep.scenes.length : 0;
+  var refsCount = state.images.filter(function (im) { return !im.userPhoto; }).length;
+  var vidsCount = state.queue.filter(function (q) { return q.status === 'done'; }).length;
+  var vidsTotal = state.queue.length;
+  var s = [
+    { k: 'Idée', v: has(state.idea) ? 'faite' : '', ok: has(state.idea), tab: 'idees' },
+    { k: 'Durée', v: state.totalDuration ? state.totalDuration + 's' : '', ok: !!state.totalDuration, tab: 'idees' },
+    { k: 'Styles', v: (state.styles || []).length ? state.styles.length + ' choisis' : '', ok: (state.styles || []).length > 0, tab: 'univers' },
+    { k: 'Script', v: scenes ? scenes + ' scènes' : '', ok: scenes > 0, tab: 'univers' },
+    { k: 'Références', v: refsCount ? refsCount + ' images' : '', ok: refsCount > 0, tab: 'refs' },
+    { k: 'Vidéos', v: vidsTotal ? vidsCount + '/' + vidsTotal : '', ok: vidsTotal > 0 && vidsCount === vidsTotal, tab: 'videos' }
+  ];
+  var found = false;
+  s.forEach(function (x) { x.cur = !found && !x.ok; if (x.cur) found = true; });
+  return s;
+}
+function stripHtml() {
+  return '<div class="strip">' + stageInfo().map(function (x) {
+    return '<button type="button" class="stage' + (x.ok ? ' ok' : '') + (x.cur ? ' cur' : '') + '" data-act="tab" data-v="' + x.tab + '"><small>' + (x.ok ? '✓ ' + (x.v || 'fait') : (x.v || 'à faire')) + '</small><b>' + x.k + '</b></button>';
+  }).join('') + '</div>';
+}
+
+function renderIdees() {
+  var h = stripHtml();
+  h += '<header class="hero"><span class="kicker">Étape 1</span><h1>Mon idée</h1><p class="muted">Décris ton idée, choisis un ton et un thème. Puis génère un script avec Agnes.</p></header>';
+
+  h += '<section class="glass card"><h2>L\'idée</h2>' +
+    '<div class="stack">' +
+    '<label class="q">Décris ton idée<span class="q-hint">Une phrase suffit. Exemple : une laverie où chaque machine révèle un secret.</span></label>' +
+    '<textarea id="idea-input" placeholder="Une laverie de quartier où chaque machine révèle un secret…">' + esc(state.idea) + '</textarea>' +
+    '<div class="rowbtns">' +
+    '<button class="btn ghost" data-act="surprise">🎲 Surprends-moi</button>' +
+    '</div>' +
+    '<div class="row">' +
+    '<div style="flex:1;min-width:140px"><label class="q">Ton</label><select id="tone-select">' +
+    ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'].map(function (t) {
+      return '<option value="' + t + '"' + (state.tone === t ? ' selected' : '') + '>' + t + '</option>';
+    }).join('') +
+    '</select></div>' +
+    '<div style="flex:1;min-width:140px"><label class="q">Thème</label><input type="text" id="theme-input" placeholder="famille, amitié…" value="' + esc(state.theme) + '"></div>' +
+    '</div>' +
+    '</div></section>';
+
+  h += '<section class="glass card"><h2>Format</h2>' +
+    '<div class="mode-toggle">' +
+    '<div class="mode-option' + (state.mode === 'serie' ? ' selected' : '') + '" data-act="mode" data-v="serie"><div class="mo-icon">📺</div><div class="mo-name">Épisode de série</div><div class="mo-desc">Au moins 61 secondes au total</div></div>' +
+    '<div class="mode-option' + (state.mode === 'hook' ? ' selected' : '') + '" data-act="mode" data-v="hook"><div class="mo-icon">⚡</div><div class="mo-name">Hook court</div><div class="mo-desc">Garde les 3 premières secondes</div></div>' +
+    '</div>' +
+    '<div class="stack" style="margin-top:12px">' +
+    '<label class="q">Durée totale de la vidéo<span class="q-hint">Nombre de scènes calculé automatiquement (6 s par scène).</span></label>' +
+    '<select id="total-duration">' +
+    DUREES_TOTALES.map(function (d) {
+      var sceneCount = Math.ceil(d.v / 6);
+      return '<option value="' + d.v + '"' + (state.totalDuration === d.v ? ' selected' : '') + '>' + d.t + ' (~' + sceneCount + ' scènes)</option>';
+    }).join('') +
+    '</select>' +
+    '<label class="q" style="margin-top:10px">Durée d\'un clip vidéo</label>' +
+    '<select id="duration-select">' +
+    DUREES_CLIP.map(function (d) {
+      var cur = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
+      return '<option value="' + d.frames + '"' + (cur === d.frames ? ' selected' : '') + '>' + d.t + ' (' + d.frames + ' frames)</option>';
+    }).join('') +
+    '</select>' +
+    '</div></section>';
+
+  h += '<section class="glass card"><h2>Modèle d\'image</h2>' +
+    '<label class="q">Modèle Agnes pour les images</label>' +
+    '<select id="image-model">' +
+    '<option value="' + MODEL_IMAGE_DEFAULT + '"' + (state.imageModel === MODEL_IMAGE_DEFAULT ? ' selected' : '') + '>agnes-image-2.1-flash (par défaut)</option>' +
+    '<option value="' + MODEL_IMAGE_ALT + '"' + (state.imageModel === MODEL_IMAGE_ALT ? ' selected' : '') + '>agnes-image-2.5-flash (alternatif)</option>' +
+    '</select>' +
+    '<p class="small muted">Tu pourras choisir plusieurs styles visuels dans l\'onglet Univers.</p></section>';
+
+  h += '<section class="glass card"><h2>Générer</h2>' +
+    '<p class="small muted">Lance la génération du script avec Agnes. Tu verras ensuite les scènes et tu pourras générer les images.</p>' +
+    '<button class="btn big" data-act="gen-script">✍️ Générer le script</button>' +
+    '<div id="script-output"></div></section>';
+
+  h += debugPanelHtml();
+  return h;
+}
+
+function renderUnivers() {
+  var ep = state.episode;
+  var h = stripHtml();
+  if (!ep) {
+    h += '<section class="glass empty"><div class="big">🌌</div><h3>Pas encore d\'univers</h3><p class="muted">Génère d\'abord un script dans l\'onglet Idées.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
+    h += debugPanelHtml();
+    return h;
+  }
+
+  h += '<header class="hero"><span class="kicker">Étape 2</span><h1>' + esc(ep.title || 'Univers') + '</h1><p class="muted">' + esc(ep.logline || '') + '</p></header>';
+
+  h += '<section class="glass card"><h2>Styles visuels (' + (state.styles || []).length + ' sélectionné' + ((state.styles || []).length > 1 ? 's' : '') + ')</h2>' +
+    '<p class="small muted">Tu peux en choisir plusieurs. Ils seront combinés dans les prompts.</p>' +
+    '<div class="chips scrollrow" id="style-chips">' +
+    STYLE_BANK.slice(0, 20).map(function (s) {
+      var sel = (state.styles || []).indexOf(s.id) >= 0;
+      return '<button type="button" class="chip small" data-act="style-pick" data-v="' + s.id + '" aria-pressed="' + sel + '">' + s.emoji + ' ' + esc(s.nom) + '</button>';
+    }).join('') +
+    '</div>' +
+    '<details class="acc" style="margin-top:12px;"><summary><div><b>Voir tous les styles (' + STYLE_BANK.length + ')</b><br><span>Clique pour cocher plusieurs styles</span></div></summary><div class="in">' +
+    '<input type="search" id="style-search" placeholder="Rechercher un style…" style="margin-bottom:8px;">' +
+    '<div class="styles-grid" id="styles-grid">' +
+    STYLE_BANK.map(function (s) {
+      var sel = (state.styles || []).indexOf(s.id) >= 0;
+      return '<div class="style-card' + (sel ? ' selected' : '') + '" data-act="style-pick" data-v="' + s.id + '">' +
+        '<span class="emoji">' + s.emoji + '</span>' +
+        '<div class="info"><div class="nm">' + esc(s.nom) + '</div><div class="ds">' + esc(s.cat) + '</div></div>' +
+        '</div>';
+    }).join('') +
+    '</div>' +
+    '</div></details>' +
+    '</section>';
+
+  h += '<section class="glass card"><h2>Réglages fins</h2>' +
+    '<div class="fld"><label class="q">Rendu de la peau</label>' +
+    '<select id="skin-select">' +
+    '<option value="">Par défaut (choisi par Agnes)</option>' +
+    '<option value="K1"' + (state.skin === 'K1' ? ' selected' : '') + '>Lisse stylisée</option>' +
+    '<option value="K2"' + (state.skin === 'K2' ? ' selected' : '') + '>Réaliste avec pores</option>' +
+    '<option value="K3"' + (state.skin === 'K3' ? ' selected' : '') + '>Taches de rousseur</option>' +
+    '<option value="K4"' + (state.skin === 'K4' ? ' selected' : '') + '>Brillante, glow</option>' +
+    '<option value="K5"' + (state.skin === 'K5' ? ' selected' : '') + '>Mate et poudrée</option>' +
+    '<option value="K6"' + (state.skin === 'K6' ? ' selected' : '') + '>Poupée plastique brillante</option>' +
+    '<option value="K7"' + (state.skin === 'K7' ? ' selected' : '') + '>Porcelaine</option>' +
+    '</select></div>' +
+    '<div class="fld" style="margin-top:10px"><label class="q">Teint de peau</label>' +
+    '<select id="teint-select">' +
+    '<option value="">Par défaut</option>' +
+    '<option value="T1"' + (state.teint === 'T1' ? ' selected' : '') + '>Très clair</option>' +
+    '<option value="T2"' + (state.teint === 'T2' ? ' selected' : '') + '>Clair beige</option>' +
+    '<option value="T3"' + (state.teint === 'T3' ? ' selected' : '') + '>Olive clair</option>' +
+    '<option value="T4"' + (state.teint === 'T4' ? ' selected' : '') + '>Hâlé doré</option>' +
+    '<option value="T5"' + (state.teint === 'T5' ? ' selected' : '') + '>Caramel</option>' +
+    '<option value="T6"' + (state.teint === 'T6' ? ' selected' : '') + '>Brun moyen</option>' +
+    '<option value="T7"' + (state.teint === 'T7' ? ' selected' : '') + '>Brun profond</option>' +
+    '<option value="T8"' + (state.teint === 'T8' ? ' selected' : '') + '>Ébène</option>' +
+    '</select></div>' +
+    '<div class="fld" style="margin-top:10px"><label class="q">Regard et expression de base</label>' +
+    '<select id="yeux-select">' +
+    '<option value="">Par défaut</option>' +
+    '<option value="Y1"' + (state.yeux === 'Y1' ? ' selected' : '') + '>Grands yeux ronds brillants</option>' +
+    '<option value="Y2"' + (state.yeux === 'Y2' ? ' selected' : '') + '>Paupières mi-closes</option>' +
+    '<option value="Y3"' + (state.yeux === 'Y3' ? ' selected' : '') + '>Regard en coin</option>' +
+    '<option value="Y4"' + (state.yeux === 'Y4' ? ' selected' : '') + '>Yeux écarquillés</option>' +
+    '<option value="Y5"' + (state.yeux === 'Y5' ? ' selected' : '') + '>Yeux en amande maquillés</option>' +
+    '<option value="Y6"' + (state.yeux === 'Y6' ? ' selected' : '') + '>Yeux pétillants et rieurs</option>' +
+    '<option value="Y8"' + (state.yeux === 'Y8' ? ' selected' : '') + '>Sourcils très expressifs</option>' +
+    '</select></div>' +
+    '</section>';
+
+  h += '<section class="glass card"><h2>Scènes (' + ep.scenes.length + ')</h2>';
+  ep.scenes.forEach(function (sc, i) {
+    h += '<details class="glass acc"><summary><div><b>Scène ' + (i + 1) + '</b><br><span>' + esc((sc.description || '').slice(0, 60)) + '</span></div></summary><div class="in">' +
+      '<div class="fld"><label class="q">Description</label><textarea data-path="episode.scenes.' + i + '.description" style="min-height:80px">' + esc(sc.description || '') + '</textarea></div>' +
+      '<div class="two"><div class="fld"><label class="q">Lieu</label><input type="text" data-path="episode.scenes.' + i + '.lieu" value="' + esc(sc.lieu || '') + '"></div>' +
+      '<div class="fld"><label class="q">Personnages</label><input type="text" data-path="episode.scenes.' + i + '.persos" value="' + esc(sc.persos || '') + '"></div></div>' +
+      '<div class="fld"><label class="q">Ambiance</label><input type="text" data-path="episode.scenes.' + i + '.ambiance" value="' + esc(sc.ambiance || '') + '"></div>' +
+      '<div class="fld"><label class="q">Prompt image (anglais)</label><textarea data-path="episode.scenes.' + i + '.action_prompt" style="min-height:80px">' + esc(sc.action_prompt || '') + '</textarea></div>' +
+      '</div></details>';
+  });
+  h += '</section>';
+
+  h += debugPanelHtml();
+  return h;
+}
+
+function renderRefs() {
+  var ep = state.episode;
+  var h = stripHtml();
+  if (!ep) {
+    h += '<section class="glass empty"><div class="big">📸</div><h3>Pas encore de références</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
+    h += debugPanelHtml();
+    return h;
+  }
+
+  h += '<header class="hero"><span class="kicker">Étape 3</span><h1>Références</h1><p class="muted">Génère une image pour chaque scène avec Agnes. Tu pourras régénérer celles qui ne te plaisent pas.</p></header>';
+
+  h += '<section class="glass card"><h2>Générer les images</h2>' +
+    '<p class="small muted">Agnes va créer une image par scène. Chaque image coûte 1 sur ton quota de 4000 par jour.</p>' +
+    '<button class="btn big" data-act="gen-refs"' + (getApiKey() ? '' : ' disabled') + '>' + (state.images.length ? '🔄 Régénérer les ' + state.images.length + ' images' : '🎨 Générer ' + ep.scenes.length + ' images') + '</button>' +
+    '<p class="small muted" id="refs-status"></p>' +
+    '</section>';
+
+  h += '<section class="glass card"><h2>Images de référence</h2>' +
+    '<p class="small muted">Chaque image est associée à sa scène. Régénère celles qui ne te plaisent pas.</p>' +
+    '<div class="images-grid" id="refs-grid">' +
+    (state.images.length ?
+      state.images.map(function (im, i) {
+        return '<div class="image-card" data-img-idx="' + i + '">' +
+          '<img src="' + esc(im.url || im.dataUri || '') + '" alt="Scène ' + (i + 1) + '">' +
+          '<button class="regen" data-act="regen-ref" data-v="' + i + '">🔄 Régénérer</button>' +
+          '</div>';
+      }).join('') :
+      '<p class="muted small">Aucune image générée pour l\'instant.</p>') +
+    '</div></section>';
+
+  h += '<section class="glass card"><h2>Ou utiliser tes propres photos</h2>' +
+    '<p class="small muted">Upload une ou plusieurs photos pour les ajouter à tes références.</p>' +
+    '<label class="upload-zone" for="refs-file-input"><input type="file" id="refs-file-input" accept="image/*" multiple><div class="icon">＋</div><div class="t1">Ajouter des photos</div><div class="t2">Elles seront utilisées comme référence pour les vidéos</div></label>' +
+    '<div class="images-grid" id="refs-user-grid">' +
+    (state.images.filter(function (im) { return im.userPhoto; }).length ?
+      state.images.filter(function (im) { return im.userPhoto; }).map(function (im) {
+        return '<div class="image-card"><img src="' + esc(im.thumbnail || im.dataUri) + '" alt=""></div>';
+      }).join('') :
+      '<p class="muted small">Aucune photo uploadée.</p>') +
+    '</div></section>';
+
+  h += debugPanelHtml();
+  return h;
+}
+
+function renderVideos() {
+  var ep = state.episode;
+  var h = stripHtml();
+  if (!ep) {
+    h += '<section class="glass empty"><div class="big">🎬</div><h3>Pas encore de vidéos</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="tab" data-v="idees">Aller aux Idées</button></section>';
+    h += debugPanelHtml();
+    return h;
+  }
+
+  h += '<header class="hero"><span class="kicker">Étape 4</span><h1>Vidéos</h1><p class="muted">Chaque scène devient un clip vidéo avec Agnes, à partir de l\'image de référence.</p></header>';
+
+  h += '<section class="glass card"><h2>Générer les clips</h2>' +
+    '<p class="small muted">Chaque clip coûte ' + (state.durationFrames / FRAME_RATE).toFixed(1) + ' secondes sur ton quota de 500 par jour. Le premier poll commence après 80 secondes.</p>' +
+    '<label class="q">Durée d\'un clip</label>' +
+    '<select id="video-duration">' +
+    DUREES_CLIP.map(function (d) {
+      return '<option value="' + d.frames + '"' + (state.durationFrames === d.frames ? ' selected' : '') + '>' + d.t + ' (' + d.frames + ' frames)</option>';
+    }).join('') +
+    '</select>' +
+    '<button class="btn big" data-act="start-videos"' + (getApiKey() && state.images.filter(function (im) { return !im.userPhoto; }).length >= ep.scenes.length ? '' : ' disabled') + '>🚀 Générer les ' + ep.scenes.length + ' clips</button>' +
+    (state.images.filter(function (im) { return !im.userPhoto; }).length < ep.scenes.length ? '<div class="warnbox"><h3>Images manquantes</h3><p class="small">Il manque ' + (ep.scenes.length - state.images.filter(function (im) { return !im.userPhoto; }).length) + ' image(s) de référence. Va dans l\'onglet Références pour les générer.</p></div>' : '') +
+    '<button class="btn ghost" data-act="stop-videos" style="display:' + (state.isRunning ? 'block' : 'none') + '">⏹ Arrêter</button>' +
+    '</section>';
+
+  if (state.queue.length) {
+    h += '<section class="glass card"><h2>File d\'attente</h2>' + renderQueue() + '</section>';
+  }
+
+  h += '<section class="glass card"><h2>Galerie des clips</h2>' +
+    '<div class="gallery-grid" id="gallery-grid">' +
+    (state.queue.filter(function (q) { return q.status === 'done'; }).length ?
+      state.queue.filter(function (q) { return q.status === 'done'; }).map(function (q) {
+        return '<div class="gallery-item">' +
+          '<video src="' + esc(q.videoUrl) + '" controls preload="metadata" playsinline muted></video>' +
+          '<div class="g-caption"><div class="g-style">Scène ' + (q.index + 1) + '</div></div>' +
+          '<div class="g-actions">' +
+          '<button data-act="regen-video" data-v="' + q.index + '">🔄 Régénérer</button>' +
+          '<a href="' + esc(q.videoUrl) + '" download="scene-' + (q.index + 1) + '.mp4" target="_blank" rel="noopener">⬇ Télécharger</a>' +
+          '</div></div>';
+      }).join('') :
+      '<p class="muted small">Aucun clip généré pour l\'instant.</p>') +
+    '</div></section>';
+
+  h += '<section class="glass card"><h2>Montage final</h2>' +
+    '<p class="small muted">Assemble tous les clips en une seule vidéo avec FFmpeg (fonctionne dans ton navigateur, sans installation).</p>' +
+    '<button class="btn big" data-act="montage" disabled>🎬 Monter la vidéo (bientôt disponible)</button>' +
+    '<p class="small muted">En attendant, tu peux télécharger chaque clip et les assembler dans CapCut ou VN Editor.</p>' +
+    '</section>';
+
+  h += debugPanelHtml();
+  return h;
+}
+
+function renderQueue() {
+  if (!state.queue.length) return '';
+  var total = state.queue.length;
+  var done = state.queue.filter(function (q) { return q.status === 'done'; }).length;
+  var failed = state.queue.filter(function (q) { return q.status === 'failed'; }).length;
+  var processing = state.queue.filter(function (q) { return q.status === 'processing' || q.status === 'creating'; }).length;
+  var h = '<div class="queue-summary">' +
+    '<span class="progress-text">' + done + ' / ' + total + ' prêts</span>' +
+    (failed ? '<span style="color:#9E1F2B">' + failed + ' échec' + (failed > 1 ? 's' : '') + '</span>' : '') +
+    (processing ? '<span>' + processing + ' en cours</span>' : '') +
+    '</div><div class="queue">';
+  state.queue.slice(0, 30).forEach(function (q) {
+    var cls = 'pending', icon = '○', label = 'En file';
+    if (q.status === 'creating') { cls = 'creating'; icon = '◐'; label = 'Préparation…'; }
+    else if (q.status === 'processing') { cls = 'processing'; icon = '◐'; label = q.progress || 'En cours…'; }
+    else if (q.status === 'done') { cls = 'done'; icon = '●'; label = 'Prêt'; }
+    else if (q.status === 'failed') { cls = 'failed'; icon = '✕'; label = q.progress || 'Échec'; }
+    h += '<div class="queue-item ' + cls + '">' +
+      '<div class="q-icon">' + icon + '</div>' +
+      '<div class="q-name">Scène ' + (q.index + 1) + '</div>' +
+      '<div class="q-status">' + esc(label) + '</div>' +
+      '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function debugPanelHtml() {
+  return '<section class="glass debug-panel collapsed" id="debug-wrap">' +
+    '<div class="debug-header" data-act="toggle-debug">' +
+    '<span class="debug-title">🖥️ Console de débogage <span class="debug-count" id="debug-count">0</span></span>' +
+    '<div class="debug-actions">' +
+    '<button data-act="clear-debug" type="button">Effacer</button>' +
+    '<button data-act="toggle-debug" type="button">▾</button>' +
+    '</div>' +
+    '</div>' +
+    '<div class="debug-body" id="debug-body"></div>' +
+    '</section>';
+}
+
+function bindTabEvents() {
+  var wrap = $('tab-content');
+  if (!wrap) return;
+  if (!wrap.__bound) {
+    wrap.__bound = true;
+    wrap.addEventListener('click', onTabClick);
+    wrap.addEventListener('change', onTabChange);
+    wrap.addEventListener('input', onTabInput);
+  }
+  var searchInput = $('style-search');
+  if (searchInput && !searchInput.__bound) {
+    searchInput.__bound = true;
+    searchInput.addEventListener('input', function () {
+      var q = searchInput.value.toLowerCase().trim();
+      var cards = document.querySelectorAll('#styles-grid .style-card');
+      cards.forEach(function (card) {
+        var nm = card.querySelector('.nm') ? card.querySelector('.nm').textContent.toLowerCase() : '';
+        card.style.display = (!q || nm.indexOf(q) >= 0) ? '' : 'none';
+      });
+    });
+  }
+}
+
+function onTabClick(e) {
+  var b = e.target.closest('[data-act]');
+  if (!b) return;
+  var act = b.getAttribute('data-act');
+  var v = b.getAttribute('data-v');
+
+  if (act === 'stop') {
+    state.stopRequested = true;
+    state.busy = null; overlay();
+    return;
+  }
+  else if (act === 'mode') {
+    state.mode = v; saveState(); render();
+  }
+  else if (act === 'surprise') {
+    var tones = ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'];
+    var themes = ['famille', 'amitié', 'mystère', 'rue', 'école', 'travail', 'amour', 'voyage', 'secret'];
+    state.tone = randomItem(tones);
+    state.theme = randomItem(themes);
+    saveState(); render();
+    showToast('Ambiance tirée : ' + state.tone + ', ' + state.theme, 'success');
+  }
+  else if (act === 'gen-script') { doGenerateScript(); }
+  else if (act === 'style-pick') {
+    if (!state.styles) state.styles = [];
+    var si = state.styles.indexOf(v);
+    if (si >= 0) state.styles.splice(si, 1);
+    else state.styles.push(v);
+    saveState(); render();
+    var s = STYLE_BANK.filter(function (x) { return x.id === v; })[0];
+    if (s) showToast((state.styles.indexOf(v) >= 0 ? '✓ Ajouté : ' : '✗ Retiré : ') + s.emoji + ' ' + s.nom, 'success', 1500);
+  }
+  else if (act === 'gen-refs') { doGenerateRefs(); }
+  else if (act === 'regen-ref') { regenerateRef(parseInt(v, 10)); }
+  else if (act === 'start-videos') { startVideoGeneration(); }
+  else if (act === 'stop-videos') { state.stopRequested = true; showToast('Arrêt demandé…', 'warn'); }
+  else if (act === 'regen-video') { regenerateVideo(parseInt(v, 10)); }
+  else if (act === 'montage') { showToast('Montage FFmpeg bientôt disponible', 'warn'); }
+  else if (act === 'tab') { go(v); }
+  else if (act === 'toggle-debug') {
+    var panel = $('debug-wrap');
+    if (panel) panel.classList.toggle('collapsed');
+  }
+  else if (act === 'clear-debug') { clearDebug(); }
+}
+
+function onTabChange(e) {
+  var id = e.target.id;
+  if (id === 'total-duration') {
+    state.totalDuration = parseInt(e.target.value, 10);
+    saveState(); render();
+  }
+  else if (id === 'duration-select') {
+    var f = parseInt(e.target.value, 10);
+    if (state.mode === 'hook') state.durationFramesHook = f;
+    else state.durationFrames = f;
+    saveState(); render();
+  }
+  else if (id === 'video-duration') {
+    state.durationFrames = parseInt(e.target.value, 10);
+    saveState(); render();
+  }
+  else if (id === 'image-model') {
+    state.imageModel = e.target.value;
+    saveState();
+  }
+  else if (id === 'tone-select') {
+    state.tone = e.target.value;
+    saveState();
+  }
+  else if (id === 'skin-select') { state.skin = e.target.value; saveState(); render(); }
+  else if (id === 'teint-select') { state.teint = e.target.value; saveState(); render(); }
+  else if (id === 'yeux-select') { state.yeux = e.target.value; saveState(); render(); }
+}
+
+function onTabInput(e) {
+  var id = e.target.id;
+  var path = e.target.getAttribute('data-path');
+  if (id === 'idea-input') { state.idea = e.target.value; saveState(); }
+  else if (id === 'theme-input') { state.theme = e.target.value; saveState(); }
+  else if (path) {
+    setPath(state, path, e.target.value);
+    saveState();
+  }
+}
+
+function setPath(obj, path, value) {
+  var parts = path.split('.');
+  var o = obj;
+  for (var i = 0; i < parts.length - 1; i++) {
+    if (!o[parts[i]]) o[parts[i]] = {};
+    o = o[parts[i]];
+  }
+  o[parts[parts.length - 1]] = value;
+}
+
+function go(tab) {
+  state.tab = tab;
+  render();
+  window.scrollTo(0, 0);
+}
+
+async function doGenerateScript() {
+  if (!state.idea || state.idea.trim().length < 5) {
+    showToast('Il manque ton idée (au moins 5 caractères)', 'error', 4000);
+    return;
+  }
+  if (!getApiKey()) {
+    showToast('Ajoute ta clé Agnes en haut de la page', 'error', 4000);
+    return;
+  }
+
+  var totalSec = state.totalDuration || 70;
+  if (state.mode === 'hook') totalSec = 30;
+  if (state.mode === 'serie' && totalSec < 61) totalSec = 70;
+  var sceneDuration = 6;
+  var scenes = Math.max(3, Math.ceil(totalSec / sceneDuration));
+
+  setStatus('Génération du script…');
+  state.busy = { label: 'Agnes écrit le script…', sub: scenes + ' scènes attendues (' + totalSec + ' s)' };
+  overlay();
+  logDebug('info', 'SCRIPT', 'Idée : ' + state.idea.slice(0, 80) + ' — ' + scenes + ' scènes de ' + sceneDuration + 's');
+
+  try {
+    var parsed = await generateScript(state.idea, state.tone, state.theme, totalSec, scenes);
+    state.episode = {
+      title: parsed.title || 'Épisode sans titre',
+      logline: parsed.logline || '',
+      scenes: parsed.scenes,
+      targetSeconds: totalSec
+    };
+    state.images = [];
+    state.queue = [];
+    saveState();
+    state.busy = null; overlay();
+    setStatus(null);
+    showToast('Script généré : ' + parsed.scenes.length + ' scènes', 'success', 3000);
+    state.tab = 'univers';
+    render();
+  } catch (e) {
+    state.busy = null; overlay();
+    setStatus(null);
+    logDebug('err', 'SCRIPT', e.message);
+    showToast('Erreur : ' + e.message.slice(0, 70), 'error', 4000);
+  }
+}
+
+async function doGenerateRefs() {
+  if (!state.episode) { showToast('Pas d\'épisode', 'error'); return; }
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+
+  var status = $('refs-status');
+  if (status) status.textContent = 'Préparation…';
+  setStatus('Génération des images…');
+  state.busy = { label: 'Génération des images', sub: state.episode.scenes.length + ' scènes à illustrer' };
+  overlay();
+  state.stopRequested = false;
+
+  var refsOnly = state.images.filter(function (im) { return !im.userPhoto; });
+  for (var i = 0; i < state.episode.scenes.length; i++) {
+    if (state.stopRequested) break;
+    var sc = state.episode.scenes[i];
+    var prompt = buildImagePromptFromScene(sc);
+
+    if (status) status.textContent = 'Image ' + (i + 1) + ' / ' + state.episode.scenes.length + '…';
+    logDebug('api', 'IMAGE', 'Scène ' + (i + 1) + '…');
+
+    try {
+      var url = await callAgnesImage(prompt);
+      var userImages = state.images.filter(function (im) { return im.userPhoto; });
+      var aiImages = state.images.filter(function (im) { return !im.userPhoto; });
+      aiImages[i] = { url: url, sceneIndex: i };
+      state.images = aiImages.concat(userImages);
+      logDebug('ok', 'IMAGE', 'Scène ' + (i + 1) + ' OK');
+    } catch (e) {
+      logDebug('err', 'IMAGE', 'Scène ' + (i + 1) + ' échec : ' + e.message);
+    }
+    await sleep(IMAGE_INTERVAL_MS);
+    if (state.tab === 'refs') render();
+  }
+
+  state.busy = null; overlay();
+  setStatus(null);
+  showToast('Images générées', 'success');
+  render();
+}
+
+async function regenerateRef(i) {
+  if (!state.episode || !state.episode.scenes[i]) return;
+  var sc = state.episode.scenes[i];
+  setStatus('Régénération de l\'image ' + (i + 1) + '…');
+  logDebug('api', 'IMAGE-REGEN', 'Scène ' + (i + 1));
+
+  try {
+    var prompt = buildImagePromptFromScene(sc);
+    var url = await callAgnesImage(prompt);
+    state.images[i] = { url: url, sceneIndex: i };
+    showToast('Image ' + (i + 1) + ' régénérée', 'success');
+    logDebug('ok', 'IMAGE-REGEN', 'Scène ' + (i + 1) + ' OK');
+  } catch (e) {
+    logDebug('err', 'IMAGE-REGEN', 'Scène ' + (i + 1) + ' : ' + e.message);
+    showToast('Erreur : ' + e.message.slice(0, 60), 'error');
+  }
+  setStatus(null);
+  render();
+}
+
+async function startVideoGeneration() {
+  if (state.isRunning) return;
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+  if (!state.episode) { showToast('Pas d\'épisode', 'error'); return; }
+
+  state.isRunning = true;
+  state.stopRequested = false;
+  state.completed = 0;
+  state.failed = 0;
+  state.queue = state.episode.scenes.map(function (sc, i) {
+    return {
+      index: i, scene: sc, status: 'pending', progress: null,
+      videoId: null, videoUrl: null, startTime: null
+    };
+  });
+
+  checkQuotaWarn(state.durationFrames, state.queue.length);
+  setStatus('Génération des clips…');
+  render();
+
+  var pollingTasks = [];
+  for (var i = 0; i < state.queue.length; i++) {
+    if (state.stopRequested) break;
+    var item = state.queue[i];
+    try {
+      item.status = 'creating';
+      render();
+
+      var refImg = state.images[i] ? (state.images[i].url || state.images[i].dataUri) : null;
+      if (!refImg) {
+        item.status = 'failed';
+        item.progress = 'Image manquante';
+        state.failed++;
+        render();
+        continue;
+      }
+
+      var prompt = buildVideoPromptFromScene(item.scene);
+      var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
+      item.videoId = id;
+      item.startTime = Date.now();
+      item.status = 'processing';
+      render();
+
+      pollingTasks.push(pollTaskAndDisplay(item));
+
+      if (i < state.queue.length - 1 && !state.stopRequested) {
+        var wait = Math.ceil(VIDEO_INTERVAL_SAFE / 1000);
+        for (var r = wait; r > 0; r--) {
+          if (state.stopRequested) break;
+          setStatus('Prochain clip dans ' + r + ' s…');
+          await sleep(1000);
+        }
+      }
+    } catch (e) {
+      item.status = 'failed';
+      item.progress = e.message.slice(0, 60);
+      state.failed++;
+      logDebug('err', 'VIDÉO', 'Scène ' + (i + 1) + ' : ' + e.message);
+      render();
+    }
+  }
+
+  if (pollingTasks.length) {
+    setStatus('Finalisation…');
+    await Promise.allSettled(pollingTasks);
+  }
+
+  state.isRunning = false;
+  state.stopRequested = false;
+  setStatus(null);
+  showToast(state.completed + ' clip' + (state.completed > 1 ? 's' : '') + ' prêt' + (state.completed > 1 ? 's' : ''), 'success');
+  render();
+}
+
+async function pollTaskAndDisplay(item) {
+  try {
+    var vurl = await pollVideo(item.videoId, function (progress) {
+      item.progress = progress;
+      render();
+    }, state.durationFrames);
+
+    var elapsed = Date.now() - item.startTime;
+    recordGenerationTime('video', elapsed);
+    item.status = 'done';
+    item.videoUrl = vurl;
+    item.progress = 'Prêt en ' + Math.round(elapsed / 1000) + 's';
+    state.completed++;
+    render();
+    logDebug('ok', 'VIDÉO', 'Scène ' + (item.index + 1) + ' prête en ' + (elapsed / 1000).toFixed(1) + 's');
+  } catch (e) {
+    item.status = 'failed';
+    item.progress = e.message.slice(0, 60);
+    state.failed++;
+    render();
+    logDebug('err', 'VIDÉO', 'Scène ' + (item.index + 1) + ' : ' + e.message);
+  }
+}
+
+async function regenerateVideo(i) {
+  if (!state.episode || !state.episode.scenes[i]) return;
+  var item = state.queue[i];
+  if (!item) return;
+  setStatus('Régénération du clip ' + (i + 1) + '…');
+  try {
+    item.status = 'creating';
+    render();
+    var refImg = state.images[i] ? (state.images[i].url || state.images[i].dataUri) : null;
+    if (!refImg) throw new Error('Image manquante');
+    var prompt = buildVideoPromptFromScene(state.episode.scenes[i]);
+    var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
+    item.videoId = id;
+    item.startTime = Date.now();
+    item.status = 'processing';
+    render();
+    await pollTaskAndDisplay(item);
+  } catch (e) {
+    item.status = 'failed';
+    item.progress = e.message.slice(0, 60);
+    state.failed++;
+    logDebug('err', 'VIDÉO-REGEN', 'Scène ' + (i + 1) + ' : ' + e.message);
+    render();
+  }
+  setStatus(null);
+}
+
+function processImageFile(file) {
+  return new Promise(function (resolve) {
+    if (!file.type.startsWith('image/')) { resolve(null); return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var dataUri = e.target.result;
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var c = document.createElement('canvas');
+          var ratio = img.height / img.width;
+          var w = 200;
+          c.width = w;
+          c.height = Math.round(w * ratio);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          var thumb = c.toDataURL('image/jpeg', 0.7);
+          resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: thumb, userPhoto: true });
+        } catch (err) { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri, userPhoto: true }); }
+      };
+      img.onerror = function () { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri, userPhoto: true }); };
+      img.src = dataUri;
+    };
+    reader.onerror = function () { resolve(null); };
+    reader.readAsDataURL(file);
+  });
+}
+async function handleFiles(files) {
+  var list = Array.prototype.slice.call(files).filter(function (f) { return f.type.startsWith('image/'); });
+  if (!list.length) return;
+  showToast('Chargement de ' + list.length + ' photo' + (list.length > 1 ? 's' : '') + '…', 'warn');
+  for (var i = 0; i < list.length; i++) {
+    var im = await processImageFile(list[i]);
+    if (im) state.images.push(im);
+  }
+  render();
+  showToast('Photo' + (list.length > 1 ? 's' : '') + ' ajoutée' + (list.length > 1 ? 's' : ''), 'success');
+}
+
+function init() {
+  document.querySelectorAll('.dock button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      state.tab = b.getAttribute('data-tab');
+      render();
+      window.scrollTo(0, 0);
+    });
+  });
+
+  var saveBtn = $('api-save-btn');
+  if (saveBtn) saveBtn.addEventListener('click', saveApiKey);
+  var clearBtn = $('api-clear-btn');
+  if (clearBtn) clearBtn.addEventListener('click', clearAllKeys);
+  var apiInp = $('api-key-input');
+  if (apiInp) {
+    apiInp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); }
+    });
+  }
+
+  var groqInput = $('groq-key');
+  if (groqInput) {
+    try { groqInput.value = localStorage.getItem('groq_key') || ''; } catch (e) {}
+    groqInput.addEventListener('input', function () {
+      try { localStorage.setItem('groq_key', groqInput.value.trim()); } catch (e) {}
+    });
+  }
+  var orInput = $('openrouter-key');
+  if (orInput) {
+    try { orInput.value = localStorage.getItem('openrouter_key') || ''; } catch (e) {}
+    orInput.addEventListener('input', function () {
+      try { localStorage.setItem('openrouter_key', orInput.value.trim()); } catch (e) {}
+    });
+  }
+
+  var wakeBtn = $('wake-toggle-btn');
+  if (wakeBtn) wakeBtn.addEventListener('click', toggleWakeLock);
+
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'refs-file-input') {
+      handleFiles(e.target.files);
+      e.target.value = '';
+    }
+  });
+
+  try {
+    if (localStorage.getItem(WAKE_LOCK_PREF) === '1') {
+      state.wakeEnabled = true;
+      activateWakeLock().then(updateWakeStatus);
+    }
+  } catch (e) {}
+
+  loadState();
+  if (!state.styles) state.styles = [];
+  if (!state.totalDuration) state.totalDuration = 70;
+  updateApiPanel();
+  updateApiPanelVisibility();
+  updateQuotaPanel();
+  updateWakeStatus();
+  render();
+  logDebug('ok', 'INIT', 'Fabrique de séries · Agnes prête');
+  logDebug('info', 'INIT', 'Modèles : ' + MODEL_TEXT + ' / ' + MODEL_IMAGE_DEFAULT + ' / ' + MODEL_VIDEO);
 }
 
 if (document.readyState === 'loading') {
@@ -2324,5 +3057,3 @@ if (document.readyState === 'loading') {
 </script>
 </body>
 </html>
-  
-
