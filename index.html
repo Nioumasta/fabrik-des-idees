@@ -1,4 +1,4 @@
-
+=== DÉBUT PARTIE 1 ===
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,18 +7,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#ECE8FF">
-<title>Agnes Créateur</title>
+<title>Fabrik des Idées</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;500;600;700&display=swap">
-
 <style>
 
 /* ============================================================
-   Agnes Créateur - Feuille de style
-   Style verre dépoli inspiré de la Fabrique de séries
-   Toutes les valeurs Agnes (endpoints, modèles, délais)
-   sont dans la Partie 2 (JavaScript)
+   FABRIK DES IDÉES - Feuille de style
+   Design verre dépoli violet/rose/bleu
+   Optimisé mobile-first
    ============================================================ */
 
 :root {
@@ -72,7 +70,7 @@ body {
   background: var(--bg); color: var(--fg);
   font-family: var(--font-body); font-size: 16px; line-height: 1.55;
   padding-inline: 16px;
-  padding-block: 18px 220px;;
+  padding-block: 18px 200px;
   padding-top: calc(18px + env(safe-area-inset-top, 0px));
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
@@ -89,7 +87,7 @@ body {
 #view { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
 
 h1, h2, h3, h4 { margin: 0; line-height: 1.2; text-wrap: balance; }
-h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; letter-spacing: -0.01em; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; letter-spacing: -0.01em; }
 h2 { font-size: 1.15rem; font-weight: 700; }
 h3 { font-size: 1.02rem; font-weight: 700; }
 p { margin: 0; }
@@ -117,7 +115,7 @@ button { cursor: pointer; }
   .glass { background: var(--glass-strong); }
 }
 .card { padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.hero { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }
+.hero { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; padding-bottom: 6px; }
 
 /* Boutons */
 .btn {
@@ -144,18 +142,19 @@ button { cursor: pointer; }
   align-self: flex-start; min-height: 44px;
 }
 
-/* Bandeau progression */
+/* Bandeau étapes */
 .strip {
   display: flex; gap: 8px; overflow-x: auto;
   padding: 2px 2px 8px; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .strip::-webkit-scrollbar { display: none; }
 .stage {
-  flex: none; min-width: 92px; border-radius: 16px; padding: 10px 12px;
+  flex: none; min-width: 100px; border-radius: 16px; padding: 10px 12px;
   text-align: left; color: var(--fg); background: var(--glass);
   border: 1px solid var(--glass-line);
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  display: flex; flex-direction: column; gap: 2px; min-height: 64px;
+  display: flex; flex-direction: column; gap: 2px; min-height: 68px;
 }
 .stage small { font-size: .72rem; color: var(--muted); font-weight: 600; }
 .stage b { font-size: .88rem; }
@@ -222,6 +221,7 @@ button { cursor: pointer; }
 .quota-warn {
   background: var(--warn-bg); border-radius: 12px; padding: 10px 12px;
   font-size: .8rem; color: var(--warn); font-weight: 600; line-height: 1.45;
+  display: none;
 }
 
 /* Wake */
@@ -262,7 +262,7 @@ select {
   padding-right: 38px;
 }
 
-/* Chips (choix multiples) */
+/* Chips */
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip {
   border: 1.5px solid var(--line); background: var(--glass-strong);
@@ -280,6 +280,7 @@ select {
 .scrollrow {
   flex-wrap: nowrap; overflow-x: auto;
   padding-bottom: 6px; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .scrollrow::-webkit-scrollbar { display: none; }
 .scrollrow .chip { white-space: nowrap; flex: none; }
@@ -349,10 +350,10 @@ select {
   background: var(--accent-a); color: #fff; border-color: #fff;
 }
 
-/* Grille styles (Hook Factory) */
+/* Grille styles */
 .styles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 8px;
 }
 .style-card {
@@ -371,13 +372,6 @@ select {
 .style-card .info { min-width: 0; }
 .style-card .nm { font-size: .85rem; font-weight: 700; line-height: 1.2; }
 .style-card .ds { font-size: .72rem; color: var(--muted); margin-top: 2px; line-height: 1.3; }
-.cat-h {
-  grid-column: 1 / -1; font-size: .72rem; font-weight: 700;
-  color: var(--accent-text); text-transform: uppercase;
-  letter-spacing: .1em; padding: 12px 0 4px;
-  border-bottom: 1px solid var(--line); margin-bottom: 4px;
-}
-.cat-h:first-child { padding-top: 0; border-bottom: none; }
 
 /* Bouton dé magique */
 .magic-btn {
@@ -390,17 +384,6 @@ select {
 }
 .magic-btn:active { transform: scale(.98); background: linear-gradient(135deg, rgba(109,74,232,.15), rgba(181,52,143,.15)); }
 .magic-btn .dice { font-size: 26px; }
-
-/* Boutons statut (dans les cartes) */
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px; border-radius: 99px;
-  font-size: .72rem; font-weight: 700;
-  background: var(--code-bg); color: var(--accent-text);
-}
-.status-badge.done { background: linear-gradient(135deg, var(--accent-a), var(--accent-b)); color: #fff; }
-.status-badge.working { background: var(--hot-bg); color: #8A5A20; }
-.status-badge.error { background: var(--warn-bg); color: var(--warn); }
 
 /* File d'attente */
 .queue { display: flex; flex-direction: column; gap: 6px; }
@@ -473,13 +456,6 @@ select {
   box-shadow: 0 0 0 4px rgba(109,74,232,.15);
 }
 .hook-player video { width: 100%; display: block; aspect-ratio: 9/16; object-fit: contain; background: #000; }
-.hook-player .hook-bar {
-  height: 6px; background: var(--code-bg); position: relative;
-}
-.hook-player .hook-bar-fill {
-  height: 100%; background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
-  transition: width .1s linear;
-}
 .hook-player .hook-consigne {
   padding: 12px 14px; background: var(--glass-strong);
   font-size: .82rem; font-weight: 600; color: var(--accent-text);
@@ -535,48 +511,6 @@ select {
 .debug-entry.api .c { color: var(--accent-a); }
 .debug-entry.measure .c { color: var(--accent-b); }
 
-/* Visionneuse JSON brut */
-.raw-toggle {
-  font-size: .78rem; color: var(--accent-text); font-weight: 700;
-  cursor: pointer; padding: 6px 0; display: inline-block;
-  text-decoration: underline; background: none; border: 0;
-}
-.raw-viewer {
-  display: none; margin-top: 10px;
-  padding: 12px 14px; border-radius: 12px;
-  background: var(--code-bg);
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: .74rem; line-height: 1.45;
-  max-height: 340px; overflow: auto;
-  white-space: pre-wrap; word-break: break-all;
-}
-.raw-viewer.visible { display: block; }
-
-/* Journal médias */
-.media-log {
-  display: flex; flex-direction: column; gap: 6px;
-  max-height: 340px; overflow-y: auto;
-}
-.media-log-entry {
-  display: flex; gap: 8px; padding: 10px 12px;
-  background: var(--glass-strong); border-radius: 12px;
-  font-size: .78rem; align-items: center;
-  border: 1px solid var(--line);
-}
-.media-log-entry .ml-tag {
-  font-size: .65rem; padding: 3px 8px; border-radius: 6px;
-  text-transform: uppercase; letter-spacing: .08em;
-  font-weight: 700; flex-shrink: 0;
-}
-.media-log-entry .ml-tag.image { background: rgba(232,123,53,.15); color: #8A4A20; border: 1px solid rgba(232,123,53,.3); }
-.media-log-entry .ml-tag.video { background: rgba(139,95,196,.15); color: #5A3A90; border: 1px solid rgba(139,95,196,.3); }
-.media-log-entry .ml-url {
-  flex: 1; overflow: hidden; text-overflow: ellipsis;
-  white-space: nowrap; color: var(--accent-text);
-  font-size: .72rem; text-decoration: underline;
-}
-.media-log-entry .ml-time { color: var(--muted); font-size: .7rem; flex-shrink: 0; }
-
 /* Statut de tâche (barre du bas) */
 .status-bar {
   position: fixed; left: 50%; transform: translateX(-50%) translateY(120%);
@@ -592,6 +526,7 @@ select {
   font-size: .85rem; font-weight: 600; color: var(--fg);
   z-index: 25; transition: transform .3s ease;
   max-width: calc(100% - 32px);
+  pointer-events: none;
 }
 .status-bar.visible { transform: translateX(-50%) translateY(0); }
 .status-bar .spinner {
@@ -616,8 +551,8 @@ select {
   text-align: center; pointer-events: none;
 }
 .toast.visible { opacity: 1; transform: translateY(0); }
-.toast.success { background: var(--ok); }
-.toast.error { background: var(--warn); }
+.toast.success { background: var(--ok); color: #fff; }
+.toast.error { background: var(--warn); color: #fff; }
 .toast.warn { background: #C77A20; color: #fff; }
 
 /* Dock de navigation */
@@ -639,7 +574,7 @@ select {
   color: var(--muted); border-radius: 20px;
   padding: 8px 4px; min-height: 54px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; font-size: .72rem; font-weight: 700;
+  gap: 2px; font-size: .7rem; font-weight: 700;
 }
 .dock button[aria-current="page"] {
   color: #fff;
@@ -687,12 +622,16 @@ pre.fin {
 }
 
 /* Media queries */
-@media (max-width: 420px) {
-  h1 { font-size: 1.25rem; }
+@media (max-width: 480px) {
+  body { font-size: 15px; padding-block: 14px 180px; }
+  h1 { font-size: 1.35rem; }
+  .card { padding: 14px; gap: 8px; }
+  .btn { padding: 12px 16px; min-height: 46px; font-size: .95rem; }
   .images-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
   .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .styles-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
   .dock button { font-size: .68rem; }
-  body { padding-bottom: 130px; }
+  .stage { min-width: 90px; padding: 8px 10px; }
 }
 </style>
 <script src="./styles.js"></script>
@@ -701,19 +640,15 @@ pre.fin {
 
 <div class="bg" aria-hidden="true"></div>
 
-<!-- ============================================================
-     ZONE API : clé Agnes + quotas + wake lock
-     Les champs sont remplis par le JavaScript en Partie 2
-     ============================================================ -->
 <div id="view">
   <header class="hero">
-    <span class="kicker">Agnes Créateur</span>
-    <h1>Fabrique de séries et Hook Factory</h1>
-    <p class="muted">Idées, scripts, images et vidéos avec Agnes. Gratuit dans la limite des quotas Agnes.</p>
+    <span class="kicker">Fabrik des Idées</span>
+    <h1>Créez vos séries et vos hooks vidéo</h1>
+    <p class="muted">Idées, scripts, images et vidéos avec Agnes. Gratuit dans la limite des quotas.</p>
   </header>
 
-  <!-- Panneau API -->
-  <section class="glass card api-panel" id="api-panel">
+  <!-- Panneau API (visible la 1ère fois) -->
+  <section class="glass card api-panel" id="api-panel" style="display:none;">
     <h2>Ma clé Agnes</h2>
     <input type="password" class="api-key-input" id="api-key-input"
            placeholder="Colle ta clé Agnes ici (sk-...)"
@@ -725,8 +660,6 @@ pre.fin {
       <span class="status-dot"></span>
       <span id="api-status-text">Aucune clé Agnes enregistrée</span>
     </div>
-    <div class="api-hint">
-    <!-- Clés de secours pour les autres APIs -->
     <details style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
       <summary style="cursor:pointer;font-weight:700;color:var(--accent-text);">Clés de secours (facultatif)</summary>
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
@@ -737,6 +670,7 @@ pre.fin {
         <p class="small muted">Pollinations fonctionne sans clé pour les images.</p>
       </div>
     </details>
+    <div class="api-hint">
       Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank" rel="noopener">platform.agnes-ai.com</a>
       (Settings, puis API Keys).
     </div>
@@ -748,44 +682,41 @@ pre.fin {
     </div>
   </section>
 
-  <!-- Quotas -->
+  <!-- Quotas (toujours visible) -->
   <section class="glass quota-panel" id="quota-panel">
     <h2 class="small">Quotas Agnes (compteurs locaux)</h2>
     <div class="quota-row">
       <span class="quota-label">Requêtes texte</span>
       <span class="quota-value">
-        <span id="quota-text">0</span>/30 par minute
+        <span id="quota-text">0</span>/30 min
         <span class="quota-bar"><span class="quota-bar-fill" id="quota-text-bar" style="width:0%"></span></span>
       </span>
     </div>
     <div class="quota-row">
       <span class="quota-label">Images générées</span>
       <span class="quota-value">
-        <span id="quota-image">0</span>/4000 par jour
+        <span id="quota-image">0</span>/4000 jour
         <span class="quota-bar"><span class="quota-bar-fill" id="quota-image-bar" style="width:0%"></span></span>
       </span>
     </div>
     <div class="quota-row">
       <span class="quota-label">Secondes de vidéo</span>
       <span class="quota-value">
-        <span id="quota-video">0</span>/500 par jour
+        <span id="quota-video">0</span>/500 jour
         <span class="quota-bar"><span class="quota-bar-fill" id="quota-video-bar" style="width:0%"></span></span>
       </span>
     </div>
     <div class="quota-row">
       <span class="quota-label">Créations vidéo</span>
       <span class="quota-value">
-        <span id="quota-video-rpm">0</span>/1 par minute
+        <span id="quota-video-rpm">0</span>/1 min
       </span>
     </div>
     <div class="quota-row">
-      <span class="quota-label">Vitesse vidéo mesurée</span>
+      <span class="quota-label">Vitesse mesurée</span>
       <span class="quota-value"><span id="stat-speed">en attente</span></span>
     </div>
-    <div class="quota-warn" id="quota-warn" style="display:none;">
-      ⚠️ Attention : ta sélection consomme beaucoup du quota vidéo (500 secondes par jour).
-      Réduis le nombre de clips ou la durée, ou attends demain.
-    </div>
+    <div class="quota-warn" id="quota-warn"></div>
   </section>
 
   <!-- Wake lock -->
@@ -796,9 +727,7 @@ pre.fin {
     </div>
   </section>
 
-  <!-- ============================================================
-       Contenu des onglets : rendu par le JavaScript en Partie 2
-       ============================================================ -->
+  <!-- Contenu des onglets -->
   <main id="tab-content"></main>
 </div>
 
@@ -814,41 +743,40 @@ pre.fin {
 <!-- Dock de navigation -->
 <nav class="dock" aria-label="Navigation principale">
   <button type="button" data-tab="idees" aria-current="page">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
     Idées
   </button>
-  <button type="button" data-tab="photos">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
-    Photos
+  <button type="button" data-tab="univers">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+    Univers
   </button>
-  <button type="button" data-tab="hooks">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>
-    Hooks
+  <button type="button" data-tab="refs">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
+    Références
   </button>
-  <button type="button" data-tab="episodes">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M7 6l-2-3M12 6l-2-3M17 6l-2-3"/></svg>
-    Épisodes
+  <button type="button" data-tab="videos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M7 6l-2-3M12 6l-2-3M17 6l-2-3"/></svg>
+    Vidéos
   </button>
 </nav>
 
-<!-- Canvas anti-veille (fallback) -->
+<!-- Canvas anti-veille -->
 <canvas id="noSleepCanvas" width="2" height="2" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1;"></canvas>
 <video id="noSleepVideo" playsinline muted loop style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1;"></video>
 
-<!-- ============================================================
-     La Partie 2 (JavaScript) doit être collée JUSTE ICI
-     ============================================================ -->
+<!-- PARTIE 2 À COLLER ICI -->
+
+=== DÉBUT PARTIE 2a ===
 
 <script>
 "use strict";
 
 /* ============================================================
-   AGNES CRÉATEUR : moteur JavaScript
-   Toutes les constantes Agnes, délais et parseurs sont repris
-   à l'identique depuis les fichiers sources de la créatrice.
+   FABRIK DES IDÉES : moteur JavaScript
+   Constantes Agnes, délais, parsers, API
    ============================================================ */
 
-/* ---------- 1. CONSTANTES AGNES (identiques à Kata Studio) ---------- */
+/* ---------- 1. CONSTANTES AGNES ---------- */
 var API_BASE = 'https://apihub.agnes-ai.com/v1';
 var POLL_BASE = 'https://apihub.agnes-ai.com/agnesapi';
 var MODEL_TEXT = 'agnes-2.5-flash';
@@ -857,7 +785,6 @@ var MODEL_IMAGE_ALT = 'agnes-image-2.5-flash';
 var MODEL_VIDEO = 'agnes-video-v2.0';
 var FRAME_RATE = 24;
 
-/* Délais (Kata Studio = référence) */
 var VIDEO_INTERVAL_MIN = 62000;
 var VIDEO_INTERVAL_MAX = 90000;
 var VIDEO_INTERVAL_SAFE = 75000;
@@ -874,11 +801,9 @@ var IMAGE_DAILY_LIMIT = 4000;
 var VIDEO_DAILY_SECONDS = 500;
 var VIDEO_RPM_LIMIT = 1;
 
-/* Délais 429 et 503 (Kata Studio) */
 var RETRY_429 = [10, 20, 35, 50, 75, 100, 150];
 var RETRY_503 = [5, 10, 15, 20, 30, 45];
 
-/* num_frames trouvés dans les fichiers sources 1, 3, 4, 5 */
 var DURATIONS = [
   { frames: 121, s: 5.04, label: '5 s',       mode: 'hook' },
   { frames: 145, s: 6.04, label: '6 s',       mode: 'both' },
@@ -892,12 +817,12 @@ var DURATIONS = [
 var HOOK_MIN_SECONDS = 61;
 var HOOK_IDEAL_SECONDS = 3;
 
-/* Stockage local */
-var STORE = 'agnes_createur_v1';
-var API_KEY_STORAGE = 'agnes_createur_key';
-var EXTERNAL_KEY_STORAGE = 'agnes_createur_ext_keys';
-var WAKE_LOCK_PREF = 'agnes_createur_wakelock';
-var TIMING_CACHE_KEY = 'agnes_createur_timing';
+var STORE = 'fabrik_des_idees_v1';
+var API_KEY_STORAGE = 'fabrik_api_key';
+var EXTERNAL_KEY_STORAGE = 'fabrik_ext_keys';
+var WAKE_LOCK_PREF = 'fabrik_wakelock';
+var TIMING_CACHE_KEY = 'fabrik_timing';
+var PREFS_KEY = 'fabrik_prefs';
 
 /* ============================================================
    ÉTAT GLOBAL
@@ -933,7 +858,8 @@ var state = {
     lastResetTime: Date.now()
   },
   wakeEnabled: false,
-  fallbackMode: null
+  fallbackMode: null,
+  apiKeyPanelShown: false
 };
 
 /* ============================================================
@@ -1090,7 +1016,9 @@ function saveApiKey() {
   }
   try {
     localStorage.setItem(API_KEY_STORAGE, k);
+    try { localStorage.setItem(PREFS_KEY, '1'); } catch (e) {}
     updateApiPanel();
+    updateApiPanelVisibility();
     showToast('Clé Agnes enregistrée', 'success');
     inp.blur();
   } catch (e) { showToast('Sauvegarde impossible', 'error'); }
@@ -1100,11 +1028,13 @@ function clearAllKeys() {
   try {
     localStorage.removeItem(API_KEY_STORAGE);
     localStorage.removeItem(EXTERNAL_KEY_STORAGE);
+    localStorage.removeItem(PREFS_KEY);
   } catch (e) {}
   var inp = $('api-key-input');
   if (inp) inp.value = '';
   state.externalKey = '';
   updateApiPanel();
+  updateApiPanelVisibility();
   showToast('Clés effacées', 'warn');
 }
 function updateApiPanel() {
@@ -1124,6 +1054,20 @@ function updateApiPanel() {
     txt.textContent = 'Aucune clé Agnes enregistrée';
     inp.value = '';
     inp.placeholder = 'Colle ta clé Agnes ici (sk-...)';
+  }
+}
+function updateApiPanelVisibility() {
+  var panel = $('api-panel');
+  if (!panel) return;
+  var hasKey = !!getApiKey();
+  var seen = false;
+  try { seen = localStorage.getItem(PREFS_KEY) === '1'; } catch (e) {}
+  if (!hasKey && !seen) {
+    panel.style.display = 'block';
+    state.apiKeyPanelShown = true;
+  } else {
+    panel.style.display = 'none';
+    state.apiKeyPanelShown = false;
   }
 }
 
@@ -1172,7 +1116,7 @@ function checkQuotaWarn(frames, count) {
 }
 
 /* ============================================================
-   VITESSE MESURÉE (cache timing)
+   VITESSE MESURÉE
    ============================================================ */
 function loadTimingCache() {
   try { return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY) || '{}'); }
@@ -1210,7 +1154,7 @@ function updateSpeedDisplay() {
 }
 
 /* ============================================================
-   WAKE LOCK (API + fallback canvas)
+   WAKE LOCK
    ============================================================ */
 var wakeLockSentinel = null;
 var canvasStream = null;
@@ -1325,10 +1269,8 @@ async function toggleWakeLock() {
   updateWakeStatus();
 }
 
-
-
 /* ============================================================
-   PARSEUR JSON À 5 STRATÉGIES (repris de Kata Studio)
+   PARSEUR JSON À 5 STRATÉGIES
    ============================================================ */
 function escapeControlCharsInStrings(text) {
   var result = '', inString = false, escape = false, i, ch, code;
@@ -1396,16 +1338,12 @@ function extractJson(text, kind) {
     var r1 = JSON.parse(c);
     logDebug('ok', 'PARSE', 'Stratégie 1 (directe) OK');
     return r1;
-  } catch (e1) {
-    logDebug('warn', 'PARSE', 'Stratégie 1 échouée');
-  }
+  } catch (e1) { logDebug('warn', 'PARSE', 'Stratégie 1 échouée'); }
   try {
     var r2 = JSON.parse(escapeControlCharsInStrings(c));
     logDebug('ok', 'PARSE', 'Stratégie 2 (échappement) OK');
     return r2;
-  } catch (e2) {
-    logDebug('warn', 'PARSE', 'Stratégie 2 échouée');
-  }
+  } catch (e2) { logDebug('warn', 'PARSE', 'Stratégie 2 échouée'); }
   try {
     var lb = c.lastIndexOf('}');
     if (lb > 0) {
@@ -1413,25 +1351,19 @@ function extractJson(text, kind) {
       logDebug('ok', 'PARSE', 'Stratégie 3 (troncature) OK');
       return r3;
     }
-  } catch (e3) {
-    logDebug('warn', 'PARSE', 'Stratégie 3 échouée');
-  }
+  } catch (e3) { logDebug('warn', 'PARSE', 'Stratégie 3 échouée'); }
   try {
     var r4 = JSON.parse(balanceJson(escapeControlCharsInStrings(c)));
     logDebug('ok', 'PARSE', 'Stratégie 4 (équilibrage) OK');
     return r4;
-  } catch (e4) {
-    logDebug('warn', 'PARSE', 'Stratégie 4 échouée');
-  }
+  } catch (e4) { logDebug('warn', 'PARSE', 'Stratégie 4 échouée'); }
   try {
     var salv = salvageScenario(c);
     if (salv && salv.scenes.length) {
       logDebug('ok', 'PARSE', 'Stratégie 5 (regex) OK : ' + salv.scenes.length + ' scènes');
       return salv;
     }
-  } catch (e5) {
-    logDebug('err', 'PARSE', 'Stratégie 5 échouée');
-  }
+  } catch (e5) { logDebug('err', 'PARSE', 'Stratégie 5 échouée'); }
   logDebug('err', 'PARSE', 'Aucune stratégie n\'a fonctionné');
   return null;
 }
@@ -1474,7 +1406,7 @@ async function apiFetch(url, options, label, kind) {
 }
 
 /* ============================================================
-   CALL TEXTE : Agnes ou compatibles OpenAI
+   CALL TEXTE : Agnes
    ============================================================ */
 async function callAgnesText(system, user, temperature, maxTokens) {
   state.counters.textRequests++;
@@ -1506,6 +1438,7 @@ async function callAgnesText(system, user, temperature, maxTokens) {
   if (!content) throw new Error('Pas de contenu texte');
   return content;
 }
+
 /* ============================================================
    TEXTES DE SECOURS : Groq et OpenRouter
    ============================================================ */
@@ -1539,7 +1472,6 @@ async function callGroqText(system, user, temperature, maxTokens) {
   if (!content) throw new Error('Pas de contenu Groq');
   return content;
 }
-
 async function callOpenRouterText(system, user, temperature, maxTokens) {
   var orKey = '';
   try { orKey = (localStorage.getItem('openrouter_key') || '').trim(); } catch (e) {}
@@ -1582,7 +1514,7 @@ async function callExternalText(system, user, temperature, maxTokens) {
     temperature: temperature || 0.85,
     max_tokens: maxTokens || 4000
   };
-  logDebug('api', 'TEXTE', 'Externe → ' + state.externalUrl + ' (' + state.externalModel + ')');
+  logDebug('api', 'TEXTE', 'Externe → ' + state.externalUrl);
   try {
     var res = await apiFetch(state.externalUrl, {
       method: 'POST',
@@ -1594,15 +1526,15 @@ async function callExternalText(system, user, temperature, maxTokens) {
     }, 'Texte externe', 'text');
     if (!res.ok) {
       var err = await res.text();
-      throw new Error('Texte externe HTTP ' + res.status + ' : ' + err.slice(0, 200));
+      throw new Error('Texte externe HTTP ' + res.status);
     }
     var data = await res.json();
     var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
     if (!content) throw new Error('Pas de contenu');
     return content;
   } catch (e) {
-    if (e.message && (e.message.indexOf('Failed to fetch') >= 0 || e.message.indexOf('NetworkError') >= 0 || e.name === 'TypeError')) {
-      logDebug('err', 'CORS', 'Refus navigateur (CORS) pour le service externe');
+    if (e.message && (e.message.indexOf('Failed to fetch') >= 0 || e.name === 'TypeError')) {
+      logDebug('err', 'CORS', 'Refus navigateur');
       state.fallbackMode = { prompt: user, system: system };
       throw new Error('CORS : ton navigateur refuse l\'appel direct. Passe en mode copier-coller.');
     }
@@ -1644,23 +1576,17 @@ async function callAgnesImage(prompt, size) {
   if (item.b64_json) return 'data:image/png;base64,' + item.b64_json;
   throw new Error('Format image inconnu');
 }
-/* ============================================================
-   IMAGE DE SECOURS : Pollinations (gratuit, sans clé)
-   ============================================================ */
 async function callPollinationsImage(prompt, size) {
   state.counters.imagesGenerated++;
   updateQuotaPanel();
   size = size || '1024x1792';
   logDebug('api', 'IMAGE', 'Pollinations (secours)');
-  /* Pollinations : simple URL GET */
   var encoded = encodeURIComponent(prompt);
-  var url = 'https://image.pollinations.ai/prompt/' + encoded + '?width=1024&height=1792&nologo=true&model=flux';
-  /* On retourne directement l'URL, c'est une image distante */
-  return url;
+  return 'https://image.pollinations.ai/prompt/' + encoded + '?width=1024&height=1792&nologo=true&model=flux';
 }
 
 /* ============================================================
-   CALL VIDEO (création + polling, délais Kata Studio)
+   CALL VIDEO
    ============================================================ */
 async function createVideoTask(prompt, firstFrame, lastFrame, numFrames) {
   var now = Date.now();
@@ -1686,7 +1612,7 @@ async function createVideoTask(prompt, firstFrame, lastFrame, numFrames) {
   };
   if (lastFrame) body.last_frame = lastFrame;
 
-  logDebug('api', 'VIDÉO', MODEL_VIDEO + ' · ' + numFrames + ' frames (' + (numFrames / FRAME_RATE).toFixed(2) + 's)');
+  logDebug('api', 'VIDÉO', MODEL_VIDEO + ' · ' + numFrames + ' frames');
   var res = await apiFetch(API_BASE + '/videos', {
     method: 'POST',
     headers: {
@@ -1750,7 +1676,7 @@ async function pollVideo(videoId, onProgress, numFrames) {
 }
 
 /* ============================================================
-   TEST DE CONNEXION (mode 5b)
+   TEST DE CONNEXION
    ============================================================ */
 var SERVICES = {
   openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini', label: 'OpenAI' },
@@ -1759,68 +1685,9 @@ var SERVICES = {
   xai: { url: 'https://api.x.ai/v1/chat/completions', model: 'grok-2-latest', label: 'xAI (Grok)' },
   autre: { url: '', model: '', label: 'Autre service compatible OpenAI' }
 };
-async function testConnection() {
-  var url = state.externalUrl, key = state.externalKey, model = state.externalModel;
-  if (!url || !key || !model) {
-    showToast('Remplis l\'adresse, la clé et le modèle', 'error');
-    return;
-  }
-  var box = $('test-result');
-  if (box) {
-    box.className = 'warnbox';
-    box.textContent = 'Test en cours…';
-    box.style.display = 'block';
-  }
-  try {
-    var res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + key,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [{ role: 'user', content: 'Réponds juste "ok".' }],
-        max_tokens: 5
-      })
-    });
-    if (res.ok) {
-      if (box) {
-        box.className = 'okbox';
-        box.innerHTML = '✅ Connexion réussie. Le service a répondu correctement.';
-        box.style.display = 'block';
-      }
-      logDebug('ok', 'TEST', 'Connexion OK vers ' + url);
-    } else {
-      var txt = await res.text();
-      var msg = '';
-      if (res.status === 401 || res.status === 403) msg = '🔑 Clé refusée. Vérifie ta clé.';
-      else if (res.status === 404) msg = '❌ Modèle introuvable ou adresse incorrecte.';
-      else msg = '❌ Erreur ' + res.status + ' : ' + txt.slice(0, 200);
-      if (box) {
-        box.className = 'warnbox';
-        box.innerHTML = msg;
-        box.style.display = 'block';
-      }
-      logDebug('warn', 'TEST', 'HTTP ' + res.status);
-    }
-  } catch (e) {
-    var corsMsg = '⚠️ Ton navigateur a bloqué l\'appel (probablement une protection CORS du service). Tu peux quand même utiliser ce service en mode copier-coller.';
-    if (box) {
-      box.className = 'warnbox';
-      box.innerHTML = corsMsg;
-      box.style.display = 'block';
-    }
-    logDebug('err', 'TEST', 'CORS/Network : ' + e.message);
-    state.fallbackMode = { prompt: 'Ce mode est un test.', system: 'test' };
-  }
-}
 
 /* ============================================================
-   BANQUE DE STYLES ALÉATOIRES (Hook Factory)
-   ============================================================ */
-/* ============================================================
-   CHARGEMENT DES STYLES depuis styles.js
+   CHARGEMENT DES STYLES
    ============================================================ */
 var STYLE_BANK = [];
 if (typeof STYLES_LIBRARY !== 'undefined' && STYLES_LIBRARY) {
@@ -1833,17 +1700,520 @@ if (typeof STYLES_LIBRARY !== 'undefined' && STYLES_LIBRARY) {
   });
   logDebug('ok', 'STYLES', STYLE_BANK.length + ' styles chargés depuis ' + allCategories.length + ' catégories');
 } else {
-  logDebug('err', 'STYLES', 'styles.js non trouvé. Vérifie l\'upload sur Netlify.');
+  logDebug('err', 'STYLES', 'styles.js non trouvé');
 }
+
+=== DÉBUT PARTIE 2b ===
+
 /* ============================================================
-   GÉNÉRATION DE SCÉNARIO / PROMPTS
+   RENDU DES ONGLETS
+   ============================================================ */
+function render() {
+  var c = $('tab-content');
+  if (!c) return;
+  var html = '';
+  if (state.tab === 'idees') html = renderIdees();
+  else if (state.tab === 'univers') html = renderUnivers();
+  else if (state.tab === 'refs') html = renderRefs();
+  else if (state.tab === 'videos') html = renderVideos();
+  c.innerHTML = html;
+  document.querySelectorAll('.dock button').forEach(function (b) {
+    if (b.getAttribute('data-tab') === state.tab) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  bindTabEvents();
+}
+
+/* ============================================================
+   ONGLET IDÉES
+   ============================================================ */
+function renderIdees() {
+  var prov = state.textProvider;
+  var h = '';
+  h += '<section class="glass card"><h2>1. Mon idée</h2>' +
+    '<div class="stack">' +
+    '<label class="q">Décris ton idée<span class="q-hint">Une phrase suffit. Ou utilise Surprends-moi.</span></label>' +
+    '<textarea id="idea-input" placeholder="Exemple : une laverie de quartier où chaque machine révèle un secret…">' + esc(state.idea) + '</textarea>' +
+    '<div class="rowbtns">' +
+    '<button class="btn ghost" data-act="surprise">🎲 Surprends-moi</button>' +
+    '</div>' +
+    '<div class="row">' +
+    '<div style="flex:1;min-width:140px"><label class="q">Ton</label><select id="tone-select">' +
+    ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'].map(function (t) {
+      return '<option value="' + t + '"' + (state.tone === t ? ' selected' : '') + '>' + t + '</option>';
+    }).join('') +
+    '</select></div>' +
+    '<div style="flex:1;min-width:140px"><label class="q">Thème</label><input type="text" id="theme-input" placeholder="famille, amitié…" value="' + esc(state.theme) + '"></div>' +
+    '</div>' +
+    '</div></section>';
+
+  h += '<section class="glass card"><h2>2. Format</h2>' +
+    '<div class="mode-toggle">' +
+    '<div class="mode-option' + (state.mode === 'serie' ? ' selected' : '') + '" data-act="mode" data-v="serie"><div class="mo-icon">📺</div><div class="mo-name">Épisode de série</div><div class="mo-desc">Au moins 61 secondes au total</div></div>' +
+    '<div class="mode-option' + (state.mode === 'hook' ? ' selected' : '') + '" data-act="mode" data-v="hook"><div class="mo-icon">⚡</div><div class="mo-name">Hook court</div><div class="mo-desc">Garde les 3 premières secondes dans CapCut</div></div>' +
+    '</div>' +
+    '<div class="stack" style="margin-top:12px">' +
+    '<label class="q">Durée d\'un clip<span class="q-hint">Valeurs trouvées dans tes fichiers sources.</span></label>' +
+    '<select id="duration-select">' +
+    DURATIONS.filter(function (d) { return state.mode === 'hook' ? d.mode !== 'serie' : d.mode !== 'hook'; }).map(function (d) {
+      var cur = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
+      return '<option value="' + d.frames + '"' + (cur === d.frames ? ' selected' : '') + '>' + d.label + ' (' + d.frames + ' frames)</option>';
+    }).join('') +
+    '</select>' +
+    '<div id="duration-info" class="small muted"></div>' +
+    '</div></section>';
+
+  h += '<section class="glass card"><h2>3. IA pour le texte</h2>' +
+    '<div class="stack">' +
+    '<button class="chip" data-act="provider" data-v="agnes" aria-pressed="' + (prov === 'agnes') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Agnes (recommandé)</b><br><span class="small muted">Même clé que pour les images et vidéos.</span></button>' +
+    '<button class="chip" data-act="provider" data-v="openai-compat" aria-pressed="' + (prov === 'openai-compat') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Autre service (clé API)</b><br><span class="small muted">OpenAI, Mistral, Groq, xAI.</span></button>' +
+    '<button class="chip" data-act="provider" data-v="copier-coller" aria-pressed="' + (prov === 'copier-coller') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Copier-coller manuel</b><br><span class="small muted">Colle le prompt dans l\'IA de ton choix.</span></button>' +
+    '</div>';
+
+  if (prov === 'openai-compat') {
+    h += '<div class="stack" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">' +
+      '<label class="q">Service</label>' +
+      '<select id="ext-service">' +
+      Object.keys(SERVICES).map(function (k) {
+        return '<option value="' + k + '"' + (state.externalService === k ? ' selected' : '') + '>' + SERVICES[k].label + '</option>';
+      }).join('') +
+      '</select>' +
+      '<label class="q">Adresse</label>' +
+      '<input type="url" id="ext-url" value="' + esc(state.externalUrl) + '">' +
+      '<label class="q">Modèle</label>' +
+      '<input type="text" id="ext-model" value="' + esc(state.externalModel) + '">' +
+      '<label class="q">Clé API</label>' +
+      '<input type="password" id="ext-key" value="' + esc(state.externalKey) + '" placeholder="sk-...">' +
+      '<div class="api-security">🔒 Clé stockée uniquement sur ton appareil.</div>' +
+      '<div id="test-result" style="display:none;"></div>' +
+      '</div>';
+  }
+  if (prov === 'copier-coller') {
+    h += '<div class="hotbox" style="margin-top:14px">Le mode copier-coller affichera un prompt à copier dans l\'IA de ton choix, puis à recoller ici.</div>';
+  }
+  h += '</section>';
+
+  h += '<section class="glass card"><h2>4. Modèle d\'image</h2>' +
+    '<label class="q">Modèle Agnes pour les images</label>' +
+    '<select id="image-model">' +
+    '<option value="' + MODEL_IMAGE_DEFAULT + '"' + (state.imageModel === MODEL_IMAGE_DEFAULT ? ' selected' : '') + '>agnes-image-2.1-flash (par défaut)</option>' +
+    '<option value="' + MODEL_IMAGE_ALT + '"' + (state.imageModel === MODEL_IMAGE_ALT ? ' selected' : '') + '>agnes-image-2.5-flash (alternatif)</option>' +
+    '</select></section>';
+
+  h += '<section class="glass card"><h2>5. Générer</h2>' +
+    '<p class="small muted">Lance la génération d\'un script. Tu verras ensuite les prompts d\'images et de vidéos, modifiables.</p>' +
+    '<button class="btn big" data-act="gen-script">✍️ Générer le script</button>' +
+    '<div id="script-output"></div></section>';
+
+  h += debugPanelHtml();
+  return h;
+}
+
+/* ============================================================
+   ONGLET UNIVERS
+   ============================================================ */
+function renderUnivers() {
+  var ep = state.episode;
+  var h = '';
+  if (!ep) {
+    h += '<section class="glass empty"><div class="big">🌌</div><h3>Pas encore d\'univers</h3><p class="muted">Génère d\'abord un script dans l\'onglet Idées pour construire ton univers.</p><button class="btn" data-act="go-idees">Aller aux Idées</button></section>';
+  } else {
+    h += '<section class="glass card"><h2>' + esc(ep.title || 'Univers') + '</h2>' +
+      '<p class="muted">' + esc(ep.logline || '') + '</p>' +
+      '<p class="small muted">' + ep.scenes.length + ' scènes · ' + (ep.scenes.length * (state.durationFrames / FRAME_RATE)).toFixed(1) + ' s au total</p>' +
+      '</section>';
+
+    h += '<section class="glass card"><h2>Décors et personnages</h2>' +
+      '<p class="small muted">Agnes les déduit du script. Tu peux les modifier librement.</p>';
+    ep.scenes.forEach(function (sc, i) {
+      h += '<details class="glass" style="padding:12px;margin-bottom:8px;">' +
+        '<summary style="cursor:pointer;font-weight:700;">Scène ' + (i + 1) + ' · ' + esc((sc.description || '').slice(0, 50)) + '</summary>' +
+        '<div class="stack" style="margin-top:10px">' +
+        '<b class="small">Lieu / Décor</b>' +
+        '<textarea id="sc-lieu-' + i + '" style="min-height:60px">' + esc(sc.lieu || '') + '</textarea>' +
+        '<b class="small">Personnages présents</b>' +
+        '<textarea id="sc-persos-' + i + '" style="min-height:60px">' + esc(sc.persos || '') + '</textarea>' +
+        '<b class="small">Ambiance</b>' +
+        '<input type="text" id="sc-ambiance-' + i + '" value="' + esc(sc.ambiance || '') + '">' +
+        '<button class="btn ghost" data-act="save-scene" data-v="' + i + '">Enregistrer</button>' +
+        '</div></details>';
+    });
+    h += '</section>';
+  }
+  h += debugPanelHtml();
+  return h;
+}
+
+/* ============================================================
+   ONGLET RÉFÉRENCES
+   ============================================================ */
+function renderRefs() {
+  var ep = state.episode;
+  var h = '';
+  if (!ep) {
+    h += '<section class="glass empty"><div class="big">📸</div><h3>Pas encore de références</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="go-idees">Aller aux Idées</button></section>';
+  } else {
+    h += '<section class="glass card"><h2>Générer les références</h2>' +
+      '<p class="small muted">L\'appli peut générer une image de référence pour chaque personnage et chaque lieu. Ces images serviront ensuite pour les vidéos, pour garder une cohérence visuelle parfaite.</p>' +
+      '<button class="btn big" data-act="gen-refs">🎨 Générer les images de référence</button>' +
+      '<div id="refs-grid" class="images-grid"></div>' +
+      '</section>';
+
+    h += '<section class="glass card"><h2>Ou utiliser tes propres photos</h2>' +
+      '<p class="small muted">Tu peux aussi uploader des photos pour servir de référence.</p>' +
+      '<label class="upload-zone" for="refs-file-input"><input type="file" id="refs-file-input" accept="image/*" multiple><div class="icon">＋</div><div class="t1">Ajouter des photos</div><div class="t2">Personnages, décors</div></label>' +
+      '<div class="images-grid" id="refs-user-grid">' +
+      state.images.map(function (im) {
+        return '<div class="image-card"><img src="' + (im.thumbnail || im.dataUri) + '" alt=""></div>';
+      }).join('') +
+      '</div>' +
+      '</section>';
+  }
+  h += debugPanelHtml();
+  return h;
+}
+
+/* ============================================================
+   ONGLET VIDÉOS
+   ============================================================ */
+function renderVideos() {
+  var ep = state.episode;
+  var h = '';
+  if (!ep) {
+    h += '<section class="glass empty"><div class="big">🎬</div><h3>Pas encore de vidéos</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="go-idees">Aller aux Idées</button></section>';
+  } else {
+    h += '<section class="glass card"><h2>Générer les vidéos</h2>' +
+      '<p class="small muted">Chaque scène devient un clip vidéo avec Agnes. Les prompts sont automatiquement construits à partir du script.</p>' +
+      '<label class="q">Durée d\'un clip</label>' +
+      '<select id="video-duration">' +
+      DURATIONS.map(function (d) {
+        return '<option value="' + d.frames + '"' + (d.frames === state.durationFrames ? ' selected' : '') + '>' + d.label + ' (' + d.frames + ' frames)</option>';
+      }).join('') +
+      '</select>' +
+      '<p class="small muted" id="video-estimate"></p>' +
+      '<button class="btn big" data-act="start-videos"' + (getApiKey() ? '' : ' disabled') + '>🚀 Générer les clips</button>' +
+      '<button class="btn ghost" data-act="stop-videos" style="display:' + (state.isRunning ? 'block' : 'none') + '">⏹ Arrêter</button>' +
+      '</section>';
+
+    h += '<section class="glass card"><h2>Prompts des scènes</h2>';
+    ep.scenes.forEach(function (sc, i) {
+      var vp = buildVideoPromptFromScene(sc);
+      h += '<details class="glass" style="padding:12px;margin-bottom:8px;">' +
+        '<summary style="cursor:pointer;font-weight:700;">Scène ' + (i + 1) + ' · ' + esc((sc.description || '').slice(0, 50)) + '</summary>' +
+        '<div class="stack" style="margin-top:10px">' +
+        '<b class="small">Prompt vidéo</b>' +
+        '<pre class="fin" id="vp-' + i + '">' + esc(vp) + '</pre>' +
+        '<button class="btn ghost" data-act="copy-prompt" data-v="vp-' + i + '">Copier</button>' +
+        '</div></details>';
+    });
+    h += '</section>';
+
+    if (state.queue.length) {
+      h += '<section class="glass card"><h2>File d\'attente</h2>';
+      h += renderQueue();
+      h += '</section>';
+    }
+
+    h += '<section class="glass card"><h2>Galerie des clips</h2>' +
+      '<div class="gallery-grid" id="gallery-grid"></div>' +
+      '</section>';
+
+    h += '<section class="glass card"><h2>Montage final</h2>' +
+      '<p class="small muted">Une fois les clips générés, l\'appli pourra les assembler en une seule vidéo grâce à FFmpeg intégré.</p>' +
+      '<button class="btn big" data-act="montage" disabled>🎬 Monter la vidéo (bientôt disponible)</button>' +
+      '<p class="small muted">En attendant, tu peux télécharger chaque clip et les assembler dans CapCut ou VN Editor.</p>' +
+      '</section>';
+
+    h += '<section class="glass card"><h2>Export</h2>' +
+      '<div class="rowbtns">' +
+      '<button class="btn ghost" data-act="export-json">Export JSON</button>' +
+      '<button class="btn ghost" data-act="export-csv">Export CSV</button>' +
+      '</div>' +
+      '</section>';
+  }
+  h += debugPanelHtml();
+  return h;
+}
+
+/* ============================================================
+   FILE D'ATTENTE
+   ============================================================ */
+function renderQueue() {
+  if (!state.queue.length) return '';
+  var total = state.queue.length;
+  var done = state.queue.filter(function (q) { return q.status === 'done'; }).length;
+  var failed = state.queue.filter(function (q) { return q.status === 'failed'; }).length;
+  var processing = state.queue.filter(function (q) { return q.status === 'processing' || q.status === 'creating'; }).length;
+  var h = '<div class="queue-summary">' +
+    '<span class="progress-text">' + done + ' / ' + total + ' prêts</span>' +
+    (failed ? '<span style="color:#9E1F2B">' + failed + ' échec' + (failed > 1 ? 's' : '') + '</span>' : '') +
+    (processing ? '<span>' + processing + ' en cours</span>' : '') +
+    '</div><div class="queue">';
+  state.queue.slice(0, 30).forEach(function (q) {
+    var cls = 'pending', icon = '○', label = 'En file';
+    if (q.status === 'creating') { cls = 'creating'; icon = '◐'; label = 'Préparation…'; }
+    else if (q.status === 'processing') { cls = 'processing'; icon = '◐'; label = q.progress || 'En cours…'; }
+    else if (q.status === 'done') { cls = 'done'; icon = '●'; label = 'Prêt'; }
+    else if (q.status === 'failed') { cls = 'failed'; icon = '✕'; label = q.progress || 'Échec'; }
+    h += '<div class="queue-item ' + cls + '">' +
+      '<div class="q-icon">' + icon + '</div>' +
+      '<div class="q-name">Scène ' + (q.index + 1) + '</div>' +
+      '<div class="q-status">' + esc(label) + '</div>' +
+      '</div>';
+  });
+  if (state.queue.length > 30) h += '<p class="small muted">… et ' + (state.queue.length - 30) + ' autres</p>';
+  h += '</div>';
+  return h;
+}
+
+/* ============================================================
+   GALERIE
+   ============================================================ */
+function renderGallery() {
+  var grid = $('gallery-grid');
+  if (!grid) return;
+  var done = state.queue.filter(function (q) { return q.status === 'done' && q.videoUrl; });
+  if (!done.length) return;
+  grid.innerHTML = done.map(function (q) {
+    return '<div class="gallery-item">' +
+      '<video src="' + q.videoUrl + '" controls preload="metadata" playsinline muted></video>' +
+      '<div class="g-caption"><div class="g-style">Scène ' + (q.index + 1) + '</div></div>' +
+      '<div class="g-actions">' +
+      '<button data-act="play-hook" data-v="' + q.index + '">▶ 3s</button>' +
+      '<a href="' + q.videoUrl + '" download="scene-' + (q.index + 1) + '.mp4" target="_blank" rel="noopener">⬇ Télécharger</a>' +
+      '</div>' +
+      '</div>';
+  }).join('');
+}
+
+/* ============================================================
+   PANNEAU DEBUG
+   ============================================================ */
+function debugPanelHtml() {
+  return '<section class="glass debug-panel collapsed" id="debug-wrap">' +
+    '<div class="debug-header" data-act="toggle-debug">' +
+    '<span class="debug-title">🖥️ Console de débogage <span class="debug-count" id="debug-count">0</span></span>' +
+    '<div class="debug-actions">' +
+    '<button data-act="clear-debug" type="button">Effacer</button>' +
+    '<button data-act="toggle-debug" type="button">▾</button>' +
+    '</div>' +
+    '</div>' +
+    '<div class="debug-body" id="debug-body"></div>' +
+    '</section>';
+}
+
+/* ============================================================
+   CONSTRUCTION DU PROMPT VIDÉO
+   ============================================================ */
+function buildVideoPromptFromScene(scene) {
+  var parts = [];
+  if (scene.action_prompt) parts.push('Action: ' + scene.action_prompt);
+  if (scene.camera) parts.push('Camera: ' + scene.camera);
+  if (scene.light) parts.push('Lighting: ' + scene.light);
+  parts.push('Vertical 9:16, 24fps, no cuts, no text, no watermark, no music, natural ambient sound only.');
+  return parts.join('. ');
+}
+
+/* ============================================================
+   ÉVÉNEMENTS
+   ============================================================ */
+function bindTabEvents() {
+  var wrap = $('tab-content');
+  if (!wrap) return;
+  if (!wrap.__bound) {
+    wrap.__bound = true;
+    wrap.addEventListener('click', onTabClick);
+    wrap.addEventListener('change', onTabChange);
+    wrap.addEventListener('input', onTabInput);
+  }
+  if (state.tab === 'videos') setTimeout(renderGallery, 30);
+  updateDurationInfo();
+}
+
+function updateDurationInfo() {
+  var el = $('duration-info');
+  if (!el) return;
+  var frames = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
+  var clips = state.mode === 'serie' ? Math.ceil(HOOK_MIN_SECONDS / (frames / FRAME_RATE)) : 0;
+  if (state.mode === 'serie') {
+    el.textContent = 'Pour atteindre ' + HOOK_MIN_SECONDS + ' secondes, il faut ' + clips + ' clips de ' + (frames / FRAME_RATE).toFixed(1) + ' s.';
+  } else {
+    el.textContent = 'Le hook idéal dure 3 secondes. Chaque clip fait ' + (frames / FRAME_RATE).toFixed(1) + ' s.';
+  }
+}
+
+function onTabClick(e) {
+  var b = e.target.closest('[data-act]');
+  if (!b) return;
+  var act = b.getAttribute('data-act');
+  var v = b.getAttribute('data-v');
+
+  if (act === 'mode') {
+    state.mode = v;
+    if (v === 'hook') state.durationFramesHook = 121;
+    else state.durationFrames = 241;
+    saveState(); render();
+  }
+  else if (act === 'provider') {
+    state.textProvider = v;
+    saveState(); render();
+  }
+  else if (act === 'surprise') {
+    var tones = ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'];
+    var themes = ['famille', 'amitié', 'mystère', 'rue', 'école', 'travail', 'amour', 'voyage', 'secret'];
+    state.tone = randomItem(tones);
+    state.theme = randomItem(themes);
+    saveState(); render();
+    showToast('Ambiance tirée : ' + state.tone + ', ' + state.theme, 'success');
+  }
+  else if (act === 'gen-script') { doGenerateScript(); }
+  else if (act === 'go-idees') { state.tab = 'idees'; render(); }
+  else if (act === 'gen-refs') { doGenerateRefs(); }
+  else if (act === 'start-videos') { startVideoGeneration(); }
+  else if (act === 'stop-videos') { state.stopRequested = true; showToast('Arrêt demandé…', 'warn'); }
+  else if (act === 'montage') { showToast('Montage FFmpeg bientôt disponible', 'warn'); }
+  else if (act === 'save-scene') {
+    var idx = parseInt(v, 10);
+    var sc = state.episode.scenes[idx];
+    if (sc) {
+      var lieu = $('sc-lieu-' + idx);
+      var persos = $('sc-persos-' + idx);
+      var ambiance = $('sc-ambiance-' + idx);
+      if (lieu) sc.lieu = lieu.value;
+      if (persos) sc.persos = persos.value;
+      if (ambiance) sc.ambiance = ambiance.value;
+      saveState();
+      showToast('Scène ' + (idx + 1) + ' enregistrée', 'success');
+    }
+  }
+  else if (act === 'copy-prompt') {
+    var pre = $(v);
+    if (pre) { copyText(pre.textContent); showToast('Copié', 'success'); }
+  }
+  else if (act === 'export-json') { exportJson(); }
+  else if (act === 'export-csv') { exportCsv(); }
+  else if (act === 'toggle-debug') {
+    var panel = $('debug-wrap');
+    if (panel) panel.classList.toggle('collapsed');
+  }
+  else if (act === 'clear-debug') { clearDebug(); }
+  else if (act === 'play-hook') { playHookByIndex(parseInt(v, 10)); }
+}
+
+function onTabChange(e) {
+  var id = e.target.id;
+  if (id === 'duration-select') {
+    var f = parseInt(e.target.value, 10);
+    if (state.mode === 'hook') state.durationFramesHook = f;
+    else state.durationFrames = f;
+    saveState(); updateDurationInfo();
+  }
+  else if (id === 'video-duration') {
+    state.durationFrames = parseInt(e.target.value, 10);
+    saveState(); updateVideoEstimate();
+  }
+  else if (id === 'image-model') { state.imageModel = e.target.value; saveState(); }
+  else if (id === 'ext-service') {
+    state.externalService = e.target.value;
+    var svc = SERVICES[state.externalService];
+    if (svc) { state.externalUrl = svc.url; state.externalModel = svc.model; }
+    saveState(); render();
+  }
+  else if (id === 'tone-select') { state.tone = e.target.value; saveState(); }
+}
+function onTabInput(e) {
+  var id = e.target.id;
+  if (id === 'idea-input') { state.idea = e.target.value; saveState(); }
+  else if (id === 'theme-input') { state.theme = e.target.value; saveState(); }
+  else if (id === 'ext-url') { state.externalUrl = e.target.value; saveState(); }
+  else if (id === 'ext-model') { state.externalModel = e.target.value; saveState(); }
+  else if (id === 'ext-key') {
+    state.externalKey = e.target.value;
+    try { localStorage.setItem(EXTERNAL_KEY_STORAGE, state.externalKey); } catch (err) {}
+  }
+}
+
+/* ============================================================
+   LECTEUR HOOK 3 SECONDES
+   ============================================================ */
+function playHookPreview(videoEl) {
+  if (!videoEl) return;
+  videoEl.currentTime = 0;
+  videoEl.play();
+  var start = Date.now();
+  var timer = setInterval(function () {
+    if (videoEl.currentTime >= HOOK_IDEAL_SECONDS || Date.now() - start > 4000) {
+      videoEl.pause();
+      videoEl.currentTime = 0;
+      clearInterval(timer);
+    }
+  }, 50);
+}
+
+function playHookByIndex(i) {
+  var videos = document.querySelectorAll('#gallery-grid video');
+  if (!videos.length) return;
+  var visibleIdx = state.queue.filter(function (x) { return x.status === 'done'; }).findIndex(function (x) { return x.index === i; });
+  if (visibleIdx < 0 || !videos[visibleIdx]) return;
+  playHookPreview(videos[visibleIdx]);
+  videos[visibleIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* ============================================================
+   UTILITAIRES DE COPIE ET TÉLÉCHARGEMENT
+   ============================================================ */
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(function () {});
+  }
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  document.body.removeChild(ta);
+}
+function download(filename, content, mime) {
+  mime = mime || 'application/json';
+  var blob = new Blob([content], { type: mime });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+function exportJson() {
+  download('fabrik-' + Date.now() + '.json', JSON.stringify({
+    exportedAt: new Date().toISOString(),
+    episode: state.episode,
+    queue: state.queue
+  }, null, 2));
+  showToast('Export JSON téléchargé', 'success');
+}
+function exportCsv() {
+  var rows = ['index;video_id;url'];
+  state.queue.filter(function (q) { return q.status === 'done'; }).forEach(function (q) {
+    rows.push(q.index + ';"' + (q.videoId || '') + '";' + (q.videoUrl || ''));
+  });
+  download('fabrik-' + Date.now() + '.csv', rows.join('\n'), 'text/csv');
+  showToast('Export CSV téléchargé', 'success');
+}
+
+=== DÉBUT PARTIE 2c ===
+
+/* ============================================================
+   GÉNÉRATION DE SCRIPT
    ============================================================ */
 function buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount) {
   return 'Tu es scénariste de vidéos courtes verticales (TikTok, Shorts, Reels).\n' +
     'Idée : ' + idea + '\n' +
     'Thème : ' + (theme || 'libre') + '\n' +
     'Ton : ' + (tone || 'neutre') + '\n' +
-    'Durée cible : environ ' + targetSeconds + ' secondes au total (' + sceneCount + ' plans).\n' +
+    'Durée cible : environ ' + targetSeconds + ' secondes au total (' + sceneCount + ' scènes).\n' +
     'Format : portrait 9:16.\n\n' +
     'Écris un scénario complet en JSON valide. Le script doit être fluide, naturel, en français oral vivant.\n\n' +
     'Format JSON attendu :\n' +
@@ -1856,39 +2226,22 @@ function buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount) {
     '      "description": "ce qui se passe dans la scène, en français",\n' +
     '      "action_prompt": "description précise de l\'action pour l\'image en anglais",\n' +
     '      "camera": "mouvement de caméra en anglais",\n' +
-    '      "light": "lumière en anglais"\n' +
+    '      "light": "lumière en anglais",\n' +
+    '      "lieu": "lieu ou décor en français",\n' +
+    '      "persos": "personnages présents en français",\n' +
+    '      "ambiance": "ambiance en français"\n' +
     '    }\n' +
     '  ]\n' +
     '}\n' +
     'Réponds uniquement avec le JSON, sans texte avant ou après.';
 }
-function buildImagePromptFromScene(scene, stylePhrase) {
-  var parts = [];
-  if (scene.action_prompt) parts.push(scene.action_prompt);
-  if (scene.light) parts.push(scene.light);
-  if (stylePhrase) parts.push(stylePhrase);
-  parts.push('Portrait orientation 9:16 vertical, cinematic, no text, no watermark.');
-  return parts.join('. ');
-}
-function buildVideoPromptFromScene(scene, stylePhrase) {
-  var parts = [];
-  if (scene.action_prompt) parts.push('Action: ' + scene.action_prompt);
-  if (scene.camera) parts.push('Camera: ' + scene.camera);
-  if (stylePhrase) parts.push('Style: ' + stylePhrase);
-  parts.push('Vertical 9:16, 24fps, no cuts, no text, no watermark, no music, natural ambient sound only.');
-  return parts.join('. ');
-}
 
-/* ============================================================
-   GÉNÉRATEUR DE SCRIPT (appel principal)
-   ============================================================ */
 async function generateScript(idea, tone, theme, targetSeconds, sceneCount) {
   var sys = 'Tu réponds UNIQUEMENT en JSON valide, sans markdown ni commentaire.';
   var user = buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount);
   var raw;
   
   if (state.textProvider === 'agnes') {
-    /* Essayer Agnes d'abord, puis Groq, puis OpenRouter */
     try {
       raw = await callAgnesText(sys, user, 0.85, 4000);
     } catch (e1) {
@@ -1919,709 +2272,8 @@ async function generateScript(idea, tone, theme, targetSeconds, sceneCount) {
   return parsed;
 }
 
-/* ============================================================
-   PIPELINE HOOK FACTORY
-   ============================================================ */
-async function runHookJob(job) {
-  try {
-    job.status = 'creating';
-    renderQueue();
-
-    var firstFrame = job.image.dataUri;
-    var id = await createVideoTask(job.prompt, firstFrame, null, state.durationFramesHook);
-    job.videoId = id;
-    job.startTime = Date.now();
-    job.status = 'processing';
-    renderQueue();
-
-    var vurl = await pollVideo(id, function (progress) {
-      job.progress = progress;
-      renderQueue();
-    }, state.durationFramesHook);
-
-    var elapsed = Date.now() - job.startTime;
-    recordGenerationTime('video', elapsed);
-    job.videoUrl = vurl;
-    job.status = 'done';
-    job.progress = 'Terminé (' + Math.round(elapsed / 1000) + ' s)';
-    job.actualDuration = elapsed;
-    state.completed++;
-    renderQueue();
-    renderGallery();
-    addMediaLog('video', vurl, 'Hook ' + (job.index + 1));
-    logDebug('ok', 'HOOK', 'Clip ' + (job.index + 1) + ' prêt en ' + (elapsed / 1000).toFixed(1) + ' s');
-    showToast('Clip prêt (' + Math.round(elapsed / 1000) + ' s)', 'success');
-  } catch (e) {
-    job.status = 'failed';
-    job.progress = e.message.slice(0, 60);
-    state.failed++;
-    renderQueue();
-    logDebug('err', 'HOOK', 'Échec clip ' + (job.index + 1) + ' : ' + e.message);
-  }
-}
-async function startHookFactory() {
-  if (state.isRunning) return;
-  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
-  var selected = state.images.filter(function (im) { return state.selectedImages.indexOf(im.id) >= 0; });
-  if (!selected.length) { showToast('Sélectionne au moins une photo', 'error'); return; }
-
-  var stylesCount = 1;
-  var styleSelect = $('hook-styles-count');
-  if (styleSelect) stylesCount = parseInt(styleSelect.value, 10) || 1;
-
-  state.isRunning = true;
-  state.stopRequested = false;
-  state.completed = 0;
-  state.failed = 0;
-  state.queue = [];
-  var idx = 0;
-  selected.forEach(function (img) {
-    for (var s = 0; s < stylesCount; s++) {
-      var style = randomItem(STYLE_BANK);
-      state.queue.push({
-        index: idx++,
-        image: img,
-        style: style,
-        prompt: buildVideoPromptFromScene({ action_prompt: 'animate the image subtly', camera: style.phrase, light: 'natural light' }, ''),
-        status: 'pending',
-        progress: null,
-        videoId: null,
-        videoUrl: null,
-        startTime: null,
-        actualDuration: null
-      });
-    }
-  });
-
-  checkQuotaWarn(state.durationFramesHook, state.queue.length);
-  logDebug('info', 'HOOK', 'File : ' + state.queue.length + ' clips de ' + (state.durationFramesHook / FRAME_RATE).toFixed(2) + 's');
-  setStatus('Création de ' + state.queue.length + ' hooks…');
-  renderQueue();
-
-  var interval = VIDEO_INTERVAL_SAFE;
-  var i, j, wait;
-  for (i = 0; i < state.queue.length; i++) {
-    if (state.stopRequested) break;
-    runHookJob(state.queue[i]);
-    if (i < state.queue.length - 1 && !state.stopRequested) {
-      wait = Math.ceil(interval / 1000);
-      for (j = wait; j > 0; j--) {
-        if (state.stopRequested) break;
-        setStatus('Prochain clip dans ' + j + ' s…');
-        await sleep(1000);
-      }
-    }
-  }
-
-  setStatus('Finalisation…');
-  while (state.queue.some(function (q) { return q.status === 'processing' || q.status === 'creating'; })) {
-    if (state.stopRequested) break;
-    await sleep(1000);
-  }
-
-  state.isRunning = false;
-  state.stopRequested = false;
-  setStatus(null);
-  showToast(state.completed + ' clip' + (state.completed > 1 ? 's' : '') + ' prêt' + (state.completed > 1 ? 's' : ''), 'success');
-}
-
-/* ============================================================
-   LECTEUR HOOK 3 SECONDES
-   ============================================================ */
-function playHookPreview(videoEl) {
-  if (!videoEl) return;
-  videoEl.currentTime = 0;
-  videoEl.play();
-  var start = Date.now();
-  var timer = setInterval(function () {
-    if (videoEl.currentTime >= HOOK_IDEAL_SECONDS || Date.now() - start > 4000) {
-      videoEl.pause();
-      videoEl.currentTime = 0;
-      clearInterval(timer);
-    }
-  }, 50);
-}
-
-
-
-/* ============================================================
-   RENDU DES ONGLETS
-   ============================================================ */
-function render() {
-  var c = $('tab-content');
-  if (!c) return;
-  var html = '';
-  if (state.tab === 'idees') html = renderIdees();
-  else if (state.tab === 'photos') html = renderPhotos();
-  else if (state.tab === 'hooks') html = renderHooks();
-  else if (state.tab === 'episodes') html = renderEpisodes();
-  c.innerHTML = html;
-  document.querySelectorAll('.dock button').forEach(function (b) {
-    if (b.getAttribute('data-tab') === state.tab) b.setAttribute('aria-current', 'page');
-    else b.removeAttribute('aria-current');
-  });
-  bindTabEvents();
-}
-
-/* ---------- Onglet Idées ---------- */
-function renderIdees() {
-  var prov = state.textProvider;
-  var h = '';
-  h += '<section class="glass card"><h2>1. Mon idée</h2>' +
-    '<div class="stack">' +
-    '<label class="q">Décris ton idée<span class="q-hint">Une phrase suffit. Ou utilise le bouton Surprends-moi.</span></label>' +
-    '<textarea id="idea-input" placeholder="Exemple : une laverie de quartier où chaque machine révèle un secret…">' + esc(state.idea) + '</textarea>' +
-    '<div class="rowbtns">' +
-    '<button class="btn ghost" data-act="surprise">🎲 Surprends-moi</button>' +
-    '</div>' +
-    '<div class="row">' +
-    '<div style="flex:1;min-width:140px"><label class="q">Ton</label><select id="tone-select">' +
-    ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'].map(function (t) {
-      return '<option value="' + t + '"' + (state.tone === t ? ' selected' : '') + '>' + t + '</option>';
-    }).join('') +
-    '</select></div>' +
-    '<div style="flex:1;min-width:140px"><label class="q">Thème</label><input type="text" id="theme-input" placeholder="Exemple : famille, amitié, mystère" value="' + esc(state.theme) + '"></div>' +
-    '</div>' +
-    '</div></section>';
-
-  h += '<section class="glass card"><h2>2. Format</h2>' +
-    '<div class="mode-toggle">' +
-    '<div class="mode-option' + (state.mode === 'serie' ? ' selected' : '') + '" data-act="mode" data-v="serie"><div class="mo-icon">📺</div><div class="mo-name">Épisode de série</div><div class="mo-desc">Au moins 61 secondes au total</div></div>' +
-    '<div class="mode-option' + (state.mode === 'hook' ? ' selected' : '') + '" data-act="mode" data-v="hook"><div class="mo-icon">⚡</div><div class="mo-name">Hook court</div><div class="mo-desc">Garde les 3 premières secondes dans CapCut</div></div>' +
-    '</div>' +
-    '<div class="stack" style="margin-top:12px">' +
-    '<label class="q">Durée d\'un clip<span class="q-hint">Valeurs trouvées dans tes fichiers sources.</span></label>' +
-    '<select id="duration-select">' +
-    DURATIONS.filter(function (d) { return state.mode === 'hook' ? d.mode !== 'serie' : d.mode !== 'hook'; }).map(function (d) {
-      var cur = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
-      return '<option value="' + d.frames + '"' + (cur === d.frames ? ' selected' : '') + '>' + d.label + ' (' + d.frames + ' frames)</option>';
-    }).join('') +
-    '</select>' +
-    '<div id="duration-info" class="small muted"></div>' +
-    '</div></section>';
-
-  h += '<section class="glass card"><h2>3. IA pour le texte</h2>' +
-    '<div class="stack">' +
-    '<button class="chip" data-act="provider" data-v="agnes" aria-pressed="' + (prov === 'agnes') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Agnes (recommandé)</b><br><span class="small muted">Même clé que pour les images et vidéos. Modèle agnes-2.5-flash.</span></button>' +
-    '<button class="chip" data-act="provider" data-v="openai-compat" aria-pressed="' + (prov === 'openai-compat') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Autre service (clé API)</b><br><span class="small muted">OpenAI, Mistral, Groq, xAI. À tester, le navigateur peut bloquer.</span></button>' +
-    '<button class="chip" data-act="provider" data-v="copier-coller" aria-pressed="' + (prov === 'copier-coller') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Copier-coller manuel</b><br><span class="small muted">Marche toujours. Colle le prompt dans ChatGPT, Gemini, Claude, etc.</span></button>' +
-    '</div>';
-
-  if (prov === 'openai-compat') {
-    h += '<div class="stack" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">' +
-      '<label class="q">Service</label>' +
-      '<select id="ext-service">' +
-      Object.keys(SERVICES).map(function (k) {
-        return '<option value="' + k + '"' + (state.externalService === k ? ' selected' : '') + '>' + SERVICES[k].label + '</option>';
-      }).join('') +
-      '</select>' +
-      '<label class="q">Adresse<span class="q-hint">À vérifier dans la documentation du service.</span></label>' +
-      '<input type="url" id="ext-url" value="' + esc(state.externalUrl) + '">' +
-      '<label class="q">Modèle<span class="q-hint">À vérifier dans la documentation du service.</span></label>' +
-      '<input type="text" id="ext-model" value="' + esc(state.externalModel) + '">' +
-      '<label class="q">Clé API (stockée uniquement sur cet appareil)</label>' +
-      '<input type="password" id="ext-key" value="' + esc(state.externalKey) + '" placeholder="sk-...">' +
-      '<div class="api-security">🔒 Utilise une clé limitée, uniquement sur tes appareils. Ne partage jamais ce fichier après avoir saisi une clé.</div>' +
-      '<button class="btn ghost" data-act="test-connection">Tester la connexion</button>' +
-      '<div id="test-result" style="display:none;"></div>' +
-      '</div>';
-  }
-  if (prov === 'copier-coller') {
-    h += '<div class="hotbox" style="margin-top:14px">Le mode copier-coller affichera un prompt prêt à copier dans l\'onglet Épisodes. Colle-le dans ton IA préférée (ChatGPT, Gemini, Claude…) puis recolle sa réponse dans l\'application.</div>';
-  }
-  h += '</section>';
-
-  h += '<section class="glass card"><h2>4. Modèle d\'image</h2>' +
-    '<label class="q">Modèle Agnes pour les images</label>' +
-    '<select id="image-model">' +
-    '<option value="' + MODEL_IMAGE_DEFAULT + '"' + (state.imageModel === MODEL_IMAGE_DEFAULT ? ' selected' : '') + '>agnes-image-2.1-flash (par défaut)</option>' +
-    '<option value="' + MODEL_IMAGE_ALT + '"' + (state.imageModel === MODEL_IMAGE_ALT ? ' selected' : '') + '>agnes-image-2.5-flash (alternatif)</option>' +
-    '</select></section>';
-
-  h += '<section class="glass card"><h2>5. Générer</h2>' +
-    '<p class="small muted">Lance la génération d\'un script avec l\'IA choisie. Tu verras ensuite les prompts d\'images et de vidéos, modifiables.</p>' +
-    '<button class="btn big" data-act="gen-script">✍️ Générer le script</button>' +
-    '<div id="script-output"></div></section>';
-
-  h += debugPanelHtml();
-  return h;
-}
-
-/* ---------- Onglet Photos ---------- */
-function renderPhotos() {
-  var h = '';
-  h += '<section class="glass card"><h2>Mes photos</h2>' +
-    '<p class="small muted">Ajoute des photos depuis ton téléphone ou ton ordinateur. Coche celles à transformer en hooks.</p>' +
-    '<label class="upload-zone" for="file-input"><input type="file" id="file-input" accept="image/*" multiple><div class="icon">＋</div><div class="t1">Ajouter des photos</div><div class="t2">Plusieurs à la fois</div></label>' +
-    '<div class="images-grid" id="images-grid">' +
-    state.images.map(function (im) {
-      var sel = state.selectedImages.indexOf(im.id) >= 0;
-      return '<div class="image-card' + (sel ? ' selected' : '') + '" data-img-id="' + im.id + '">' +
-        '<img src="' + (im.thumbnail || im.dataUri) + '" alt="">' +
-        '<div class="sel" data-act="toggle-select" data-v="' + im.id + '">✓</div>' +
-        '<button class="rm" data-act="remove-image" data-v="' + im.id + '">✕</button>' +
-        '</div>';
-    }).join('') +
-    '</div>' +
-    '<p class="small muted">' + state.selectedImages.length + ' sélectionnée' + (state.selectedImages.length > 1 ? 's' : '') + ' sur ' + state.images.length + '</p>' +
-    '<button class="btn ghost" data-act="clear-images">Tout supprimer</button>' +
-    '</section>';
-  if (state.images.length) {
-    h += '<section class="glass card"><h2>Prêt à générer</h2>' +
-      '<p class="small muted">Direction l\'onglet Hooks pour choisir les styles aléatoires et lancer la génération.</p>' +
-      '<button class="btn big" data-act="go-hooks">Aller aux Hooks</button></section>';
-  }
-  h += debugPanelHtml();
-  return h;
-}
-
-/* ---------- Onglet Hooks (Hook Factory) ---------- */
-function renderHooks() {
-  var h = '';
-  var curDur = state.durationFramesHook;
-  h += '<section class="glass card"><h2>Hook Factory</h2>' +
-    '<p class="small muted">Chaque photo sélectionnée devient plusieurs clips courts. Le style est tiré au hasard pour surprendre.</p>' +
-    '<div class="stack">' +
-    '<label class="q">Durée d\'un hook<span class="q-hint">Choisis la durée du clip. Le hook idéal dure 3 secondes : garde les 3 premières secondes dans CapCut.</span></label>' +
-    '<select id="hook-duration">' +
-    DURATIONS.filter(function (d) { return d.mode !== 'serie'; }).map(function (d) {
-      return '<option value="' + d.frames + '"' + (curDur === d.frames ? ' selected' : '') + '>' + d.label + ' (' + d.frames + ' frames)</option>';
-    }).join('') +
-    '</select>' +
-    '<label class="q">Styles par photo<span class="q-hint">Combien de clips différents par photo (1 à 5).</span></label>' +
-    '<select id="hook-styles-count">' +
-    [1, 2, 3, 4, 5].map(function (n) {
-      return '<option value="' + n + '"' + (n === 1 ? ' selected' : '') + '>' + n + ' style' + (n > 1 ? 's' : '') + ' par photo</option>';
-    }).join('') +
-    '</select>' +
-    '</div>' +
-    '<div style="margin-top:12px">' +
-    '<button class="magic-btn" data-act="magic-dice"><span class="dice">🎲</span> Dé magique (style aléatoire)</button>' +
-    '</div>' +
-    '<p class="small muted" id="hook-estimate"></p>' +
-    '<button class="btn big" data-act="start-hooks"' + (state.selectedImages.length && getApiKey() ? '' : ' disabled') + '>🚀 Générer les hooks</button>' +
-    '<button class="btn ghost" data-act="stop-hooks" style="display:' + (state.isRunning ? 'block' : 'none') + '">⏹ Arrêter</button>' +
-    '</section>';
-
-  h += '<details class="glass card" style="padding:0;overflow:hidden;">' +
-    '<summary style="cursor:pointer;padding:16px;font-weight:700;font-size:1.15rem;list-style:none;display:flex;justify-content:space-between;align-items:center;">' +
-      '<span>🎨 Banque de styles (' + STYLE_BANK.length + ')</span>' +
-      '<span class="small muted">Clique pour ouvrir</span>' +
-    '</summary>' +
-    '<div style="padding:0 16px 16px;">' +
-    '<p class="small muted">Ouvre une catégorie pour voir les styles. Clique un style pour voir sa description.</p>' +
-    '<input type="search" id="style-search" placeholder="Rechercher un style..." style="margin-bottom:12px;">' +
-    (function () {
-      var cats = {};
-      STYLE_BANK.forEach(function (s) {
-        var cat = s.cat || 'Autres';
-        if (!cats[cat]) cats[cat] = [];
-        cats[cat].push(s);
-      });
-      var out = '';
-      var catNames = Object.keys(cats).sort();
-      if (!catNames.length) {
-        return '<p class="small muted">Aucun style chargé. Vérifie que styles.js est bien déployé.</p>';
-      }
-      catNames.forEach(function (cat) {
-        var catStyles = cats[cat] || [];
-        var count = catStyles.length;
-        var firstThree = catStyles.slice(0, 3).map(function (s) { return (s.emoji || '') + ' ' + (s.nom || ''); }).join(' · ');
-        out += '<details style="margin-bottom:8px;background:var(--glass-strong);border-radius:12px;padding:10px 14px;border:1px solid var(--line);">' +
-          '<summary style="cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;">' +
-            '<span>' + esc(cat) + ' <span class="small muted" style="font-weight:400;">(' + count + ')</span></span>' +
-            '<span class="small muted" style="font-size:.72rem;">' + esc(firstThree) + '…</span>' +
-          '</summary>' +
-          '<div class="styles-grid" style="margin-top:12px;">';
-        catStyles.forEach(function (s) {
-          out += '<div class="style-card" data-act="show-style" data-v="' + (s.id || '') + '">' +
-            '<span class="emoji">' + (s.emoji || '🎨') + '</span>' +
-            '<div class="info"><div class="nm">' + esc(s.nom || 'Sans nom') + '</div><div class="ds">' + esc((s.phrase || '').slice(0, 60)) + '…</div></div>' +
-            '</div>';
-        });
-        out += '</div></details>';
-      });
-      return out;
-    })() +
-    '</div>' +
-    '</details>';
-
-  if (state.queue.length) {
-    h += '<section class="glass card"><h2>File d\'attente</h2>';
-    h += renderQueue();
-    h += '</section>';
-  }
-
-  if (state.queue.some(function (q) { return q.status === 'done'; })) {
-    h += '<section class="glass card"><h2>Lecteur de hook (3 secondes)</h2>' +
-      '<p class="small muted">Appuie sur un clip pour voir seulement les 3 premières secondes, comme il apparaîtra en hook sur TikTok.</p>' +
-      '<div class="hotbox">📌 Le hook idéal dure 3 secondes : garde les 3 premières secondes dans CapCut.</div>' +
-      '</section>';
-  }
-
-  h += '<section class="glass card"><h2>Galerie des hooks</h2>' +
-    '<div class="gallery-grid" id="gallery-grid"></div>' +
-    '</section>';
-
-  h += '<section class="glass card"><h2>Export</h2>' +
-    '<div class="rowbtns">' +
-    '<button class="btn ghost" data-act="export-json">Export JSON</button>' +
-    '<button class="btn ghost" data-act="export-csv">Export CSV</button>' +
-    '</div>' +
-    '<p class="small muted">Pour le montage final : télécharge chaque clip et assemble-les dans CapCut. Agnes ne fait pas le montage.</p>' +
-    '</section>';
-
-  h += debugPanelHtml();
-  return h;
-}
-
-/* ---------- Onglet Épisodes ---------- */
-function renderEpisodes() {
-  var ep = state.episode;
-  var h = '';
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">🎬</div><h3>Aucun épisode en cours</h3><p class="muted">Va dans l\'onglet Idées pour décrire ton idée et générer un script.</p><button class="btn" data-act="go-idees">Aller aux Idées</button></section>';
-  } else {
-    h += '<section class="glass card"><h2>' + esc(ep.title || 'Épisode en cours') + '</h2>' +
-      '<p class="muted">' + esc(ep.logline || '') + '</p>' +
-      '<p class="small muted">' + ep.scenes.length + ' plans · ' + (ep.scenes.length * (state.durationFrames / FRAME_RATE)).toFixed(1) + ' s au total</p>' +
-      '<button class="btn ghost" data-act="reset-episode">Recommencer un épisode</button></section>';
-
-    h += '<section class="glass card"><h2>Prompts des plans</h2>';
-    ep.scenes.forEach(function (sc, i) {
-      var ip = buildImagePromptFromScene(sc, '');
-      var vp = buildVideoPromptFromScene(sc, '');
-      h += '<details class="glass" style="padding:12px;margin-bottom:8px;"><summary style="cursor:pointer;font-weight:700;">Plan ' + (i + 1) + ' · ' + esc(sc.description || '') + '</summary>' +
-        '<div class="stack" style="margin-top:10px">' +
-        '<b class="small">Prompt image</b>' +
-        '<pre class="fin" id="ip-' + i + '">' + esc(ip) + '</pre>' +
-        '<button class="btn ghost" data-act="copy-prompt" data-v="ip-' + i + '">Copier</button>' +
-        '<b class="small">Prompt vidéo</b>' +
-        '<pre class="fin" id="vp-' + i + '">' + esc(vp) + '</pre>' +
-        '<button class="btn ghost" data-act="copy-prompt" data-v="vp-' + i + '">Copier</button>' +
-        '</div></details>';
-    });
-    h += '</section>';
-
-    h += '<section class="glass card"><h2>Consigne de montage</h2>' +
-      '<div class="hotbox">📌 Le hook idéal dure 3 secondes : garde les 3 premières secondes dans CapCut.</div>' +
-      '<p class="small muted">Agnes génère les clips, mais ne fait pas le montage final. Assemble-les dans CapCut (ou un autre outil) en gardant les 3 premières secondes comme accroche.</p>' +
-      '</section>';
-  }
-  h += debugPanelHtml();
-  return h;
-}
-
-/* ---------- File d'attente ---------- */
-function renderQueue() {
-  if (!state.queue.length) return '';
-  var total = state.queue.length;
-  var done = state.queue.filter(function (q) { return q.status === 'done'; }).length;
-  var failed = state.queue.filter(function (q) { return q.status === 'failed'; }).length;
-  var processing = state.queue.filter(function (q) { return q.status === 'processing' || q.status === 'creating'; }).length;
-  var h = '<div class="queue-summary">' +
-    '<span class="progress-text">' + done + ' / ' + total + ' prêts</span>' +
-    (failed ? '<span style="color:#9E1F2B">' + failed + ' échec' + (failed > 1 ? 's' : '') + '</span>' : '') +
-    (processing ? '<span>' + processing + ' en cours</span>' : '') +
-    '</div><div class="queue">';
-  state.queue.slice(0, 30).forEach(function (q) {
-    var cls = 'pending', icon = '○', label = 'En file';
-    if (q.status === 'creating') { cls = 'creating'; icon = '◐'; label = 'Préparation…'; }
-    else if (q.status === 'processing') { cls = 'processing'; icon = '◐'; label = q.progress || 'En cours…'; }
-    else if (q.status === 'done') { cls = 'done'; icon = '●'; label = 'Prêt'; }
-    else if (q.status === 'failed') { cls = 'failed'; icon = '✕'; label = q.progress || 'Échec'; }
-    h += '<div class="queue-item ' + cls + '">' +
-      '<div class="q-icon">' + icon + '</div>' +
-      '<div class="q-name">' + esc(q.style.nom) + ' (photo ' + (state.images.indexOf(q.image) + 1) + ')</div>' +
-      '<div class="q-status">' + esc(label) + '</div>' +
-      '</div>';
-  });
-  if (state.queue.length > 30) h += '<p class="small muted">… et ' + (state.queue.length - 30) + ' autres</p>';
-  h += '</div>';
-  return h;
-}
-
-/* ---------- Galerie ---------- */
-function renderGallery() {
-  var grid = $('gallery-grid');
-  if (!grid) return;
-  var done = state.queue.filter(function (q) { return q.status === 'done' && q.videoUrl; });
-  if (!done.length) return;
-  grid.innerHTML = done.map(function (q) {
-    return '<div class="gallery-item">' +
-      '<video src="' + q.videoUrl + '" controls preload="metadata" playsinline muted></video>' +
-      '<div class="g-caption"><div class="g-style">' + q.style.emoji + ' ' + esc(q.style.nom) + '</div><div>Clip ' + (q.index + 1) + '</div></div>' +
-      '<div class="g-actions">' +
-      '<button data-act="play-hook" data-v="' + q.index + '">▶ Hook 3s</button>' +
-      '<a href="' + q.videoUrl + '" download="hook-' + (q.index + 1) + '.mp4" target="_blank" rel="noopener">⬇ Télécharger</a>' +
-      '</div>' +
-      '</div>';
-  }).join('');
-}
-
-/* ---------- Panneau debug ---------- */
-function debugPanelHtml() {
-  return '<section class="glass debug-panel collapsed" id="debug-wrap">' +
-    '<div class="debug-header" data-act="toggle-debug">' +
-    '<span class="debug-title">🖥️ Console de débogage <span class="debug-count" id="debug-count">0</span></span>' +
-    '<div class="debug-actions">' +
-    '<button data-act="clear-debug" type="button">Effacer</button>' +
-    '<button data-act="toggle-debug" type="button">▾</button>' +
-    '</div>' +
-    '</div>' +
-    '<div class="debug-body" id="debug-body"></div>' +
-    '</section>';
-}
-
-/* ---------- Journal des médias (dans onglet Hooks) ---------- */
-function mediaLogHtml() {
-  return '<section class="glass card"><h2>Journal des médias</h2>' +
-    '<div class="media-log" id="media-log"><div class="empty">Aucun média généré pour l\'instant.</div></div>' +
-    '</section>';
-}
-
-/* ============================================================
-   ÉVÉNEMENTS (délégation)
-   ============================================================ */
-function bindTabEvents() {
-  var wrap = $('tab-content');
-  if (!wrap) return;
-  if (!wrap.__bound) {
-    wrap.__bound = true;
-    wrap.addEventListener('click', onTabClick);
-    wrap.addEventListener('change', onTabChange);
-    wrap.addEventListener('input', onTabInput);
-  /* Barre de recherche des styles */
-  var searchInput = $('style-search');
-  if (searchInput) {
-    searchInput.addEventListener('input', function () {
-      var q = searchInput.value.toLowerCase().trim();
-      var cards = document.querySelectorAll('.style-card');
-      cards.forEach(function (card) {
-        var nom = card.querySelector('.nm') ? card.querySelector('.nm').textContent.toLowerCase() : '';
-        var ds = card.querySelector('.ds') ? card.querySelector('.ds').textContent.toLowerCase() : '';
-        var match = !q || nom.indexOf(q) >= 0 || ds.indexOf(q) >= 0;
-        card.style.display = match ? '' : 'none';
-      });
-      /* Ouvre automatiquement toutes les catégories si on cherche */
-      if (q) {
-        document.querySelectorAll('details').forEach(function (d) {
-          if (d.querySelector('.styles-grid')) d.open = true;
-        });
-      }
-    });
-  }
-  }
-  /* Rendu de la galerie si on est sur Hooks */
-  if (state.tab === 'hooks') setTimeout(renderGallery, 30);
-  /* Info durée */
-  updateDurationInfo();
-}
-
-function updateDurationInfo() {
-  var el = $('duration-info');
-  if (!el) return;
-  var frames = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
-  var clips = state.mode === 'serie' ? Math.ceil(HOOK_MIN_SECONDS / (frames / FRAME_RATE)) : 0;
-  if (state.mode === 'serie') {
-    el.textContent = 'Pour atteindre ' + HOOK_MIN_SECONDS + ' secondes, il faut ' + clips + ' clips de ' + (frames / FRAME_RATE).toFixed(1) + ' s.';
-  } else {
-    el.textContent = 'Le hook idéal dure 3 secondes. Chaque clip fait ' + (frames / FRAME_RATE).toFixed(1) + ' s, garde les 3 premières secondes dans CapCut.';
-  }
-}
-
-function onTabClick(e) {
-  var b = e.target.closest('[data-act]');
-  if (!b) return;
-  var act = b.getAttribute('data-act');
-  var v = b.getAttribute('data-v');
-
-  if (act === 'mode') {
-    state.mode = v;
-    if (v === 'hook') state.durationFramesHook = 121;
-    else state.durationFrames = 241;
-    saveState(); render();
-  }
-  else if (act === 'provider') {
-    state.textProvider = v;
-    saveState(); render();
-  }
-  else if (act === 'test-connection') { testConnection(); }
-  else if (act === 'surprise') {
-    var tones = ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'];
-    var themes = ['famille', 'amitié', 'mystère', 'rue', 'école', 'travail', 'amour', 'voyage', 'secret'];
-    state.tone = randomItem(tones);
-    state.theme = randomItem(themes);
-    saveState(); render();
-    showToast('Ambiance tirée : ' + state.tone + ', ' + state.theme, 'success');
-  }
-  else if (act === 'gen-script') { doGenerateScript(); }
-  else if (act === 'go-hooks') { state.tab = 'hooks'; render(); }
-  else if (act === 'go-idees') { state.tab = 'idees'; render(); }
-  else if (act === 'toggle-select') { toggleImageSelection(v); }
-  else if (act === 'remove-image') { removeImage(v); }
-  else if (act === 'clear-images') { if (confirm('Supprimer toutes les photos ?')) { state.images = []; state.selectedImages = []; render(); } }
-  else if (act === 'magic-dice') { magicDice(); }
-  else if (act === 'start-hooks') { startHookFactory(); }
-  else if (act === 'stop-hooks') { state.stopRequested = true; showToast('Arrêt demandé…', 'warn'); }
-  else if (act === 'show-style') { showStyleDetail(v); }
-  else if (act === 'play-hook') { playHookByIndex(parseInt(v, 10)); }
-  else if (act === 'export-json') { exportJson(); }
-  else if (act === 'export-csv') { exportCsv(); }
-  else if (act === 'copy-prompt') {
-    var pre = $(v);
-    if (pre) { copyText(pre.textContent); showToast('Copié', 'success'); }
-  }
-  else if (act === 'reset-episode') { if (confirm('Effacer l\'épisode en cours ?')) { state.episode = null; render(); } }
-  else if (act === 'toggle-debug') {
-    var panel = $('debug-wrap');
-    if (panel) panel.classList.toggle('collapsed');
-  }
-  else if (act === 'clear-debug') { clearDebug(); }
-}
-
-function onTabChange(e) {
-  var id = e.target.id;
-  if (id === 'duration-select') {
-    var f = parseInt(e.target.value, 10);
-    if (state.mode === 'hook') state.durationFramesHook = f;
-    else state.durationFrames = f;
-    saveState(); updateDurationInfo();
-  }
-  else if (id === 'hook-duration') {
-    state.durationFramesHook = parseInt(e.target.value, 10);
-    saveState();
-    updateHookEstimate();
-  }
-  else if (id === 'hook-styles-count') { updateHookEstimate(); }
-  else if (id === 'image-model') { state.imageModel = e.target.value; saveState(); }
-  else if (id === 'ext-service') {
-    state.externalService = e.target.value;
-    var svc = SERVICES[state.externalService];
-    if (svc) {
-      state.externalUrl = svc.url;
-      state.externalModel = svc.model;
-    }
-    saveState(); render();
-  }
-  else if (id === 'tone-select') { state.tone = e.target.value; saveState(); }
-}
-function onTabInput(e) {
-  var id = e.target.id;
-  if (id === 'idea-input') { state.idea = e.target.value; saveState(); }
-  else if (id === 'theme-input') { state.theme = e.target.value; saveState(); }
-  else if (id === 'ext-url') { state.externalUrl = e.target.value; saveState(); }
-  else if (id === 'ext-model') { state.externalModel = e.target.value; saveState(); }
-  else if (id === 'ext-key') {
-    state.externalKey = e.target.value;
-    try { localStorage.setItem(EXTERNAL_KEY_STORAGE, state.externalKey); } catch (err) {}
-  }
-}
-
-/* ============================================================
-   PHOTOS : traitement
-   ============================================================ */
-function processImageFile(file) {
-  return new Promise(function (resolve) {
-    if (!file.type.startsWith('image/')) { resolve(null); return; }
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var dataUri = e.target.result;
-      /* Vignette */
-      var img = new Image();
-      img.onload = function () {
-        try {
-          var c = document.createElement('canvas');
-          var ratio = img.height / img.width;
-          var w = 200;
-          c.width = w;
-          c.height = Math.round(w * ratio);
-          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-          var thumb = c.toDataURL('image/jpeg', 0.7);
-          resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: thumb });
-        } catch (err) { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri }); }
-      };
-      img.onerror = function () { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri }); };
-      img.src = dataUri;
-    };
-    reader.onerror = function () { resolve(null); };
-    reader.readAsDataURL(file);
-  });
-}
-async function handleFiles(files) {
-  var list = Array.prototype.slice.call(files).filter(function (f) { return f.type.startsWith('image/'); });
-  if (!list.length) return;
-  showToast('Chargement de ' + list.length + ' photo' + (list.length > 1 ? 's' : '') + '…', 'warn');
-  var i, im;
-  for (i = 0; i < list.length; i++) {
-    im = await processImageFile(list[i]);
-    if (im) state.images.push(im);
-  }
-  render();
-  showToast(state.images.length + ' photo' + (state.images.length > 1 ? 's' : '') + ' prête' + (state.images.length > 1 ? 's' : ''), 'success');
-}
-function toggleImageSelection(id) {
-  var idx = state.selectedImages.indexOf(id);
-  if (idx >= 0) state.selectedImages.splice(idx, 1);
-  else state.selectedImages.push(id);
-  render();
-}
-function removeImage(id) {
-  state.images = state.images.filter(function (im) { return im.id !== id; });
-  state.selectedImages = state.selectedImages.filter(function (x) { return x !== id; });
-  render();
-}
-function updateHookEstimate() {
-  var el = $('hook-estimate');
-  if (!el) return;
-  var sc = $('hook-styles-count');
-  var n = sc ? parseInt(sc.value, 10) : 1;
-  var frames = state.durationFramesHook;
-  var total = state.selectedImages.length * n;
-  var totalSeconds = (frames / FRAME_RATE) * total;
-  var perClip = frames / FRAME_RATE;
-  var minutes = Math.ceil((total * (VIDEO_INTERVAL_SAFE / 1000 + 90)) / 60);
-  el.textContent = total + ' clip' + (total > 1 ? 's' : '') + ' de ' + perClip.toFixed(1) + ' s = ' +
-    totalSeconds.toFixed(0) + ' s de quota vidéo. Temps estimé : environ ' + minutes + ' min.';
-  checkQuotaWarn(frames, total);
-}
-
-/* ============================================================
-   DÉ MAGIQUE + DÉTAIL STYLE
-   ============================================================ */
-function magicDice() {
-  var s = randomItem(STYLE_BANK);
-  showToast(s.emoji + ' ' + s.nom, 'success', 3000);
-  logDebug('ok', 'DÉ', s.nom + ' : ' + s.phrase);
-}
-function showStyleDetail(id) {
-  var s = STYLE_BANK.filter(function (x) { return x.id === id; })[0];
-  if (!s) return;
-  alert(s.emoji + ' ' + s.nom + '\n\n' + s.phrase);
-}
-
-/* ============================================================
-   LECTEUR HOOK PAR INDEX
-   ============================================================ */
-function playHookByIndex(i) {
-  var videos = document.querySelectorAll('#gallery-grid video');
-  if (!videos.length) return;
-  var idx = 0;
-  var q;
-  for (idx = 0; idx < state.queue.length; idx++) {
-    if (state.queue[idx].index === i && state.queue[idx].status === 'done') break;
-  }
-  var visibleIdx = state.queue.filter(function (x) { return x.status === 'done'; }).findIndex(function (x) { return x.index === i; });
-  if (visibleIdx < 0 || !videos[visibleIdx]) return;
-  playHookPreview(videos[visibleIdx]);
-  videos[visibleIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-/* ============================================================
-   GÉNÉRATION DE SCRIPT (avec état)
-   ============================================================ */
 async function doGenerateScript() {
-    if (!state.idea || state.idea.trim().length < 5) {
+  if (!state.idea || state.idea.trim().length < 5) {
     showToast('Il manque ton idée (au moins 5 caractères)', 'error', 4000);
     logDebug('err', 'SCRIPT', 'Idée vide ou trop courte');
     return;
@@ -2631,11 +2283,6 @@ async function doGenerateScript() {
     logDebug('err', 'SCRIPT', 'Clé Agnes manquante');
     return;
   }
-  if (state.textProvider === 'openai-compat' && (!state.externalKey || !state.externalUrl || !state.externalModel)) {
-    showToast('Remplis adresse, clé et modèle du service externe', 'error', 4000);
-    logDebug('err', 'SCRIPT', 'Config service externe incomplète');
-    return;
-  }
   
   var frames = state.durationFrames;
   var totalSec = state.mode === 'serie' ? Math.max(HOOK_MIN_SECONDS, 65) : 30;
@@ -2643,8 +2290,10 @@ async function doGenerateScript() {
   if (state.mode === 'serie') {
     while (scenes * (frames / FRAME_RATE) < HOOK_MIN_SECONDS) scenes++;
   }
+  
   setStatus('Génération du script…');
   logDebug('info', 'SCRIPT', 'Idée : ' + state.idea.slice(0, 80));
+  
   try {
     if (state.textProvider === 'copier-coller') {
       var prompt = buildScriptPrompt(state.idea, state.tone, state.theme, totalSec, scenes);
@@ -2661,7 +2310,7 @@ async function doGenerateScript() {
     };
     saveState();
     setStatus(null);
-    showToast('Script généré : ' + parsed.scenes.length + ' plans', 'success');
+    showToast('Script généré : ' + parsed.scenes.length + ' scènes', 'success');
     render();
   } catch (e) {
     setStatus(null);
@@ -2682,7 +2331,7 @@ function showCopyPaste(prompt, scenes, totalSec) {
   if (!out) return;
   out.innerHTML = '<div class="hotbox">' +
     '<b>Mode copier-coller</b>' +
-    '<p class="small">1. Copie le prompt ci-dessous. 2. Colle-le dans ChatGPT, Gemini, Claude, Mistral ou Grok. 3. Copie sa réponse (le JSON) et colle-la dans la case. 4. Clique Valider.</p>' +
+    '<p class="small">1. Copie le prompt ci-dessous. 2. Colle-le dans l\'IA de ton choix. 3. Copie sa réponse (le JSON) et colle-la dans la case. 4. Clique Valider.</p>' +
     '</div>' +
     '<label class="q">Prompt à copier</label>' +
     '<textarea id="cp-prompt" readonly style="min-height:220px;font-family:ui-monospace,monospace;font-size:.8rem;">' + esc(prompt) + '</textarea>' +
@@ -2690,12 +2339,13 @@ function showCopyPaste(prompt, scenes, totalSec) {
     '<label class="q">Réponse de l\'IA</label>' +
     '<textarea id="cp-response" placeholder="Colle ici la réponse complète de l\'IA (le JSON avec title, logline et scenes)…" style="min-height:160px;"></textarea>' +
     '<button class="btn big" data-act="use-cp">Valider la réponse</button>' +
-    '<p class="small muted">' + scenes + ' plans attendus, environ ' + totalSec + ' secondes au total.</p>';
+    '<p class="small muted">' + scenes + ' scènes attendues, environ ' + totalSec + ' secondes au total.</p>';
   setTimeout(function () {
     out.addEventListener('click', cpClick, true);
   }, 20);
   out.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
 function cpClick(e) {
   var b = e.target.closest('[data-act]');
   if (!b) return;
@@ -2721,60 +2371,166 @@ function cpClick(e) {
       targetSeconds: (parsed.scenes.length * (state.durationFrames / FRAME_RATE))
     };
     saveState();
-    showToast('Script chargé : ' + parsed.scenes.length + ' plans', 'success');
+    showToast('Script chargé : ' + parsed.scenes.length + ' scènes', 'success');
     render();
   }
 }
 
 /* ============================================================
-   UTILITAIRE COPIE
+   GÉNÉRATION DE RÉFÉRENCES (images)
    ============================================================ */
-function copyText(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text).catch(function () {});
+async function doGenerateRefs() {
+  if (!state.episode) { showToast('Pas d\'épisode à référencer', 'error'); return; }
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+  
+  var grid = $('refs-grid');
+  if (grid) grid.innerHTML = '';
+  
+  setStatus('Génération des références…');
+  logDebug('info', 'REFS', 'Début génération de ' + state.episode.scenes.length + ' références');
+  
+  for (var i = 0; i < state.episode.scenes.length; i++) {
+    var sc = state.episode.scenes[i];
+    var prompt = 'Reference image for a scene. ' +
+      (sc.lieu ? 'Location: ' + sc.lieu + '. ' : '') +
+      (sc.persos ? 'Characters: ' + sc.persos + '. ' : '') +
+      (sc.ambiance ? 'Atmosphere: ' + sc.ambiance + '. ' : '') +
+      (sc.action_prompt || '') +
+      '. Portrait 9:16, cinematic, no text, no watermark.';
+    
+    try {
+      var url = await callAgnesImage(prompt);
+      addMediaLog('image', url, 'Réf ' + (i + 1));
+      if (grid) {
+        grid.innerHTML += '<div class="image-card"><img src="' + url + '" alt=""></div>';
+      }
+      logDebug('ok', 'REFS', 'Réf ' + (i + 1) + ' OK');
+    } catch (e) {
+      logDebug('err', 'REFS', 'Réf ' + (i + 1) + ' échec : ' + e.message);
+    }
+    await sleep(IMAGE_INTERVAL_MS);
   }
-  var ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed'; ta.style.left = '-9999px';
-  document.body.appendChild(ta);
-  ta.select();
-  try { document.execCommand('copy'); } catch (e) {}
-  document.body.removeChild(ta);
+  
+  setStatus(null);
+  showToast('Références générées', 'success');
 }
 
 /* ============================================================
-   EXPORTS
+   GÉNÉRATION DE VIDÉOS
    ============================================================ */
-function download(filename, content, mime) {
-  mime = mime || 'application/json';
-  var blob = new Blob([content], { type: mime });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+function updateVideoEstimate() {
+  var el = $('video-estimate');
+  if (!el || !state.episode) return;
+  var n = state.episode.scenes.length;
+  var frames = state.durationFrames;
+  var totalSec = (frames / FRAME_RATE) * n;
+  var minutes = Math.ceil((n * (VIDEO_INTERVAL_SAFE / 1000 + 90)) / 60);
+  el.textContent = n + ' clips de ' + (frames / FRAME_RATE).toFixed(1) + ' s = ' + totalSec.toFixed(0) + ' s de quota. Durée estimée : environ ' + minutes + ' min.';
 }
-function exportJson() {
-  var done = state.queue.filter(function (q) { return q.status === 'done'; }).map(function (q) {
-    return { index: q.index, style: q.style.nom, stylePhrase: q.style.phrase, url: q.videoUrl, duration: q.actualDuration };
+
+async function startVideoGeneration() {
+  if (state.isRunning) return;
+  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
+  if (!state.episode) { showToast('Pas d\'épisode à générer', 'error'); return; }
+  
+  state.isRunning = true;
+  state.stopRequested = false;
+  state.completed = 0;
+  state.failed = 0;
+  state.queue = state.episode.scenes.map(function (sc, i) {
+    return {
+      index: i,
+      scene: sc,
+      status: 'pending',
+      progress: null,
+      videoId: null,
+      videoUrl: null,
+      startTime: null
+    };
   });
-  download('agnes-hooks-' + Date.now() + '.json', JSON.stringify({
-    exportedAt: new Date().toISOString(),
-    total: done.length,
-    clips: done
-  }, null, 2));
-  showToast('Export JSON téléchargé', 'success');
+  
+  checkQuotaWarn(state.durationFrames, state.queue.length);
+  setStatus('Génération de ' + state.queue.length + ' clips…');
+  render();
+  
+  var pollingTasks = [];
+  for (var i = 0; i < state.queue.length; i++) {
+    if (state.stopRequested) break;
+    var item = state.queue[i];
+    try {
+      item.status = 'creating';
+      render();
+      
+      var prompt = buildVideoPromptFromScene(item.scene);
+      var refImg = null;
+      if (state.images.length > i) refImg = state.images[i].dataUri;
+      
+      if (!refImg) {
+        logDebug('warn', 'VIDÉO', 'Scène ' + (i + 1) + ' sans image de référence, on génère sans');
+        continue;
+      }
+      
+      var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
+      item.videoId = id;
+      item.startTime = Date.now();
+      item.status = 'processing';
+      render();
+      
+      pollingTasks.push(pollTaskAndDisplay(item));
+      
+      if (i < state.queue.length - 1 && !state.stopRequested) {
+        var wait = Math.ceil(VIDEO_INTERVAL_SAFE / 1000);
+        for (var r = wait; r > 0; r--) {
+          if (state.stopRequested) break;
+          setStatus('Prochain clip dans ' + r + ' s…');
+          await sleep(1000);
+        }
+      }
+    } catch (e) {
+      item.status = 'failed';
+      item.progress = e.message.slice(0, 60);
+      state.failed++;
+      logDebug('err', 'VIDÉO', 'Scène ' + (i + 1) + ' échec : ' + e.message);
+      render();
+    }
+  }
+  
+  if (pollingTasks.length) {
+    setStatus('Finalisation…');
+    await Promise.allSettled(pollingTasks);
+  }
+  
+  state.isRunning = false;
+  state.stopRequested = false;
+  setStatus(null);
+  showToast(state.completed + ' clip' + (state.completed > 1 ? 's' : '') + ' prêt' + (state.completed > 1 ? 's' : ''), 'success');
 }
-function exportCsv() {
-  var rows = ['index;style;url;duration_ms'];
-  state.queue.filter(function (q) { return q.status === 'done'; }).forEach(function (q) {
-    rows.push(q.index + ';"' + q.style.nom.replace(/"/g, '""') + '";' + q.videoUrl + ';' + (q.actualDuration || ''));
-  });
-  download('agnes-hooks-' + Date.now() + '.csv', rows.join('\n'), 'text/csv');
-  showToast('Export CSV téléchargé', 'success');
+
+async function pollTaskAndDisplay(item) {
+  try {
+    var vurl = await pollVideo(item.videoId, function (progress) {
+      item.progress = progress;
+      render();
+    }, state.durationFrames);
+    
+    var elapsed = Date.now() - item.startTime;
+    recordGenerationTime('video', elapsed);
+    item.status = 'done';
+    item.videoUrl = vurl;
+    item.progress = 'Prêt en ' + Math.round(elapsed / 1000) + 's';
+    state.completed++;
+    render();
+    renderGallery();
+    addMediaLog('video', vurl, 'Scène ' + (item.index + 1));
+    logDebug('ok', 'VIDÉO', 'Scène ' + (item.index + 1) + ' prête en ' + (elapsed / 1000).toFixed(1) + 's');
+    showToast('Scène ' + (item.index + 1) + ' prête', 'success');
+  } catch (e) {
+    item.status = 'failed';
+    item.progress = e.message.slice(0, 60);
+    state.failed++;
+    render();
+    logDebug('err', 'VIDÉO', 'Scène ' + (item.index + 1) + ' échec : ' + e.message);
+  }
 }
 
 /* ============================================================
@@ -2806,7 +2562,20 @@ function init() {
       window.scrollTo(0, 0);
     });
   });
-    /* Sauvegarde des clés de secours */
+  
+  /* API */
+  var saveBtn = $('api-save-btn');
+  if (saveBtn) saveBtn.addEventListener('click', saveApiKey);
+  var clearBtn = $('api-clear-btn');
+  if (clearBtn) clearBtn.addEventListener('click', clearAllKeys);
+  var apiInp = $('api-key-input');
+  if (apiInp) {
+    apiInp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); }
+    });
+  }
+  
+  /* Clés de secours */
   var groqInput = $('groq-key');
   if (groqInput) {
     try { groqInput.value = localStorage.getItem('groq_key') || ''; } catch (e) {}
@@ -2821,31 +2590,19 @@ function init() {
       try { localStorage.setItem('openrouter_key', orInput.value.trim()); } catch (e) {}
     });
   }
-
-  /* Boutons API */
-  var saveBtn = $('api-save-btn');
-  if (saveBtn) saveBtn.addEventListener('click', saveApiKey);
-  var clearBtn = $('api-clear-btn');
-  if (clearBtn) clearBtn.addEventListener('click', clearAllKeys);
-  var apiInp = $('api-key-input');
-  if (apiInp) {
-    apiInp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); }
-    });
-  }
-
+  
   /* Wake lock */
   var wakeBtn = $('wake-toggle-btn');
   if (wakeBtn) wakeBtn.addEventListener('click', toggleWakeLock);
-
-  /* Upload photo (délégation, car l'input est recréé à chaque rendu) */
+  
+  /* Upload photos de référence */
   document.addEventListener('change', function (e) {
-    if (e.target && e.target.id === 'file-input') {
+    if (e.target && e.target.id === 'refs-file-input') {
       handleFiles(e.target.files);
       e.target.value = '';
     }
   });
-
+  
   /* Restauration wake lock */
   try {
     if (localStorage.getItem(WAKE_LOCK_PREF) === '1') {
@@ -2853,22 +2610,62 @@ function init() {
       activateWakeLock().then(updateWakeStatus);
     }
   } catch (e) {}
-
+  
   /* Restauration clé externe */
   try {
     var ek = localStorage.getItem(EXTERNAL_KEY_STORAGE);
     if (ek) state.externalKey = ek;
   } catch (e) {}
-
+  
   /* Chargement état + rendu */
   loadState();
   updateApiPanel();
+  updateApiPanelVisibility();
   updateQuotaPanel();
   updateWakeStatus();
   render();
-  logDebug('ok', 'INIT', 'Agnes Créateur prêt');
+  logDebug('ok', 'INIT', 'Fabrik des Idées prêt');
   logDebug('info', 'INIT', 'Modèles : ' + MODEL_TEXT + ' / ' + MODEL_IMAGE_DEFAULT + ' / ' + MODEL_VIDEO);
   logDebug('info', 'INIT', 'Délais : 62 s min entre créations, premier poll 80 s, poll 8/8/12/12/20/20/25');
+}
+
+/* Traitement des images */
+function processImageFile(file) {
+  return new Promise(function (resolve) {
+    if (!file.type.startsWith('image/')) { resolve(null); return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var dataUri = e.target.result;
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var c = document.createElement('canvas');
+          var ratio = img.height / img.width;
+          var w = 200;
+          c.width = w;
+          c.height = Math.round(w * ratio);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          var thumb = c.toDataURL('image/jpeg', 0.7);
+          resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: thumb });
+        } catch (err) { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri }); }
+      };
+      img.onerror = function () { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri }); };
+      img.src = dataUri;
+    };
+    reader.onerror = function () { resolve(null); };
+    reader.readAsDataURL(file);
+  });
+}
+async function handleFiles(files) {
+  var list = Array.prototype.slice.call(files).filter(function (f) { return f.type.startsWith('image/'); });
+  if (!list.length) return;
+  showToast('Chargement de ' + list.length + ' photo' + (list.length > 1 ? 's' : '') + '…', 'warn');
+  for (var i = 0; i < list.length; i++) {
+    var im = await processImageFile(list[i]);
+    if (im) state.images.push(im);
+  }
+  render();
+  showToast(state.images.length + ' photo' + (state.images.length > 1 ? 's' : '') + ' prête' + (state.images.length > 1 ? 's' : ''), 'success');
 }
 
 /* Démarrage */
