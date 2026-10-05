@@ -935,9 +935,6 @@ function ideesHtml() {
 function universHtml() {
   var ready = has(P.idee) && P.style;
   var hasU = P.persos.length > 0 || has(P.concept);
-  var styleOpts = '<option value="">Choisir un style</option>' + GROUPS.map(function (g, gi) {
-    return '<optgroup label="' + esc(g) + '">' + STYLES.filter(function (s) { return s.g === gi; }).map(function (s) { return '<option value="' + s.id + '"' + (P.style === s.id ? " selected" : "") + '>' + esc(s.nom) + ' (' + esc(s.diff.toLowerCase()) + ')</option>'; }).join("") + '</optgroup>';
-  }).join("");
   var h = '<header class="hero"><span class="kicker">Étape 2</span><h1>Univers</h1><p class="muted">Le format, l\'idée, le style visuel, la clé Agnes.</p></header>';
   h += agnesPanelHtml();
   h += '<section class="glass card"><h2>1. Mon format</h2>' +
@@ -1225,7 +1222,7 @@ document.addEventListener("input", function (e) {
 });
 document.addEventListener("change", function (e) {
   var id = e.target.id;
-  else if (id === "cam") { P.cam = e.target.value; save(); }
+  if (id === "cam") { P.cam = e.target.value; save(); }
   else if (id === "bk-file") {
     var f = e.target.files[0]; if (!f) return;
     var rd = new FileReader();
