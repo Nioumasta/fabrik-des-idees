@@ -1,24 +1,16 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#ECE8FF">
-<title>Fabrik des Idées</title>
+<title>Fabrique de séries · Agnes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
-
-/* ============================================================
-   FABRIK DES IDÉES - Feuille de style
-   Design verre dépoli violet/rose/bleu
-   Optimisé mobile-first
-   ============================================================ */
-
 :root {
   --bg: #ECE8FF;
   --blob1: rgba(255, 120, 190, .55);
@@ -28,7 +20,7 @@
   --fg: #1B1340;
   --muted: #55497E;
   --glass: rgba(255, 255, 255, .55);
-  --glass-strong: rgba(255, 255, 255, .82);
+  --glass-strong: rgba(255, 255, 255, .8);
   --glass-line: rgba(255, 255, 255, .8);
   --shadow: 0 10px 34px rgba(72, 46, 160, .16);
   --line: rgba(27, 19, 64, .14);
@@ -64,13 +56,12 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
-
 body {
   margin: 0; padding: 0;
   background: var(--bg); color: var(--fg);
   font-family: var(--font-body); font-size: 16px; line-height: 1.55;
   padding-inline: 16px;
-  padding-block: 18px 200px;
+  padding-block: 18px 220px;
   padding-top: calc(18px + env(safe-area-inset-top, 0px));
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
@@ -115,9 +106,8 @@ button { cursor: pointer; }
   .glass { background: var(--glass-strong); }
 }
 .card { padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.hero { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; padding-bottom: 6px; }
+.hero { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }
 
-/* Boutons */
 .btn {
   border: 0; border-radius: 16px; padding: 14px 18px; min-height: 50px;
   font-weight: 700; color: var(--accent-fg);
@@ -142,7 +132,6 @@ button { cursor: pointer; }
   align-self: flex-start; min-height: 44px;
 }
 
-/* Bandeau étapes */
 .strip {
   display: flex; gap: 8px; overflow-x: auto;
   padding: 2px 2px 8px; scrollbar-width: none;
@@ -150,11 +139,11 @@ button { cursor: pointer; }
 }
 .strip::-webkit-scrollbar { display: none; }
 .stage {
-  flex: none; min-width: 100px; border-radius: 16px; padding: 10px 12px;
+  flex: none; min-width: 92px; border-radius: 16px; padding: 10px 12px;
   text-align: left; color: var(--fg); background: var(--glass);
   border: 1px solid var(--glass-line);
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  display: flex; flex-direction: column; gap: 2px; min-height: 68px;
+  display: flex; flex-direction: column; gap: 2px; min-height: 64px;
 }
 .stage small { font-size: .72rem; color: var(--muted); font-weight: 600; }
 .stage b { font-size: .88rem; }
@@ -166,80 +155,6 @@ button { cursor: pointer; }
 }
 .stage.cur small { color: rgba(255,255,255,.85); }
 
-/* Panneau API */
-.api-panel { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-.api-panel.ok { border-color: var(--accent-a); box-shadow: 0 0 0 2px var(--accent-a) inset, var(--shadow); }
-.api-key-input {
-  width: 100%; padding: 12px 14px; border-radius: 14px;
-  border: 1.5px solid var(--line); background: var(--glass-strong);
-  color: var(--fg);
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 14px;
-}
-.api-key-input:focus { outline: none; border-color: var(--accent-a); box-shadow: 0 0 0 3px rgba(109, 74, 232, .22); }
-.api-status-line {
-  font-size: .85rem; padding: 10px 14px; border-radius: 12px;
-  display: flex; align-items: center; gap: 10px;
-  background: var(--code-bg); color: var(--muted);
-}
-.api-status-line.ok { background: var(--ok-bg); color: var(--ok); font-weight: 600; }
-.api-status-line .status-dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--muted); flex-shrink: 0;
-}
-.api-status-line.ok .status-dot { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-.api-hint { font-size: .78rem; color: var(--muted); line-height: 1.5; }
-.api-hint a { color: var(--accent-text); text-decoration: underline; }
-.api-security {
-  background: var(--hot-bg); border-radius: 12px; padding: 10px 12px;
-  font-size: .78rem; color: var(--fg); font-weight: 500; line-height: 1.5;
-}
-
-/* Quotas */
-.quota-panel { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
-.quota-row {
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 10px; font-size: .82rem;
-  padding: 6px 0; border-bottom: 1px solid var(--line);
-}
-.quota-row:last-child { border-bottom: none; }
-.quota-label { color: var(--muted); }
-.quota-value {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-weight: 600; display: flex; align-items: center; gap: 6px;
-}
-.quota-bar {
-  width: 70px; height: 6px; background: var(--code-bg);
-  border-radius: 3px; overflow: hidden;
-}
-.quota-bar-fill {
-  height: 100%; border-radius: 3px;
-  background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
-  transition: width .3s;
-}
-.quota-bar-fill.warn { background: var(--warn); }
-.quota-warn {
-  background: var(--warn-bg); border-radius: 12px; padding: 10px 12px;
-  font-size: .8rem; color: var(--warn); font-weight: 600; line-height: 1.45;
-  display: none;
-}
-
-/* Wake */
-.wake-status {
-  font-size: .78rem; padding: 10px 12px; border-radius: 12px;
-  display: flex; justify-content: space-between; align-items: center;
-  background: var(--code-bg); color: var(--muted);
-  flex-wrap: wrap; gap: 8px;
-}
-.wake-status.active { background: var(--ok-bg); color: var(--ok); }
-.wake-status.warn { background: var(--warn-bg); color: var(--warn); }
-.wake-status button {
-  background: transparent; border: 1px solid currentColor;
-  color: inherit; padding: 6px 12px; border-radius: 10px;
-  font-size: .75rem; font-weight: 600;
-}
-
-/* Champs */
 label.q { font-weight: 700; display: block; margin-bottom: 6px; }
 .q-hint { display: block; font-size: .82rem; color: var(--muted); font-weight: 500; margin-top: 3px; line-height: 1.45; }
 textarea, input[type="text"], input[type="search"], input[type="url"], input[type="password"], select {
@@ -262,7 +177,6 @@ select {
   padding-right: 38px;
 }
 
-/* Chips */
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip {
   border: 1.5px solid var(--line); background: var(--glass-strong);
@@ -285,23 +199,11 @@ select {
 .scrollrow::-webkit-scrollbar { display: none; }
 .scrollrow .chip { white-space: nowrap; flex: none; }
 
-/* Alertes */
-.warnbox {
-  background: var(--warn-bg); border-radius: 16px;
-  padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
-}
+.warnbox { background: var(--warn-bg); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .warnbox h3 { color: var(--warn); }
-.okbox {
-  background: var(--ok-bg); border-radius: 16px;
-  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
-  color: var(--ok);
-}
-.hotbox {
-  background: var(--hot-bg); border-radius: 16px;
-  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
-}
+.okbox { background: var(--ok-bg); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; color: var(--ok); }
+.hotbox { background: var(--hot-bg); border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
 
-/* Upload */
 .upload-zone {
   position: relative;
   border: 2px dashed var(--line); border-radius: 18px;
@@ -319,42 +221,47 @@ select {
 .upload-zone .t1 { font-size: 15px; font-weight: 700; }
 .upload-zone .t2 { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-/* Grille images */
 .images-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 8px; margin-top: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px; margin-top: 12px;
 }
 .image-card {
-  position: relative; border-radius: 10px; overflow: hidden;
+  position: relative; border-radius: 12px; overflow: hidden;
   border: 1px solid var(--line); background: var(--code-bg);
-  aspect-ratio: 9/16;
 }
-.image-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.image-card img { width: 100%; display: block; aspect-ratio: 9/16; object-fit: cover; }
 .image-card.selected { border-color: var(--accent-a); box-shadow: 0 0 0 2px var(--accent-a) inset; }
 .image-card .rm {
-  position: absolute; top: 4px; right: 4px; width: 24px; height: 24px;
+  position: absolute; top: 6px; right: 6px; width: 26px; height: 26px;
   background: rgba(0,0,0,.7); color: #fff; border: none; border-radius: 50%;
   font-size: 12px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   line-height: 1;
 }
 .image-card .sel {
-  position: absolute; bottom: 4px; left: 4px; width: 26px; height: 26px;
+  position: absolute; bottom: 6px; left: 6px; width: 28px; height: 28px;
   background: rgba(255,255,255,.85); border: 2px solid rgba(0,0,0,.2);
   border-radius: 50%; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; color: transparent; font-weight: 700;
 }
-.image-card.selected .sel {
-  background: var(--accent-a); color: #fff; border-color: #fff;
+.image-card.selected .sel { background: var(--accent-a); color: #fff; border-color: #fff; }
+.image-card .regen {
+  position: absolute; bottom: 6px; right: 6px; padding: 5px 10px;
+  background: rgba(0,0,0,.75); color: #fff; border: none; border-radius: 10px;
+  font-size: .72rem; font-weight: 700; cursor: pointer;
 }
+.image-card .regen:active { background: var(--accent-a); }
 
-/* Grille styles */
 .styles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+  -webkit-overflow-scrolling: touch;
 }
 .style-card {
   padding: 10px 12px; border-radius: 14px;
@@ -372,20 +279,24 @@ select {
 .style-card .info { min-width: 0; }
 .style-card .nm { font-size: .85rem; font-weight: 700; line-height: 1.2; }
 .style-card .ds { font-size: .72rem; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+.style-cat-h {
+  grid-column: 1 / -1;
+  font-size: .72rem; font-weight: 700;
+  color: var(--accent-text); text-transform: uppercase;
+  letter-spacing: .1em; padding: 12px 0 4px;
+  border-bottom: 1px solid var(--line); margin-bottom: 4px;
+}
+.style-cat-h:first-child { padding-top: 0; border-bottom: none; }
 
-/* Bouton dé magique */
 .magic-btn {
   width: 100%; padding: 18px; border-radius: 18px;
   border: 2px dashed var(--accent-a);
   background: linear-gradient(135deg, rgba(109,74,232,.08), rgba(181,52,143,.08));
   color: var(--accent-text); font-weight: 700; font-size: 1rem;
   display: flex; align-items: center; justify-content: center; gap: 10px;
-  transition: all .2s;
 }
-.magic-btn:active { transform: scale(.98); background: linear-gradient(135deg, rgba(109,74,232,.15), rgba(181,52,143,.15)); }
-.magic-btn .dice { font-size: 26px; }
+.magic-btn:active { transform: scale(.98); }
 
-/* File d'attente */
 .queue { display: flex; flex-direction: column; gap: 6px; }
 .queue-summary {
   background: var(--glass-strong); border-radius: 12px;
@@ -410,7 +321,6 @@ select {
 .queue-item.done { border-color: var(--ok); background: var(--ok-bg); }
 .queue-item.failed { border-color: var(--warn); background: var(--warn-bg); }
 
-/* Galerie */
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -430,39 +340,24 @@ select {
   font-size: .78rem; color: var(--fg); font-weight: 600;
   display: flex; flex-direction: column; gap: 4px;
 }
-.gallery-item .g-style {
-  font-size: .72rem; color: var(--accent-text); font-weight: 700;
-}
+.gallery-item .g-style { font-size: .72rem; color: var(--accent-text); font-weight: 700; }
 .gallery-item .g-actions {
   display: flex; gap: 6px; padding: 8px 10px;
   background: var(--glass-strong);
   border-top: 1px solid var(--line);
+  flex-wrap: wrap;
 }
 .gallery-item .g-actions a,
 .gallery-item .g-actions button {
-  flex: 1; padding: 8px 10px; border-radius: 10px;
+  flex: 1; min-width: 70px; padding: 8px 10px; border-radius: 10px;
   background: var(--code-bg); color: var(--accent-text);
   border: 1px solid var(--line);
   font-size: .75rem; font-weight: 700;
   text-decoration: none; text-align: center;
 }
-.gallery-item .g-actions button:active,
-.gallery-item .g-actions a:active { background: var(--accent-a); color: #fff; }
+.gallery-item .g-actions a:active,
+.gallery-item .g-actions button:active { background: var(--accent-a); color: #fff; }
 
-/* Lecteur hook 3s */
-.hook-player {
-  background: #000; border-radius: 16px; overflow: hidden;
-  border: 2px solid var(--accent-a);
-  box-shadow: 0 0 0 4px rgba(109,74,232,.15);
-}
-.hook-player video { width: 100%; display: block; aspect-ratio: 9/16; object-fit: contain; background: #000; }
-.hook-player .hook-consigne {
-  padding: 12px 14px; background: var(--glass-strong);
-  font-size: .82rem; font-weight: 600; color: var(--accent-text);
-  display: flex; align-items: center; gap: 8px; line-height: 1.4;
-}
-
-/* Console debug */
 .debug-panel {
   background: var(--glass-strong); border-radius: 18px;
   overflow: hidden; margin-top: 8px;
@@ -511,7 +406,6 @@ select {
 .debug-entry.api .c { color: var(--accent-a); }
 .debug-entry.measure .c { color: var(--accent-b); }
 
-/* Statut de tâche (barre du bas) */
 .status-bar {
   position: fixed; left: 50%; transform: translateX(-50%) translateY(120%);
   bottom: calc(86px + env(safe-area-inset-bottom, 0px));
@@ -537,7 +431,6 @@ select {
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Toast */
 .toast {
   position: fixed; left: 16px; right: 16px;
   bottom: calc(160px + env(safe-area-inset-bottom, 0px));
@@ -555,7 +448,6 @@ select {
 .toast.error { background: var(--warn); color: #fff; }
 .toast.warn { background: #C77A20; color: #fff; }
 
-/* Dock de navigation */
 .dock {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
@@ -574,7 +466,7 @@ select {
   color: var(--muted); border-radius: 20px;
   padding: 8px 4px; min-height: 54px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; font-size: .7rem; font-weight: 700;
+  gap: 2px; font-size: .72rem; font-weight: 700;
 }
 .dock button[aria-current="page"] {
   color: #fff;
@@ -582,7 +474,6 @@ select {
 }
 .dock svg { width: 22px; height: 22px; }
 
-/* Divers */
 .hidden { display: none !important; }
 .empty {
   text-align: center; color: var(--muted);
@@ -607,6 +498,15 @@ select {
 .mode-option .mo-name { font-size: .88rem; font-weight: 700; }
 .mode-option .mo-desc { font-size: .72rem; opacity: .8; line-height: 1.3; }
 
+.opt { display: flex; flex-direction: column; gap: 6px; }
+.optb {
+  text-align: left; color: var(--fg); background: var(--glass-strong);
+  border: 1.5px solid var(--line); border-radius: 16px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-height: 56px;
+}
+.optb[aria-pressed="true"] { border-color: var(--accent-a); box-shadow: 0 0 0 2px var(--accent-a) inset; }
+.optb b { font-size: .95rem; } .optb span { font-size: .84rem; color: var(--muted); }
+
 pre.fin {
   margin: 0; white-space: pre-wrap; word-break: break-word;
   font-family: ui-monospace, Menlo, Consolas, monospace;
@@ -616,120 +516,136 @@ pre.fin {
   max-height: 320px; overflow: auto;
 }
 
-/* Empêche le zoom iOS sur les inputs */
+.busy {
+  position: fixed; inset: 0; z-index: 40;
+  display: grid; place-items: center; padding: 20px;
+  background: rgba(12, 9, 32, .45);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.busy .glass {
+  background: var(--glass-strong);
+  max-width: 420px; width: 100%; padding: 22px;
+  display: flex; flex-direction: column; gap: 12px;
+  text-align: center; align-items: center;
+}
+.spin {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 4px solid var(--code-bg); border-top-color: var(--accent-a);
+  animation: spin 0.9s linear infinite;
+}
+.badge { font-size: .72rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: var(--code-bg); color: var(--accent-text); white-space: nowrap; }
+.badge.done { background: linear-gradient(135deg, var(--accent-a), var(--accent-b)); color: #fff; }
+.chrow { width: 100%; text-align: left; color: var(--fg); display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 18px; min-height: 60px; }
+.chrow .n { flex: none; min-width: 34px; height: 34px; padding-inline: 6px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: .85rem; background: var(--code-bg); color: var(--accent-text); }
+.chrow .t { display: flex; flex-direction: column; min-width: 0; }
+.chrow .t b { font-size: .98rem; line-height: 1.25; }
+.chrow .t span { font-size: .82rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.acc { padding: 0; overflow: hidden; }
+.acc > summary { list-style: none; padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 56px; }
+.acc > summary::-webkit-details-marker { display: none; }
+.acc > summary b { font-size: 1rem; }
+.acc > summary span { font-size: .82rem; color: var(--muted); }
+.acc > summary::after { content: "›"; font-size: 1.4rem; color: var(--accent-text); transform: rotate(90deg); }
+.acc[open] > summary::after { transform: rotate(-90deg); }
+.acc .in { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.del { background: none; border: 0; color: var(--warn); font-weight: 700; padding: 8px 0; text-align: left; min-height: 40px; }
+.linkbtn { background: none; border: 0; color: var(--accent-text); font-weight: 700; padding: 6px 0; text-align: left; min-height: 36px; font-size: .9rem; }
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .two { grid-template-columns: 1fr; } }
+.next { border-left: 3px solid var(--accent-a); }
+
 @supports (-webkit-touch-callout: none) {
   input, textarea, select { font-size: 16px !important; }
 }
-
-/* Media queries */
 @media (max-width: 480px) {
-  body { font-size: 15px; padding-block: 14px 180px; }
+  body { font-size: 15px; padding-block: 14px 200px; }
   h1 { font-size: 1.35rem; }
   .card { padding: 14px; gap: 8px; }
   .btn { padding: 12px 16px; min-height: 46px; font-size: .95rem; }
-  .images-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+  .images-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-  .styles-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .styles-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
   .dock button { font-size: .68rem; }
-  .stage { min-width: 90px; padding: 8px 10px; }
 }
 </style>
-<script src="./styles.js"></script>
 </head>
 <body>
 
 <div class="bg" aria-hidden="true"></div>
 
-<div id="view">
+<main id="view">
   <header class="hero">
-    <span class="kicker">Fabrik des Idées</span>
-    <h1>Créez vos séries et vos hooks vidéo</h1>
-    <p class="muted">Idées, scripts, images et vidéos avec Agnes. Gratuit dans la limite des quotas.</p>
+    <span class="kicker">Fabrique de séries · Agnes</span>
+    <h1>De l'idée à la vidéo</h1>
+    <p class="muted">Écris ton histoire, choisis ton style, et Agnes génère les images et les vidéos.</p>
   </header>
 
-  <!-- Panneau API (visible la 1ère fois) -->
-  <section class="glass card api-panel" id="api-panel" style="display:none;">
+  <!-- Panneau API (visible uniquement la 1ère fois) -->
+  <section class="glass card" id="api-panel" style="display:none;">
     <h2>Ma clé Agnes</h2>
-    <input type="password" class="api-key-input" id="api-key-input"
-           placeholder="Colle ta clé Agnes ici (sk-...)"
-           autocomplete="off" spellcheck="false">
+    <input type="password" id="api-key-input" placeholder="Colle ta clé Agnes ici (sk-...)" autocomplete="off" spellcheck="false">
     <div class="row">
       <button type="button" class="btn big" id="api-save-btn">Enregistrer la clé</button>
     </div>
-    <div class="api-status-line" id="api-status-line">
-      <span class="status-dot"></span>
+    <div id="api-status-line" style="font-size:.85rem;padding:10px 14px;border-radius:12px;background:var(--code-bg);color:var(--muted);display:flex;align-items:center;gap:10px;">
+      <span style="width:9px;height:9px;border-radius:50%;background:var(--muted);"></span>
       <span id="api-status-text">Aucune clé Agnes enregistrée</span>
     </div>
     <details style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
       <summary style="cursor:pointer;font-weight:700;color:var(--accent-text);">Clés de secours (facultatif)</summary>
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
         <label class="q">Clé Groq (texte rapide)</label>
-        <input type="password" id="groq-key" class="api-key-input" placeholder="gsk_..." autocomplete="off">
+        <input type="password" id="groq-key" placeholder="gsk_..." autocomplete="off">
         <label class="q">Clé OpenRouter (texte varié)</label>
-        <input type="password" id="openrouter-key" class="api-key-input" placeholder="sk-or-v1-..." autocomplete="off">
+        <input type="password" id="openrouter-key" placeholder="sk-or-v1-..." autocomplete="off">
         <p class="small muted">Pollinations fonctionne sans clé pour les images.</p>
       </div>
     </details>
-    <div class="api-hint">
-      Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank" rel="noopener">platform.agnes-ai.com</a>
-      (Settings, puis API Keys).
+    <div class="small muted">
+      Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank" rel="noopener" style="color:var(--accent-text);">platform.agnes-ai.com</a> (Settings, puis API Keys).
     </div>
-    <div class="api-security">
-      🔒 Utilise une clé limitée, uniquement sur tes appareils. Ne partage jamais ce fichier après avoir saisi une clé.
-    </div>
+    <div class="hotbox">🔒 Utilise une clé limitée, uniquement sur tes appareils. Ne partage jamais ce fichier après avoir saisi une clé.</div>
     <div class="row">
       <button type="button" class="btn ghost big" id="api-clear-btn">Effacer mes clés</button>
     </div>
   </section>
 
-  <!-- Quotas (toujours visible) -->
-  <section class="glass quota-panel" id="quota-panel">
+  <!-- Panneau quotas (toujours visible) -->
+  <section class="glass card" id="quota-panel">
     <h2 class="small">Quotas Agnes (compteurs locaux)</h2>
-    <div class="quota-row">
-      <span class="quota-label">Requêtes texte</span>
-      <span class="quota-value">
-        <span id="quota-text">0</span>/30 min
-        <span class="quota-bar"><span class="quota-bar-fill" id="quota-text-bar" style="width:0%"></span></span>
-      </span>
+    <div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;padding:6px 0;border-bottom:1px solid var(--line);">
+      <span class="muted">Requêtes texte</span>
+      <span style="font-family:ui-monospace,Menlo,monospace;font-weight:600;"><span id="quota-text">0</span>/30 min</span>
     </div>
-    <div class="quota-row">
-      <span class="quota-label">Images générées</span>
-      <span class="quota-value">
-        <span id="quota-image">0</span>/4000 jour
-        <span class="quota-bar"><span class="quota-bar-fill" id="quota-image-bar" style="width:0%"></span></span>
-      </span>
+    <div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;padding:6px 0;border-bottom:1px solid var(--line);">
+      <span class="muted">Images générées</span>
+      <span style="font-family:ui-monospace,Menlo,monospace;font-weight:600;"><span id="quota-image">0</span>/4000 jour</span>
     </div>
-    <div class="quota-row">
-      <span class="quota-label">Secondes de vidéo</span>
-      <span class="quota-value">
-        <span id="quota-video">0</span>/500 jour
-        <span class="quota-bar"><span class="quota-bar-fill" id="quota-video-bar" style="width:0%"></span></span>
-      </span>
+    <div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;padding:6px 0;border-bottom:1px solid var(--line);">
+      <span class="muted">Secondes de vidéo</span>
+      <span style="font-family:ui-monospace,Menlo,monospace;font-weight:600;"><span id="quota-video">0</span>/500 jour</span>
     </div>
-    <div class="quota-row">
-      <span class="quota-label">Créations vidéo</span>
-      <span class="quota-value">
-        <span id="quota-video-rpm">0</span>/1 min
-      </span>
+    <div style="display:flex;justify-content:space-between;gap:10px;font-size:.82rem;padding:6px 0;">
+      <span class="muted">Vitesse mesurée</span>
+      <span style="font-family:ui-monospace,Menlo,monospace;font-weight:600;"><span id="stat-speed">en attente</span></span>
     </div>
-    <div class="quota-row">
-      <span class="quota-label">Vitesse mesurée</span>
-      <span class="quota-value"><span id="stat-speed">en attente</span></span>
-    </div>
-    <div class="quota-warn" id="quota-warn"></div>
   </section>
 
   <!-- Wake lock -->
   <section class="glass card">
-    <div class="wake-status" id="wake-status">
+    <div id="wake-status" style="font-size:.78rem;padding:10px 12px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;background:var(--code-bg);color:var(--muted);flex-wrap:wrap;gap:8px;">
       <span id="wake-status-text">💤 Veille automatique</span>
-      <button type="button" id="wake-toggle-btn">Garder l'écran allumé</button>
+      <button type="button" id="wake-toggle-btn" style="background:transparent;border:1px solid currentColor;color:inherit;padding:6px 12px;border-radius:10px;font-size:.75rem;font-weight:600;">Garder l'écran allumé</button>
     </div>
   </section>
 
   <!-- Contenu des onglets -->
-  <main id="tab-content"></main>
-</div>
+  <div id="tab-content"></div>
+</main>
+
+<!-- Overlay pour les chargements -->
+<div id="overlay"></div>
 
 <!-- Barre de statut -->
 <div class="status-bar" id="status-bar">
@@ -764,1910 +680,6 @@ pre.fin {
 <canvas id="noSleepCanvas" width="2" height="2" style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1;"></canvas>
 <video id="noSleepVideo" playsinline muted loop style="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1;"></video>
 
-<!-- PARTIE 2 À COLLER ICI -->
 
-<script>
-"use strict";
 
-/* ============================================================
-   FABRIK DES IDÉES : moteur JavaScript
-   Constantes Agnes, délais, parsers, API
-   ============================================================ */
-
-/* ---------- 1. CONSTANTES AGNES ---------- */
-var API_BASE = 'https://apihub.agnes-ai.com/v1';
-var POLL_BASE = 'https://apihub.agnes-ai.com/agnesapi';
-var MODEL_TEXT = 'agnes-2.5-flash';
-var MODEL_IMAGE_DEFAULT = 'agnes-image-2.1-flash';
-var MODEL_IMAGE_ALT = 'agnes-image-2.5-flash';
-var MODEL_VIDEO = 'agnes-video-v2.0';
-var FRAME_RATE = 24;
-
-var VIDEO_INTERVAL_MIN = 62000;
-var VIDEO_INTERVAL_MAX = 90000;
-var VIDEO_INTERVAL_SAFE = 75000;
-var IMAGE_PARALLEL = 3;
-var IMAGE_INTERVAL_MS = 3400;
-var IMAGE_INTERVAL_MIN = 3200;
-var IMAGE_INTERVAL_MAX = 12000;
-var IMAGE_INTERVAL_SAFE = 4000;
-var VIDEO_FIRST_POLL_DELAY_SEC = 80;
-var VIDEO_POLL_INTERVALS = [8, 8, 12, 12, 20, 20, 25];
-var VIDEO_MAX_POLL_ATTEMPTS = 100;
-var TEXT_RPM_LIMIT = 30;
-var IMAGE_DAILY_LIMIT = 4000;
-var VIDEO_DAILY_SECONDS = 500;
-var VIDEO_RPM_LIMIT = 1;
-
-var RETRY_429 = [10, 20, 35, 50, 75, 100, 150];
-var RETRY_503 = [5, 10, 15, 20, 30, 45];
-
-var DURATIONS = [
-  { frames: 121, s: 5.04, label: '5 s',       mode: 'hook' },
-  { frames: 145, s: 6.04, label: '6 s',       mode: 'both' },
-  { frames: 153, s: 6.38, label: '6,4 s',     mode: 'both' },
-  { frames: 161, s: 6.71, label: '6,7 s',     mode: 'both' },
-  { frames: 169, s: 7.04, label: '7 s',       mode: 'both' },
-  { frames: 193, s: 8.04, label: '8 s',       mode: 'both' },
-  { frames: 241, s: 10.04, label: '10 s',     mode: 'serie' },
-  { frames: 361, s: 15.04, label: '15 s',     mode: 'serie' }
-];
-var HOOK_MIN_SECONDS = 61;
-var HOOK_IDEAL_SECONDS = 3;
-
-var STORE = 'fabrik_des_idees_v1';
-var API_KEY_STORAGE = 'fabrik_api_key';
-var EXTERNAL_KEY_STORAGE = 'fabrik_ext_keys';
-var WAKE_LOCK_PREF = 'fabrik_wakelock';
-var TIMING_CACHE_KEY = 'fabrik_timing';
-var PREFS_KEY = 'fabrik_prefs';
-
-/* ============================================================
-   ÉTAT GLOBAL
-   ============================================================ */
-var state = {
-  tab: 'idees',
-  mode: 'serie',
-  idea: '',
-  tone: 'neutre',
-  theme: '',
-  durationFrames: 241,
-  durationFramesHook: 121,
-  imageModel: MODEL_IMAGE_DEFAULT,
-  textProvider: 'agnes',
-  externalService: 'openai',
-  externalUrl: 'https://api.openai.com/v1/chat/completions',
-  externalModel: 'gpt-4o-mini',
-  externalKey: '',
-  images: [],
-  selectedImages: [],
-  hookJobs: [],
-  episode: null,
-  queue: [],
-  isRunning: false,
-  stopRequested: false,
-  completed: 0,
-  failed: 0,
-  counters: {
-    textRequests: 0,
-    imagesGenerated: 0,
-    videoSeconds: 0,
-    videoRequestsThisMinute: 0,
-    lastResetTime: Date.now()
-  },
-  wakeEnabled: false,
-  fallbackMode: null,
-  apiKeyPanelShown: false
-};
-
-/* ============================================================
-   UTILITAIRES
-   ============================================================ */
-function $(id) { return document.getElementById(id); }
-function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-function esc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
-}
-function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-function formatEta(sec) {
-  if (sec < 60) return Math.round(sec) + 's';
-  var m = Math.floor(sec / 60), s = Math.round(sec % 60);
-  return m + 'm' + (s > 0 ? ' ' + s + 's' : '');
-}
-function nowTime() {
-  var d = new Date();
-  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-function countWords(t) {
-  if (!t) return 0;
-  return String(t).trim().split(/\s+/).filter(function (w) { return w.length > 0; }).length;
-}
-
-/* ---------- Toast ---------- */
-var toastTimer = null;
-function showToast(msg, type, dur) {
-  type = type || 'success';
-  dur = dur || 2500;
-  var t = $('toast');
-  if (!t) return;
-  t.className = 'toast ' + type;
-  t.textContent = msg;
-  requestAnimationFrame(function () { t.classList.add('visible'); });
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { t.classList.remove('visible'); }, dur);
-}
-
-/* ---------- Statut ---------- */
-function setStatus(text) {
-  var bar = $('status-bar'), txt = $('status-text');
-  if (!bar || !txt) return;
-  if (text) { bar.classList.add('visible'); txt.textContent = text; }
-  else bar.classList.remove('visible');
-}
-
-/* ---------- Console debug ---------- */
-var debugCount = 0;
-function logDebug(level, category, msg, data) {
-  var body = $('debug-body');
-  if (!body) return;
-  var entry = document.createElement('div');
-  entry.className = 'debug-entry ' + level;
-  var html = '<span class="t">' + nowTime() + '</span><span class="c">[' + esc(category) + ']</span>' + esc(msg);
-  if (data !== undefined && data !== null) {
-    var dStr = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-    if (dStr.length > 2000) dStr = dStr.slice(0, 2000) + '\n…[tronqué]';
-    html += '<pre style="margin:6px 0 0;padding:8px;background:#00000022;border-radius:6px;font-size:.72rem;overflow:auto;max-height:180px;">' + esc(dStr) + '</pre>';
-  }
-  entry.innerHTML = html;
-  body.appendChild(entry);
-  body.scrollTop = body.scrollHeight;
-  debugCount++;
-  var dc = $('debug-count');
-  if (dc) dc.textContent = debugCount;
-}
-function clearDebug() {
-  var body = $('debug-body');
-  if (body) body.innerHTML = '';
-  debugCount = 0;
-  var dc = $('debug-count');
-  if (dc) dc.textContent = '0';
-}
-
-/* ---------- Journal médias ---------- */
-function addMediaLog(kind, url, label) {
-  var log = $('media-log');
-  if (!log) return;
-  var empty = log.querySelector('.empty');
-  if (empty) empty.remove();
-  var el = document.createElement('div');
-  el.className = 'media-log-entry';
-  var display = url.length > 90 ? url.slice(0, 90) + '…' : url;
-  el.innerHTML = '<span class="ml-tag ' + kind + '">' + kind + '</span>' +
-    '<a class="ml-url" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(display) + '</a>' +
-    '<span class="ml-time">' + nowTime() + '</span>';
-  log.appendChild(el);
-}
-
-/* ============================================================
-   STOCKAGE LOCAL
-   ============================================================ */
-function loadState() {
-  try {
-    var raw = localStorage.getItem(STORE);
-    if (raw) {
-      var d = JSON.parse(raw);
-      if (d && typeof d === 'object') {
-        if (d.mode) state.mode = d.mode;
-        if (d.idea) state.idea = d.idea;
-        if (d.theme) state.theme = d.theme;
-        if (d.tone) state.tone = d.tone;
-        if (d.durationFrames) state.durationFrames = d.durationFrames;
-        if (d.durationFramesHook) state.durationFramesHook = d.durationFramesHook;
-        if (d.imageModel) state.imageModel = d.imageModel;
-        if (d.textProvider) state.textProvider = d.textProvider;
-        if (d.externalService) state.externalService = d.externalService;
-        if (d.externalUrl) state.externalUrl = d.externalUrl;
-        if (d.externalModel) state.externalModel = d.externalModel;
-      }
-    }
-  } catch (e) {}
-}
-function saveState() {
-  try {
-    localStorage.setItem(STORE, JSON.stringify({
-      mode: state.mode,
-      idea: state.idea,
-      theme: state.theme,
-      tone: state.tone,
-      durationFrames: state.durationFrames,
-      durationFramesHook: state.durationFramesHook,
-      imageModel: state.imageModel,
-      textProvider: state.textProvider,
-      externalService: state.externalService,
-      externalUrl: state.externalUrl,
-      externalModel: state.externalModel
-    }));
-  } catch (e) {}
-}
-
-/* ============================================================
-   CLÉS API
-   ============================================================ */
-function getApiKey() {
-  try { return (localStorage.getItem(API_KEY_STORAGE) || '').trim(); }
-  catch (e) { return ''; }
-}
-function saveApiKey() {
-  var inp = $('api-key-input');
-  if (!inp) return;
-  var k = inp.value.trim();
-  if (!k) {
-    try { localStorage.removeItem(API_KEY_STORAGE); } catch (e) {}
-    updateApiPanel();
-    showToast('Clé effacée', 'warn');
-    return;
-  }
-  if (k.indexOf('sk-') !== 0) {
-    if (!confirm('La clé ne commence pas par "sk-". La sauvegarder quand même ?')) return;
-  }
-  try {
-    localStorage.setItem(API_KEY_STORAGE, k);
-    try { localStorage.setItem(PREFS_KEY, '1'); } catch (e) {}
-    updateApiPanel();
-    updateApiPanelVisibility();
-    showToast('Clé Agnes enregistrée', 'success');
-    inp.blur();
-  } catch (e) { showToast('Sauvegarde impossible', 'error'); }
-}
-function clearAllKeys() {
-  if (!confirm('Effacer toutes les clés enregistrées sur cet appareil ?')) return;
-  try {
-    localStorage.removeItem(API_KEY_STORAGE);
-    localStorage.removeItem(EXTERNAL_KEY_STORAGE);
-    localStorage.removeItem(PREFS_KEY);
-  } catch (e) {}
-  var inp = $('api-key-input');
-  if (inp) inp.value = '';
-  state.externalKey = '';
-  updateApiPanel();
-  updateApiPanelVisibility();
-  showToast('Clés effacées', 'warn');
-}
-function updateApiPanel() {
-  var panel = $('api-panel'), inp = $('api-key-input');
-  var line = $('api-status-line'), txt = $('api-status-text');
-  if (!panel || !line || !txt || !inp) return;
-  var k = getApiKey();
-  if (k) {
-    panel.classList.add('ok');
-    line.classList.add('ok');
-    txt.textContent = 'Clé Agnes active · ' + k.slice(0, 8) + '…' + k.slice(-4);
-    inp.value = k;
-    inp.placeholder = '';
-  } else {
-    panel.classList.remove('ok');
-    line.classList.remove('ok');
-    txt.textContent = 'Aucune clé Agnes enregistrée';
-    inp.value = '';
-    inp.placeholder = 'Colle ta clé Agnes ici (sk-...)';
-  }
-}
-function updateApiPanelVisibility() {
-  var panel = $('api-panel');
-  if (!panel) return;
-  var hasKey = !!getApiKey();
-  var seen = false;
-  try { seen = localStorage.getItem(PREFS_KEY) === '1'; } catch (e) {}
-  if (!hasKey && !seen) {
-    panel.style.display = 'block';
-    state.apiKeyPanelShown = true;
-  } else {
-    panel.style.display = 'none';
-    state.apiKeyPanelShown = false;
-  }
-}
-
-/* ============================================================
-   QUOTAS
-   ============================================================ */
-function updateQuotaPanel() {
-  var c = state.counters;
-  var now = Date.now();
-  if (now - c.lastResetTime > 60000) {
-    c.videoRequestsThisMinute = 0;
-    c.lastResetTime = now;
-  }
-  var el;
-  el = $('quota-text'); if (el) el.textContent = c.textRequests;
-  el = $('quota-image'); if (el) el.textContent = c.imagesGenerated;
-  el = $('quota-video'); if (el) el.textContent = Math.round(c.videoSeconds);
-  el = $('quota-video-rpm'); if (el) el.textContent = c.videoRequestsThisMinute;
-  var bar;
-  bar = $('quota-text-bar'); if (bar) bar.style.width = Math.min((c.textRequests / TEXT_RPM_LIMIT) * 100, 100) + '%';
-  bar = $('quota-image-bar'); if (bar) bar.style.width = Math.min((c.imagesGenerated / IMAGE_DAILY_LIMIT) * 100, 100) + '%';
-  bar = $('quota-video-bar');
-  if (bar) {
-    var pct = Math.min((c.videoSeconds / VIDEO_DAILY_SECONDS) * 100, 100);
-    bar.style.width = pct + '%';
-    bar.classList.toggle('warn', pct > 70);
-  }
-  updateSpeedDisplay();
-}
-function estimateQuotaUse(frames, count) {
-  return (frames / FRAME_RATE) * count;
-}
-function checkQuotaWarn(frames, count) {
-  var use = estimateQuotaUse(frames, count);
-  var remaining = VIDEO_DAILY_SECONDS - state.counters.videoSeconds;
-  var warn = $('quota-warn');
-  if (!warn) return;
-  if (use > remaining * 0.6 || use > 300) {
-    warn.style.display = 'block';
-    warn.innerHTML = '⚠️ Attention : ' + count + ' clip' + (count > 1 ? 's' : '') +
-      ' de ' + (frames / FRAME_RATE).toFixed(1) + ' s consomment environ ' + Math.round(use) +
-      ' secondes. Il te reste ' + Math.round(remaining) + ' secondes sur les 500 du jour.';
-  } else {
-    warn.style.display = 'none';
-  }
-}
-
-/* ============================================================
-   VITESSE MESURÉE
-   ============================================================ */
-function loadTimingCache() {
-  try { return JSON.parse(localStorage.getItem(TIMING_CACHE_KEY) || '{}'); }
-  catch (e) { return {}; }
-}
-function saveTimingCache(c) {
-  try { localStorage.setItem(TIMING_CACHE_KEY, JSON.stringify(c)); } catch (e) {}
-}
-function recordGenerationTime(key, ms) {
-  var c = loadTimingCache();
-  if (!c[key]) c[key] = [];
-  c[key].push(ms);
-  if (c[key].length > 10) c[key] = c[key].slice(-10);
-  saveTimingCache(c);
-  updateSpeedDisplay();
-}
-function estimateGenerationTime(key, fallback) {
-  var c = loadTimingCache();
-  var s = c[key];
-  if (s && s.length) {
-    var sorted = s.slice().sort(function (a, b) { return a - b; });
-    var mid = Math.floor(sorted.length / 2);
-    return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-  }
-  return fallback;
-}
-function updateSpeedDisplay() {
-  var c = loadTimingCache();
-  var s = c.video || [];
-  var el = $('stat-speed');
-  if (!el) return;
-  if (!s.length) { el.textContent = 'en attente'; return; }
-  var avg = s.reduce(function (a, b) { return a + b; }, 0) / s.length;
-  el.textContent = (avg / 1000).toFixed(1) + ' s en moyenne';
-}
-
-/* ============================================================
-   WAKE LOCK
-   ============================================================ */
-var wakeLockSentinel = null;
-var canvasStream = null;
-var canvasInterval = null;
-
-function isWakeLockSupported() {
-  return 'wakeLock' in navigator && typeof navigator.wakeLock.request === 'function';
-}
-async function requestWakeLockAPI() {
-  if (!isWakeLockSupported()) return false;
-  try {
-    wakeLockSentinel = await navigator.wakeLock.request('screen');
-    wakeLockSentinel.addEventListener('release', function () {
-      wakeLockSentinel = null;
-      updateWakeStatus();
-    });
-    return true;
-  } catch (e) { return false; }
-}
-async function releaseWakeLockAPI() {
-  if (wakeLockSentinel) {
-    try { await wakeLockSentinel.release(); } catch (e) {}
-    wakeLockSentinel = null;
-  }
-}
-function startCanvasStream() {
-  if (canvasStream) return true;
-  try {
-    var canvas = $('noSleepCanvas');
-    var video = $('noSleepVideo');
-    if (!canvas || !video) return false;
-    var ctx = canvas.getContext('2d');
-    if (!ctx) return false;
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    if (typeof canvas.captureStream !== 'function') return false;
-    canvasStream = canvas.captureStream(1);
-    var toggle = false;
-    canvasInterval = setInterval(function () {
-      toggle = !toggle;
-      ctx.fillStyle = toggle ? '#000000' : '#010101';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }, 1000);
-    video.srcObject = canvasStream;
-    video.muted = true;
-    video.playsInline = true;
-    var p = video.play();
-    if (p && p.catch) p.catch(function () {});
-    return true;
-  } catch (e) { return false; }
-}
-function stopCanvasStream() {
-  if (canvasInterval) { clearInterval(canvasInterval); canvasInterval = null; }
-  var video = $('noSleepVideo');
-  if (video) {
-    try { video.pause(); video.srcObject = null; } catch (e) {}
-  }
-  if (canvasStream) {
-    try { canvasStream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
-    canvasStream = null;
-  }
-}
-async function activateWakeLock() {
-  var ok = false;
-  if (isWakeLockSupported()) ok = await requestWakeLockAPI();
-  if (!ok) ok = startCanvasStream();
-  return ok;
-}
-async function deactivateWakeLock() {
-  await releaseWakeLockAPI();
-  stopCanvasStream();
-}
-function updateWakeStatus() {
-  var el = $('wake-status'), txt = $('wake-status-text'), btn = $('wake-toggle-btn');
-  if (!el || !txt || !btn) return;
-  el.classList.remove('active', 'warn');
-  var canvas = $('noSleepCanvas');
-  var has = isWakeLockSupported() || (canvas && canvas.captureStream);
-  if (!has) {
-    el.classList.add('warn');
-    txt.textContent = '⚠️ Non supporté par ce navigateur';
-    btn.style.display = 'none';
-    return;
-  }
-  btn.style.display = 'inline-block';
-  var active = wakeLockSentinel !== null || canvasStream !== null;
-  if (state.wakeEnabled && active) {
-    el.classList.add('active');
-    txt.textContent = '✅ Écran reste allumé';
-    btn.textContent = 'Désactiver';
-  } else if (state.wakeEnabled && !active) {
-    el.classList.add('warn');
-    txt.textContent = '⏳ En attente';
-    btn.textContent = 'Désactiver';
-  } else {
-    txt.textContent = '💤 Veille automatique';
-    btn.textContent = "Garder l'écran allumé";
-  }
-}
-async function toggleWakeLock() {
-  if (state.wakeEnabled) {
-    state.wakeEnabled = false;
-    await deactivateWakeLock();
-    try { localStorage.setItem(WAKE_LOCK_PREF, '0'); } catch (e) {}
-    showToast('Veille automatique', 'warn');
-  } else {
-    state.wakeEnabled = true;
-    var ok = await activateWakeLock();
-    try { localStorage.setItem(WAKE_LOCK_PREF, '1'); } catch (e) {}
-    showToast(ok ? "L'écran va rester allumé" : 'Active-le manuellement dans les réglages', ok ? 'success' : 'warn');
-  }
-  updateWakeStatus();
-}
-
-/* ============================================================
-   PARSEUR JSON À 5 STRATÉGIES
-   ============================================================ */
-function escapeControlCharsInStrings(text) {
-  var result = '', inString = false, escape = false, i, ch, code;
-  for (i = 0; i < text.length; i++) {
-    ch = text[i];
-    if (escape) { result += ch; escape = false; continue; }
-    if (ch === '\\') { result += ch; escape = true; continue; }
-    if (ch === '"') { inString = !inString; result += ch; continue; }
-    if (inString) {
-      if (ch === '\n') { result += '\\n'; continue; }
-      if (ch === '\r') { result += '\\r'; continue; }
-      if (ch === '\t') { result += '\\t'; continue; }
-      code = ch.charCodeAt(0);
-      if (code < 32) { result += '\\u' + code.toString(16).padStart(4, '0'); continue; }
-    }
-    result += ch;
-  }
-  return result;
-}
-function balanceJson(text) {
-  var openBraces = 0, openBrackets = 0, inString = false, escape = false, i, ch;
-  for (i = 0; i < text.length; i++) {
-    ch = text[i];
-    if (escape) { escape = false; continue; }
-    if (ch === '\\') { escape = true; continue; }
-    if (ch === '"') { inString = !inString; continue; }
-    if (inString) continue;
-    if (ch === '{') openBraces++;
-    else if (ch === '}') openBraces--;
-    else if (ch === '[') openBrackets++;
-    else if (ch === ']') openBrackets--;
-  }
-  var result = text;
-  if (inString) result += '"';
-  while (openBrackets > 0) { result += ']'; openBrackets--; }
-  while (openBraces > 0) { result += '}'; openBraces--; }
-  return result;
-}
-function salvageScenario(text) {
-  var titleM = text.match(/"title"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  var logM = text.match(/"logline"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  var scenes = [];
-  var re = /"scene_number"\s*:\s*(\d+)[\s\S]*?"image_prompt"\s*:\s*"((?:[^"\\]|\\.)*)"[\s\S]*?"action_prompt"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
-  var m;
-  while ((m = re.exec(text)) !== null) {
-    scenes.push({
-      scene_number: parseInt(m[1], 10),
-      image_prompt: m[2].replace(/\\n/g, ' ').replace(/\\"/g, '"'),
-      action_prompt: m[3].replace(/\\n/g, ' ').replace(/\\"/g, '"')
-    });
-  }
-  if (!scenes.length) return null;
-  return { title: titleM ? titleM[1] : 'Sans titre', logline: logM ? logM[1] : '', scenes: scenes };
-}
-function extractJson(text, kind) {
-  if (!text) return null;
-  var c = text.trim();
-  var fm = c.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fm) c = fm[1].trim();
-  var fb = c.indexOf('{');
-  if (fb < 0) { logDebug('err', 'PARSE', 'Pas de { trouvé'); return null; }
-  c = c.slice(fb);
-
-  try {
-    var r1 = JSON.parse(c);
-    logDebug('ok', 'PARSE', 'Stratégie 1 (directe) OK');
-    return r1;
-  } catch (e1) { logDebug('warn', 'PARSE', 'Stratégie 1 échouée'); }
-  try {
-    var r2 = JSON.parse(escapeControlCharsInStrings(c));
-    logDebug('ok', 'PARSE', 'Stratégie 2 (échappement) OK');
-    return r2;
-  } catch (e2) { logDebug('warn', 'PARSE', 'Stratégie 2 échouée'); }
-  try {
-    var lb = c.lastIndexOf('}');
-    if (lb > 0) {
-      var r3 = JSON.parse(escapeControlCharsInStrings(c.slice(0, lb + 1)));
-      logDebug('ok', 'PARSE', 'Stratégie 3 (troncature) OK');
-      return r3;
-    }
-  } catch (e3) { logDebug('warn', 'PARSE', 'Stratégie 3 échouée'); }
-  try {
-    var r4 = JSON.parse(balanceJson(escapeControlCharsInStrings(c)));
-    logDebug('ok', 'PARSE', 'Stratégie 4 (équilibrage) OK');
-    return r4;
-  } catch (e4) { logDebug('warn', 'PARSE', 'Stratégie 4 échouée'); }
-  try {
-    var salv = salvageScenario(c);
-    if (salv && salv.scenes.length) {
-      logDebug('ok', 'PARSE', 'Stratégie 5 (regex) OK : ' + salv.scenes.length + ' scènes');
-      return salv;
-    }
-  } catch (e5) { logDebug('err', 'PARSE', 'Stratégie 5 échouée'); }
-  logDebug('err', 'PARSE', 'Aucune stratégie n\'a fonctionné');
-  return null;
-}
-
-/* ============================================================
-   APPELS API (fetch avec retry)
-   ============================================================ */
-async function apiFetch(url, options, label, kind) {
-  options = options || {};
-  label = label || 'API';
-  kind = kind || 'default';
-  var attempt, res;
-  for (attempt = 0; attempt < 7; attempt++) {
-    if (state.stopRequested) throw new Error('Arrêt demandé');
-    try {
-      res = await fetch(url, options);
-      if (res.status === 429) {
-        var w429 = RETRY_429[Math.min(attempt, RETRY_429.length - 1)];
-        logDebug('warn', 'RATELIMIT', label + ' : 429, attente ' + w429 + 's');
-        setStatus('L\'IA se prépare (' + w429 + ' s)…');
-        await sleep(w429 * 1000);
-        continue;
-      }
-      if (res.status === 503) {
-        var w503 = RETRY_503[Math.min(attempt, RETRY_503.length - 1)];
-        logDebug('warn', 'SERVICE', label + ' : 503, attente ' + w503 + 's');
-        setStatus('Le service se prépare (' + w503 + ' s)…');
-        await sleep(w503 * 1000);
-        continue;
-      }
-      return res;
-    } catch (e) {
-      if (e.message === 'Arrêt demandé') throw e;
-      var wNet = [3, 5, 8, 12, 20, 30][Math.min(attempt, 5)];
-      logDebug('warn', 'NETWORK', label + ' : ' + e.message + ', retry ' + wNet + 's');
-      await sleep(wNet * 1000);
-    }
-  }
-  throw new Error(label + ' : échec après 7 tentatives');
-}
-
-/* ============================================================
-   CALL TEXTE : Agnes
-   ============================================================ */
-async function callAgnesText(system, user, temperature, maxTokens) {
-  state.counters.textRequests++;
-  updateQuotaPanel();
-  var body = {
-    model: MODEL_TEXT,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user }
-    ],
-    temperature: temperature || 0.85,
-    max_tokens: maxTokens || 4000
-  };
-  logDebug('api', 'TEXTE', 'Agnes → ' + MODEL_TEXT);
-  var res = await apiFetch(API_BASE + '/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + getApiKey(),
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  }, 'Texte', 'text');
-  if (!res.ok) {
-    var err = await res.text();
-    throw new Error('Texte HTTP ' + res.status + ' : ' + err.slice(0, 200));
-  }
-  var data = await res.json();
-  var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  if (!content) throw new Error('Pas de contenu texte');
-  return content;
-}
-
-/* ============================================================
-   TEXTES DE SECOURS : Groq et OpenRouter
-   ============================================================ */
-async function callGroqText(system, user, temperature, maxTokens) {
-  var groqKey = '';
-  try { groqKey = (localStorage.getItem('groq_key') || '').trim(); } catch (e) {}
-  if (!groqKey) throw new Error('Pas de clé Groq configurée');
-  state.counters.textRequests++;
-  updateQuotaPanel();
-  var body = {
-    model: 'llama-3.3-70b-versatile',
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user }
-    ],
-    temperature: temperature || 0.85,
-    max_tokens: maxTokens || 4000
-  };
-  logDebug('api', 'TEXTE', 'Groq → llama-3.3-70b-versatile');
-  var res = await apiFetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + groqKey,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  }, 'Groq', 'text');
-  if (!res.ok) throw new Error('Groq HTTP ' + res.status);
-  var data = await res.json();
-  var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  if (!content) throw new Error('Pas de contenu Groq');
-  return content;
-}
-async function callOpenRouterText(system, user, temperature, maxTokens) {
-  var orKey = '';
-  try { orKey = (localStorage.getItem('openrouter_key') || '').trim(); } catch (e) {}
-  if (!orKey) throw new Error('Pas de clé OpenRouter configurée');
-  state.counters.textRequests++;
-  updateQuotaPanel();
-  var body = {
-    model: 'meta-llama/llama-3.3-70b-instruct:free',
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user }
-    ],
-    temperature: temperature || 0.85,
-    max_tokens: maxTokens || 4000
-  };
-  logDebug('api', 'TEXTE', 'OpenRouter → llama-3.3-70b:free');
-  var res = await apiFetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + orKey,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  }, 'OpenRouter', 'text');
-  if (!res.ok) throw new Error('OpenRouter HTTP ' + res.status);
-  var data = await res.json();
-  var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  if (!content) throw new Error('Pas de contenu OpenRouter');
-  return content;
-}
-async function callExternalText(system, user, temperature, maxTokens) {
-  state.counters.textRequests++;
-  updateQuotaPanel();
-  var body = {
-    model: state.externalModel,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: user }
-    ],
-    temperature: temperature || 0.85,
-    max_tokens: maxTokens || 4000
-  };
-  logDebug('api', 'TEXTE', 'Externe → ' + state.externalUrl);
-  try {
-    var res = await apiFetch(state.externalUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + state.externalKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    }, 'Texte externe', 'text');
-    if (!res.ok) {
-      var err = await res.text();
-      throw new Error('Texte externe HTTP ' + res.status);
-    }
-    var data = await res.json();
-    var content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    if (!content) throw new Error('Pas de contenu');
-    return content;
-  } catch (e) {
-    if (e.message && (e.message.indexOf('Failed to fetch') >= 0 || e.name === 'TypeError')) {
-      logDebug('err', 'CORS', 'Refus navigateur');
-      state.fallbackMode = { prompt: user, system: system };
-      throw new Error('CORS : ton navigateur refuse l\'appel direct. Passe en mode copier-coller.');
-    }
-    throw e;
-  }
-}
-
-/* ============================================================
-   CALL IMAGE
-   ============================================================ */
-async function callAgnesImage(prompt, size) {
-  state.counters.imagesGenerated++;
-  updateQuotaPanel();
-  size = size || '1024x1792';
-  var body = {
-    model: state.imageModel,
-    prompt: prompt,
-    n: 1,
-    size: size,
-    response_format: 'url'
-  };
-  logDebug('api', 'IMAGE', state.imageModel + ' · ' + size);
-  var res = await apiFetch(API_BASE + '/images/generations', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + getApiKey(),
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  }, 'Image', 'image');
-  if (!res.ok) {
-    var err = await res.text();
-    throw new Error('Image HTTP ' + res.status + ' : ' + err.slice(0, 200));
-  }
-  var data = await res.json();
-  var item = data.data && data.data[0];
-  if (!item) throw new Error('Pas d\'image retournée');
-  if (item.url) return item.url;
-  if (item.b64_json) return 'data:image/png;base64,' + item.b64_json;
-  throw new Error('Format image inconnu');
-}
-async function callPollinationsImage(prompt, size) {
-  state.counters.imagesGenerated++;
-  updateQuotaPanel();
-  size = size || '1024x1792';
-  logDebug('api', 'IMAGE', 'Pollinations (secours)');
-  var encoded = encodeURIComponent(prompt);
-  return 'https://image.pollinations.ai/prompt/' + encoded + '?width=1024&height=1792&nologo=true&model=flux';
-}
-
-/* ============================================================
-   CALL VIDEO
-   ============================================================ */
-async function createVideoTask(prompt, firstFrame, lastFrame, numFrames) {
-  var now = Date.now();
-  if (state.counters.videoRequestsThisMinute >= VIDEO_RPM_LIMIT) {
-    var wait = Math.ceil((60000 - (now - state.counters.lastResetTime)) / 1000);
-    if (wait > 0) {
-      logDebug('warn', 'RPM', 'Limite 1/min atteinte, attente ' + wait + 's');
-      await sleep(wait * 1000);
-      state.counters.videoRequestsThisMinute = 0;
-      state.counters.lastResetTime = Date.now();
-    }
-  }
-  state.counters.videoRequestsThisMinute++;
-  state.counters.videoSeconds += numFrames / FRAME_RATE;
-  updateQuotaPanel();
-
-  var body = {
-    model: MODEL_VIDEO,
-    prompt: prompt,
-    image: firstFrame,
-    num_frames: numFrames,
-    frame_rate: FRAME_RATE
-  };
-  if (lastFrame) body.last_frame = lastFrame;
-
-  logDebug('api', 'VIDÉO', MODEL_VIDEO + ' · ' + numFrames + ' frames');
-  var res = await apiFetch(API_BASE + '/videos', {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + getApiKey(),
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  }, 'Vidéo', 'video');
-  if (!res.ok) {
-    var err = await res.text();
-    throw new Error('Vidéo HTTP ' + res.status + ' : ' + err.slice(0, 200));
-  }
-  var data = await res.json();
-  var id = data.video_id || data.id || data.task_id;
-  if (!id) throw new Error('Pas de video_id retourné');
-  return id;
-}
-async function pollVideo(videoId, onProgress, numFrames) {
-  var estSec = estimateGenerationTime('video', 30000 + numFrames * 500) / 1000;
-  var firstWait = Math.min(VIDEO_FIRST_POLL_DELAY_SEC, Math.max(60, Math.floor(estSec * 0.75)));
-  var r = firstWait;
-  logDebug('info', 'POLLING', 'Premier poll après ' + r + 's');
-  while (r > 0) {
-    if (state.stopRequested) throw new Error('Arrêt demandé');
-    onProgress('Préparation (' + r + ' s)…');
-    await sleep(1000);
-    r--;
-  }
-  for (var attempt = 0; attempt < VIDEO_MAX_POLL_ATTEMPTS; attempt++) {
-    if (state.stopRequested) throw new Error('Arrêt demandé');
-    if (attempt > 0) {
-      var idx = Math.min(attempt - 1, VIDEO_POLL_INTERVALS.length - 1);
-      var iv = VIDEO_POLL_INTERVALS[idx];
-      while (iv > 0) {
-        if (state.stopRequested) throw new Error('Arrêt demandé');
-        onProgress('L\'image prend vie (' + iv + ' s)…');
-        await sleep(1000);
-        iv--;
-      }
-    }
-    var url = POLL_BASE + '?video_id=' + encodeURIComponent(videoId) + '&model_name=' + encodeURIComponent(MODEL_VIDEO);
-    var res = await apiFetch(url, {
-      method: 'GET',
-      headers: { 'Authorization': 'Bearer ' + getApiKey() }
-    }, 'Polling', 'video');
-    var d = await res.json();
-    var status = d.status || 'unknown';
-    var progress = d.progress || 0;
-    onProgress('Création ' + progress + ' %…');
-    logDebug('api', 'POLL', 'Statut ' + status + ' (' + progress + '%)');
-    if (status === 'completed' || status === 'succeeded' || status === 'done') {
-      var vurl = (d.metadata && d.metadata.url) || d.url || (d.output && d.output.url);
-      if (!vurl) throw new Error('Terminé mais pas d\'URL');
-      return vurl;
-    }
-    if (status === 'failed' || status === 'error' || status === 'cancelled') {
-      throw new Error('Échec (' + status + ')');
-    }
-  }
-  throw new Error('Délai maximal dépassé');
-}
-
-/* ============================================================
-   TEST DE CONNEXION
-   ============================================================ */
-var SERVICES = {
-  openai: { url: 'https://api.openai.com/v1/chat/completions', model: 'gpt-4o-mini', label: 'OpenAI' },
-  mistral: { url: 'https://api.mistral.ai/v1/chat/completions', model: 'mistral-small-latest', label: 'Mistral' },
-  groq: { url: 'https://api.groq.com/openai/v1/chat/completions', model: 'llama-3.3-70b-versatile', label: 'Groq' },
-  xai: { url: 'https://api.x.ai/v1/chat/completions', model: 'grok-2-latest', label: 'xAI (Grok)' },
-  autre: { url: '', model: '', label: 'Autre service compatible OpenAI' }
-};
-
-/* ============================================================
-   CHARGEMENT DES STYLES
-   ============================================================ */
-var STYLE_BANK = [];
-if (typeof STYLES_LIBRARY !== 'undefined' && STYLES_LIBRARY) {
-  var allCategories = Object.keys(STYLES_LIBRARY);
-  allCategories.forEach(function (cat) {
-    STYLES_LIBRARY[cat].forEach(function (s) {
-      s.cat = cat;
-      STYLE_BANK.push(s);
-    });
-  });
-  logDebug('ok', 'STYLES', STYLE_BANK.length + ' styles chargés depuis ' + allCategories.length + ' catégories');
-} else {
-  logDebug('err', 'STYLES', 'styles.js non trouvé');
-}
-
-/* ============================================================
-   RENDU DES ONGLETS
-   ============================================================ */
-function render() {
-  var c = $('tab-content');
-  if (!c) return;
-  var html = '';
-  if (state.tab === 'idees') html = renderIdees();
-  else if (state.tab === 'univers') html = renderUnivers();
-  else if (state.tab === 'refs') html = renderRefs();
-  else if (state.tab === 'videos') html = renderVideos();
-  c.innerHTML = html;
-  document.querySelectorAll('.dock button').forEach(function (b) {
-    if (b.getAttribute('data-tab') === state.tab) b.setAttribute('aria-current', 'page');
-    else b.removeAttribute('aria-current');
-  });
-  bindTabEvents();
-}
-
-/* ============================================================
-   ONGLET IDÉES
-   ============================================================ */
-function renderIdees() {
-  var prov = state.textProvider;
-  var h = '';
-  h += '<section class="glass card"><h2>1. Mon idée</h2>' +
-    '<div class="stack">' +
-    '<label class="q">Décris ton idée<span class="q-hint">Une phrase suffit. Ou utilise Surprends-moi.</span></label>' +
-    '<textarea id="idea-input" placeholder="Exemple : une laverie de quartier où chaque machine révèle un secret…">' + esc(state.idea) + '</textarea>' +
-    '<div class="rowbtns">' +
-    '<button class="btn ghost" data-act="surprise">🎲 Surprends-moi</button>' +
-    '</div>' +
-    '<div class="row">' +
-    '<div style="flex:1;min-width:140px"><label class="q">Ton</label><select id="tone-select">' +
-    ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'].map(function (t) {
-      return '<option value="' + t + '"' + (state.tone === t ? ' selected' : '') + '>' + t + '</option>';
-    }).join('') +
-    '</select></div>' +
-    '<div style="flex:1;min-width:140px"><label class="q">Thème</label><input type="text" id="theme-input" placeholder="famille, amitié…" value="' + esc(state.theme) + '"></div>' +
-    '</div>' +
-    '</div></section>';
-
-  h += '<section class="glass card"><h2>2. Format</h2>' +
-    '<div class="mode-toggle">' +
-    '<div class="mode-option' + (state.mode === 'serie' ? ' selected' : '') + '" data-act="mode" data-v="serie"><div class="mo-icon">📺</div><div class="mo-name">Épisode de série</div><div class="mo-desc">Au moins 61 secondes au total</div></div>' +
-    '<div class="mode-option' + (state.mode === 'hook' ? ' selected' : '') + '" data-act="mode" data-v="hook"><div class="mo-icon">⚡</div><div class="mo-name">Hook court</div><div class="mo-desc">Garde les 3 premières secondes dans CapCut</div></div>' +
-    '</div>' +
-    '<div class="stack" style="margin-top:12px">' +
-    '<label class="q">Durée d\'un clip<span class="q-hint">Valeurs trouvées dans tes fichiers sources.</span></label>' +
-    '<select id="duration-select">' +
-    DURATIONS.filter(function (d) { return state.mode === 'hook' ? d.mode !== 'serie' : d.mode !== 'hook'; }).map(function (d) {
-      var cur = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
-      return '<option value="' + d.frames + '"' + (cur === d.frames ? ' selected' : '') + '>' + d.label + ' (' + d.frames + ' frames)</option>';
-    }).join('') +
-    '</select>' +
-    '<div id="duration-info" class="small muted"></div>' +
-    '</div></section>';
-
-  h += '<section class="glass card"><h2>3. IA pour le texte</h2>' +
-    '<div class="stack">' +
-    '<button class="chip" data-act="provider" data-v="agnes" aria-pressed="' + (prov === 'agnes') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Agnes (recommandé)</b><br><span class="small muted">Même clé que pour les images et vidéos.</span></button>' +
-    '<button class="chip" data-act="provider" data-v="openai-compat" aria-pressed="' + (prov === 'openai-compat') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Autre service (clé API)</b><br><span class="small muted">OpenAI, Mistral, Groq, xAI.</span></button>' +
-    '<button class="chip" data-act="provider" data-v="copier-coller" aria-pressed="' + (prov === 'copier-coller') + '" style="text-align:left;min-height:60px;border-radius:14px;padding:12px 14px"><b>Copier-coller manuel</b><br><span class="small muted">Colle le prompt dans l\'IA de ton choix.</span></button>' +
-    '</div>';
-
-  if (prov === 'openai-compat') {
-    h += '<div class="stack" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">' +
-      '<label class="q">Service</label>' +
-      '<select id="ext-service">' +
-      Object.keys(SERVICES).map(function (k) {
-        return '<option value="' + k + '"' + (state.externalService === k ? ' selected' : '') + '>' + SERVICES[k].label + '</option>';
-      }).join('') +
-      '</select>' +
-      '<label class="q">Adresse</label>' +
-      '<input type="url" id="ext-url" value="' + esc(state.externalUrl) + '">' +
-      '<label class="q">Modèle</label>' +
-      '<input type="text" id="ext-model" value="' + esc(state.externalModel) + '">' +
-      '<label class="q">Clé API</label>' +
-      '<input type="password" id="ext-key" value="' + esc(state.externalKey) + '" placeholder="sk-...">' +
-      '<div class="api-security">🔒 Clé stockée uniquement sur ton appareil.</div>' +
-      '<div id="test-result" style="display:none;"></div>' +
-      '</div>';
-  }
-  if (prov === 'copier-coller') {
-    h += '<div class="hotbox" style="margin-top:14px">Le mode copier-coller affichera un prompt à copier dans l\'IA de ton choix, puis à recoller ici.</div>';
-  }
-  h += '</section>';
-
-  h += '<section class="glass card"><h2>4. Modèle d\'image</h2>' +
-    '<label class="q">Modèle Agnes pour les images</label>' +
-    '<select id="image-model">' +
-    '<option value="' + MODEL_IMAGE_DEFAULT + '"' + (state.imageModel === MODEL_IMAGE_DEFAULT ? ' selected' : '') + '>agnes-image-2.1-flash (par défaut)</option>' +
-    '<option value="' + MODEL_IMAGE_ALT + '"' + (state.imageModel === MODEL_IMAGE_ALT ? ' selected' : '') + '>agnes-image-2.5-flash (alternatif)</option>' +
-    '</select></section>';
-
-  h += '<section class="glass card"><h2>5. Générer</h2>' +
-    '<p class="small muted">Lance la génération d\'un script. Tu verras ensuite les prompts d\'images et de vidéos, modifiables.</p>' +
-    '<button class="btn big" data-act="gen-script">✍️ Générer le script</button>' +
-    '<div id="script-output"></div></section>';
-
-  h += debugPanelHtml();
-  return h;
-}
-
-/* ============================================================
-   ONGLET UNIVERS
-   ============================================================ */
-function renderUnivers() {
-  var ep = state.episode;
-  var h = '';
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">🌌</div><h3>Pas encore d\'univers</h3><p class="muted">Génère d\'abord un script dans l\'onglet Idées pour construire ton univers.</p><button class="btn" data-act="go-idees">Aller aux Idées</button></section>';
-  } else {
-    h += '<section class="glass card"><h2>' + esc(ep.title || 'Univers') + '</h2>' +
-      '<p class="muted">' + esc(ep.logline || '') + '</p>' +
-      '<p class="small muted">' + ep.scenes.length + ' scènes · ' + (ep.scenes.length * (state.durationFrames / FRAME_RATE)).toFixed(1) + ' s au total</p>' +
-      '</section>';
-
-    h += '<section class="glass card"><h2>Décors et personnages</h2>' +
-      '<p class="small muted">Agnes les déduit du script. Tu peux les modifier librement.</p>';
-    ep.scenes.forEach(function (sc, i) {
-      h += '<details class="glass" style="padding:12px;margin-bottom:8px;">' +
-        '<summary style="cursor:pointer;font-weight:700;">Scène ' + (i + 1) + ' · ' + esc((sc.description || '').slice(0, 50)) + '</summary>' +
-        '<div class="stack" style="margin-top:10px">' +
-        '<b class="small">Lieu / Décor</b>' +
-        '<textarea id="sc-lieu-' + i + '" style="min-height:60px">' + esc(sc.lieu || '') + '</textarea>' +
-        '<b class="small">Personnages présents</b>' +
-        '<textarea id="sc-persos-' + i + '" style="min-height:60px">' + esc(sc.persos || '') + '</textarea>' +
-        '<b class="small">Ambiance</b>' +
-        '<input type="text" id="sc-ambiance-' + i + '" value="' + esc(sc.ambiance || '') + '">' +
-        '<button class="btn ghost" data-act="save-scene" data-v="' + i + '">Enregistrer</button>' +
-        '</div></details>';
-    });
-    h += '</section>';
-  }
-  h += debugPanelHtml();
-  return h;
-}
-
-/* ============================================================
-   ONGLET RÉFÉRENCES
-   ============================================================ */
-function renderRefs() {
-  var ep = state.episode;
-  var h = '';
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">📸</div><h3>Pas encore de références</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="go-idees">Aller aux Idées</button></section>';
-  } else {
-    h += '<section class="glass card"><h2>Générer les références</h2>' +
-      '<p class="small muted">L\'appli peut générer une image de référence pour chaque personnage et chaque lieu. Ces images serviront ensuite pour les vidéos, pour garder une cohérence visuelle parfaite.</p>' +
-      '<button class="btn big" data-act="gen-refs">🎨 Générer les images de référence</button>' +
-      '<div id="refs-grid" class="images-grid"></div>' +
-      '</section>';
-
-    h += '<section class="glass card"><h2>Ou utiliser tes propres photos</h2>' +
-      '<p class="small muted">Tu peux aussi uploader des photos pour servir de référence.</p>' +
-      '<label class="upload-zone" for="refs-file-input"><input type="file" id="refs-file-input" accept="image/*" multiple><div class="icon">＋</div><div class="t1">Ajouter des photos</div><div class="t2">Personnages, décors</div></label>' +
-      '<div class="images-grid" id="refs-user-grid">' +
-      state.images.map(function (im) {
-        return '<div class="image-card"><img src="' + (im.thumbnail || im.dataUri) + '" alt=""></div>';
-      }).join('') +
-      '</div>' +
-      '</section>';
-  }
-  h += debugPanelHtml();
-  return h;
-}
-
-/* ============================================================
-   ONGLET VIDÉOS
-   ============================================================ */
-function renderVideos() {
-  var ep = state.episode;
-  var h = '';
-  if (!ep) {
-    h += '<section class="glass empty"><div class="big">🎬</div><h3>Pas encore de vidéos</h3><p class="muted">Génère d\'abord un script.</p><button class="btn" data-act="go-idees">Aller aux Idées</button></section>';
-  } else {
-    h += '<section class="glass card"><h2>Générer les vidéos</h2>' +
-      '<p class="small muted">Chaque scène devient un clip vidéo avec Agnes. Les prompts sont automatiquement construits à partir du script.</p>' +
-      '<label class="q">Durée d\'un clip</label>' +
-      '<select id="video-duration">' +
-      DURATIONS.map(function (d) {
-        return '<option value="' + d.frames + '"' + (d.frames === state.durationFrames ? ' selected' : '') + '>' + d.label + ' (' + d.frames + ' frames)</option>';
-      }).join('') +
-      '</select>' +
-      '<p class="small muted" id="video-estimate"></p>' +
-      '<button class="btn big" data-act="start-videos"' + (getApiKey() ? '' : ' disabled') + '>🚀 Générer les clips</button>' +
-      '<button class="btn ghost" data-act="stop-videos" style="display:' + (state.isRunning ? 'block' : 'none') + '">⏹ Arrêter</button>' +
-      '</section>';
-
-    h += '<section class="glass card"><h2>Prompts des scènes</h2>';
-    ep.scenes.forEach(function (sc, i) {
-      var vp = buildVideoPromptFromScene(sc);
-      h += '<details class="glass" style="padding:12px;margin-bottom:8px;">' +
-        '<summary style="cursor:pointer;font-weight:700;">Scène ' + (i + 1) + ' · ' + esc((sc.description || '').slice(0, 50)) + '</summary>' +
-        '<div class="stack" style="margin-top:10px">' +
-        '<b class="small">Prompt vidéo</b>' +
-        '<pre class="fin" id="vp-' + i + '">' + esc(vp) + '</pre>' +
-        '<button class="btn ghost" data-act="copy-prompt" data-v="vp-' + i + '">Copier</button>' +
-        '</div></details>';
-    });
-    h += '</section>';
-
-    if (state.queue.length) {
-      h += '<section class="glass card"><h2>File d\'attente</h2>';
-      h += renderQueue();
-      h += '</section>';
-    }
-
-    h += '<section class="glass card"><h2>Galerie des clips</h2>' +
-      '<div class="gallery-grid" id="gallery-grid"></div>' +
-      '</section>';
-
-    h += '<section class="glass card"><h2>Montage final</h2>' +
-      '<p class="small muted">Une fois les clips générés, l\'appli pourra les assembler en une seule vidéo grâce à FFmpeg intégré.</p>' +
-      '<button class="btn big" data-act="montage" disabled>🎬 Monter la vidéo (bientôt disponible)</button>' +
-      '<p class="small muted">En attendant, tu peux télécharger chaque clip et les assembler dans CapCut ou VN Editor.</p>' +
-      '</section>';
-
-    h += '<section class="glass card"><h2>Export</h2>' +
-      '<div class="rowbtns">' +
-      '<button class="btn ghost" data-act="export-json">Export JSON</button>' +
-      '<button class="btn ghost" data-act="export-csv">Export CSV</button>' +
-      '</div>' +
-      '</section>';
-  }
-  h += debugPanelHtml();
-  return h;
-}
-
-/* ============================================================
-   FILE D'ATTENTE
-   ============================================================ */
-function renderQueue() {
-  if (!state.queue.length) return '';
-  var total = state.queue.length;
-  var done = state.queue.filter(function (q) { return q.status === 'done'; }).length;
-  var failed = state.queue.filter(function (q) { return q.status === 'failed'; }).length;
-  var processing = state.queue.filter(function (q) { return q.status === 'processing' || q.status === 'creating'; }).length;
-  var h = '<div class="queue-summary">' +
-    '<span class="progress-text">' + done + ' / ' + total + ' prêts</span>' +
-    (failed ? '<span style="color:#9E1F2B">' + failed + ' échec' + (failed > 1 ? 's' : '') + '</span>' : '') +
-    (processing ? '<span>' + processing + ' en cours</span>' : '') +
-    '</div><div class="queue">';
-  state.queue.slice(0, 30).forEach(function (q) {
-    var cls = 'pending', icon = '○', label = 'En file';
-    if (q.status === 'creating') { cls = 'creating'; icon = '◐'; label = 'Préparation…'; }
-    else if (q.status === 'processing') { cls = 'processing'; icon = '◐'; label = q.progress || 'En cours…'; }
-    else if (q.status === 'done') { cls = 'done'; icon = '●'; label = 'Prêt'; }
-    else if (q.status === 'failed') { cls = 'failed'; icon = '✕'; label = q.progress || 'Échec'; }
-    h += '<div class="queue-item ' + cls + '">' +
-      '<div class="q-icon">' + icon + '</div>' +
-      '<div class="q-name">Scène ' + (q.index + 1) + '</div>' +
-      '<div class="q-status">' + esc(label) + '</div>' +
-      '</div>';
-  });
-  if (state.queue.length > 30) h += '<p class="small muted">… et ' + (state.queue.length - 30) + ' autres</p>';
-  h += '</div>';
-  return h;
-}
-
-/* ============================================================
-   GALERIE
-   ============================================================ */
-function renderGallery() {
-  var grid = $('gallery-grid');
-  if (!grid) return;
-  var done = state.queue.filter(function (q) { return q.status === 'done' && q.videoUrl; });
-  if (!done.length) return;
-  grid.innerHTML = done.map(function (q) {
-    return '<div class="gallery-item">' +
-      '<video src="' + q.videoUrl + '" controls preload="metadata" playsinline muted></video>' +
-      '<div class="g-caption"><div class="g-style">Scène ' + (q.index + 1) + '</div></div>' +
-      '<div class="g-actions">' +
-      '<button data-act="play-hook" data-v="' + q.index + '">▶ 3s</button>' +
-      '<a href="' + q.videoUrl + '" download="scene-' + (q.index + 1) + '.mp4" target="_blank" rel="noopener">⬇ Télécharger</a>' +
-      '</div>' +
-      '</div>';
-  }).join('');
-}
-
-/* ============================================================
-   PANNEAU DEBUG
-   ============================================================ */
-function debugPanelHtml() {
-  return '<section class="glass debug-panel collapsed" id="debug-wrap">' +
-    '<div class="debug-header" data-act="toggle-debug">' +
-    '<span class="debug-title">🖥️ Console de débogage <span class="debug-count" id="debug-count">0</span></span>' +
-    '<div class="debug-actions">' +
-    '<button data-act="clear-debug" type="button">Effacer</button>' +
-    '<button data-act="toggle-debug" type="button">▾</button>' +
-    '</div>' +
-    '</div>' +
-    '<div class="debug-body" id="debug-body"></div>' +
-    '</section>';
-}
-
-/* ============================================================
-   CONSTRUCTION DU PROMPT VIDÉO
-   ============================================================ */
-function buildVideoPromptFromScene(scene) {
-  var parts = [];
-  if (scene.action_prompt) parts.push('Action: ' + scene.action_prompt);
-  if (scene.camera) parts.push('Camera: ' + scene.camera);
-  if (scene.light) parts.push('Lighting: ' + scene.light);
-  parts.push('Vertical 9:16, 24fps, no cuts, no text, no watermark, no music, natural ambient sound only.');
-  return parts.join('. ');
-}
-
-/* ============================================================
-   ÉVÉNEMENTS
-   ============================================================ */
-function bindTabEvents() {
-  var wrap = $('tab-content');
-  if (!wrap) return;
-  if (!wrap.__bound) {
-    wrap.__bound = true;
-    wrap.addEventListener('click', onTabClick);
-    wrap.addEventListener('change', onTabChange);
-    wrap.addEventListener('input', onTabInput);
-  }
-  if (state.tab === 'videos') setTimeout(renderGallery, 30);
-  updateDurationInfo();
-}
-
-function updateDurationInfo() {
-  var el = $('duration-info');
-  if (!el) return;
-  var frames = state.mode === 'hook' ? state.durationFramesHook : state.durationFrames;
-  var clips = state.mode === 'serie' ? Math.ceil(HOOK_MIN_SECONDS / (frames / FRAME_RATE)) : 0;
-  if (state.mode === 'serie') {
-    el.textContent = 'Pour atteindre ' + HOOK_MIN_SECONDS + ' secondes, il faut ' + clips + ' clips de ' + (frames / FRAME_RATE).toFixed(1) + ' s.';
-  } else {
-    el.textContent = 'Le hook idéal dure 3 secondes. Chaque clip fait ' + (frames / FRAME_RATE).toFixed(1) + ' s.';
-  }
-}
-
-function onTabClick(e) {
-  var b = e.target.closest('[data-act]');
-  if (!b) return;
-  var act = b.getAttribute('data-act');
-  var v = b.getAttribute('data-v');
-
-  if (act === 'mode') {
-    state.mode = v;
-    if (v === 'hook') state.durationFramesHook = 121;
-    else state.durationFrames = 241;
-    saveState(); render();
-  }
-  else if (act === 'provider') {
-    state.textProvider = v;
-    saveState(); render();
-  }
-  else if (act === 'surprise') {
-    var tones = ['neutre', 'drôle', 'triste', 'effrayant', 'dramatique', 'mystérieux'];
-    var themes = ['famille', 'amitié', 'mystère', 'rue', 'école', 'travail', 'amour', 'voyage', 'secret'];
-    state.tone = randomItem(tones);
-    state.theme = randomItem(themes);
-    saveState(); render();
-    showToast('Ambiance tirée : ' + state.tone + ', ' + state.theme, 'success');
-  }
-  else if (act === 'gen-script') { doGenerateScript(); }
-  else if (act === 'go-idees') { state.tab = 'idees'; render(); }
-  else if (act === 'gen-refs') { doGenerateRefs(); }
-  else if (act === 'start-videos') { startVideoGeneration(); }
-  else if (act === 'stop-videos') { state.stopRequested = true; showToast('Arrêt demandé…', 'warn'); }
-  else if (act === 'montage') { showToast('Montage FFmpeg bientôt disponible', 'warn'); }
-  else if (act === 'save-scene') {
-    var idx = parseInt(v, 10);
-    var sc = state.episode.scenes[idx];
-    if (sc) {
-      var lieu = $('sc-lieu-' + idx);
-      var persos = $('sc-persos-' + idx);
-      var ambiance = $('sc-ambiance-' + idx);
-      if (lieu) sc.lieu = lieu.value;
-      if (persos) sc.persos = persos.value;
-      if (ambiance) sc.ambiance = ambiance.value;
-      saveState();
-      showToast('Scène ' + (idx + 1) + ' enregistrée', 'success');
-    }
-  }
-  else if (act === 'copy-prompt') {
-    var pre = $(v);
-    if (pre) { copyText(pre.textContent); showToast('Copié', 'success'); }
-  }
-  else if (act === 'export-json') { exportJson(); }
-  else if (act === 'export-csv') { exportCsv(); }
-  else if (act === 'toggle-debug') {
-    var panel = $('debug-wrap');
-    if (panel) panel.classList.toggle('collapsed');
-  }
-  else if (act === 'clear-debug') { clearDebug(); }
-  else if (act === 'play-hook') { playHookByIndex(parseInt(v, 10)); }
-}
-
-function onTabChange(e) {
-  var id = e.target.id;
-  if (id === 'duration-select') {
-    var f = parseInt(e.target.value, 10);
-    if (state.mode === 'hook') state.durationFramesHook = f;
-    else state.durationFrames = f;
-    saveState(); updateDurationInfo();
-  }
-  else if (id === 'video-duration') {
-    state.durationFrames = parseInt(e.target.value, 10);
-    saveState(); updateVideoEstimate();
-  }
-  else if (id === 'image-model') { state.imageModel = e.target.value; saveState(); }
-  else if (id === 'ext-service') {
-    state.externalService = e.target.value;
-    var svc = SERVICES[state.externalService];
-    if (svc) { state.externalUrl = svc.url; state.externalModel = svc.model; }
-    saveState(); render();
-  }
-  else if (id === 'tone-select') { state.tone = e.target.value; saveState(); }
-}
-function onTabInput(e) {
-  var id = e.target.id;
-  if (id === 'idea-input') { state.idea = e.target.value; saveState(); }
-  else if (id === 'theme-input') { state.theme = e.target.value; saveState(); }
-  else if (id === 'ext-url') { state.externalUrl = e.target.value; saveState(); }
-  else if (id === 'ext-model') { state.externalModel = e.target.value; saveState(); }
-  else if (id === 'ext-key') {
-    state.externalKey = e.target.value;
-    try { localStorage.setItem(EXTERNAL_KEY_STORAGE, state.externalKey); } catch (err) {}
-  }
-}
-
-/* ============================================================
-   LECTEUR HOOK 3 SECONDES
-   ============================================================ */
-function playHookPreview(videoEl) {
-  if (!videoEl) return;
-  videoEl.currentTime = 0;
-  videoEl.play();
-  var start = Date.now();
-  var timer = setInterval(function () {
-    if (videoEl.currentTime >= HOOK_IDEAL_SECONDS || Date.now() - start > 4000) {
-      videoEl.pause();
-      videoEl.currentTime = 0;
-      clearInterval(timer);
-    }
-  }, 50);
-}
-
-function playHookByIndex(i) {
-  var videos = document.querySelectorAll('#gallery-grid video');
-  if (!videos.length) return;
-  var visibleIdx = state.queue.filter(function (x) { return x.status === 'done'; }).findIndex(function (x) { return x.index === i; });
-  if (visibleIdx < 0 || !videos[visibleIdx]) return;
-  playHookPreview(videos[visibleIdx]);
-  videos[visibleIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-/* ============================================================
-   UTILITAIRES DE COPIE ET TÉLÉCHARGEMENT
-   ============================================================ */
-function copyText(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text).catch(function () {});
-  }
-  var ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed'; ta.style.left = '-9999px';
-  document.body.appendChild(ta);
-  ta.select();
-  try { document.execCommand('copy'); } catch (e) {}
-  document.body.removeChild(ta);
-}
-function download(filename, content, mime) {
-  mime = mime || 'application/json';
-  var blob = new Blob([content], { type: mime });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-}
-function exportJson() {
-  download('fabrik-' + Date.now() + '.json', JSON.stringify({
-    exportedAt: new Date().toISOString(),
-    episode: state.episode,
-    queue: state.queue
-  }, null, 2));
-  showToast('Export JSON téléchargé', 'success');
-}
-function exportCsv() {
-  var rows = ['index;video_id;url'];
-  state.queue.filter(function (q) { return q.status === 'done'; }).forEach(function (q) {
-    rows.push(q.index + ';"' + (q.videoId || '') + '";' + (q.videoUrl || ''));
-  });
-  download('fabrik-' + Date.now() + '.csv', rows.join('\n'), 'text/csv');
-  showToast('Export CSV téléchargé', 'success');
-}
-
-/* ============================================================
-   GÉNÉRATION DE SCRIPT
-   ============================================================ */
-function buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount) {
-  return 'Tu es scénariste de vidéos courtes verticales (TikTok, Shorts, Reels).\n' +
-    'Idée : ' + idea + '\n' +
-    'Thème : ' + (theme || 'libre') + '\n' +
-    'Ton : ' + (tone || 'neutre') + '\n' +
-    'Durée cible : environ ' + targetSeconds + ' secondes au total (' + sceneCount + ' scènes).\n' +
-    'Format : portrait 9:16.\n\n' +
-    'Écris un scénario complet en JSON valide. Le script doit être fluide, naturel, en français oral vivant.\n\n' +
-    'Format JSON attendu :\n' +
-    '{\n' +
-    '  "title": "titre court",\n' +
-    '  "logline": "résumé en une phrase",\n' +
-    '  "scenes": [\n' +
-    '    {\n' +
-    '      "scene_number": 1,\n' +
-    '      "description": "ce qui se passe dans la scène, en français",\n' +
-    '      "action_prompt": "description précise de l\'action pour l\'image en anglais",\n' +
-    '      "camera": "mouvement de caméra en anglais",\n' +
-    '      "light": "lumière en anglais",\n' +
-    '      "lieu": "lieu ou décor en français",\n' +
-    '      "persos": "personnages présents en français",\n' +
-    '      "ambiance": "ambiance en français"\n' +
-    '    }\n' +
-    '  ]\n' +
-    '}\n' +
-    'Réponds uniquement avec le JSON, sans texte avant ou après.';
-}
-
-async function generateScript(idea, tone, theme, targetSeconds, sceneCount) {
-  var sys = 'Tu réponds UNIQUEMENT en JSON valide, sans markdown ni commentaire.';
-  var user = buildScriptPrompt(idea, tone, theme, targetSeconds, sceneCount);
-  var raw;
-  
-  if (state.textProvider === 'agnes') {
-    try {
-      raw = await callAgnesText(sys, user, 0.85, 4000);
-    } catch (e1) {
-      logDebug('warn', 'FALLBACK', 'Agnes échoue, essai Groq');
-      try {
-        raw = await callGroqText(sys, user, 0.85, 4000);
-        showToast('Secours Groq utilisé', 'warn');
-      } catch (e2) {
-        logDebug('warn', 'FALLBACK', 'Groq échoue, essai OpenRouter');
-        try {
-          raw = await callOpenRouterText(sys, user, 0.85, 4000);
-          showToast('Secours OpenRouter utilisé', 'warn');
-        } catch (e3) {
-          throw new Error('Tous les services texte ont échoué. Utilise le mode copier-coller.');
-        }
-      }
-    }
-  } else if (state.textProvider === 'openai-compat') {
-    raw = await callExternalText(sys, user, 0.85, 4000);
-  } else {
-    throw new Error('Mode copier-coller actif');
-  }
-  
-  var parsed = extractJson(raw, 'scenario');
-  if (!parsed || !parsed.scenes || !parsed.scenes.length) {
-    throw new Error('Scénario invalide après 5 tentatives');
-  }
-  return parsed;
-}
-
-async function doGenerateScript() {
-  if (!state.idea || state.idea.trim().length < 5) {
-    showToast('Il manque ton idée (au moins 5 caractères)', 'error', 4000);
-    logDebug('err', 'SCRIPT', 'Idée vide ou trop courte');
-    return;
-  }
-  if (state.textProvider === 'agnes' && !getApiKey()) {
-    showToast('Ajoute ta clé Agnes en haut de la page', 'error', 4000);
-    logDebug('err', 'SCRIPT', 'Clé Agnes manquante');
-    return;
-  }
-  
-  var frames = state.durationFrames;
-  var totalSec = state.mode === 'serie' ? Math.max(HOOK_MIN_SECONDS, 65) : 30;
-  var scenes = Math.max(3, Math.ceil(totalSec / (frames / FRAME_RATE)));
-  if (state.mode === 'serie') {
-    while (scenes * (frames / FRAME_RATE) < HOOK_MIN_SECONDS) scenes++;
-  }
-  
-  setStatus('Génération du script…');
-  logDebug('info', 'SCRIPT', 'Idée : ' + state.idea.slice(0, 80));
-  
-  try {
-    if (state.textProvider === 'copier-coller') {
-      var prompt = buildScriptPrompt(state.idea, state.tone, state.theme, totalSec, scenes);
-      showCopyPaste(prompt, scenes, totalSec);
-      setStatus(null);
-      return;
-    }
-    var parsed = await generateScript(state.idea, state.tone, state.theme, totalSec, scenes);
-    state.episode = {
-      title: parsed.title || 'Épisode sans titre',
-      logline: parsed.logline || '',
-      scenes: parsed.scenes,
-      targetSeconds: totalSec
-    };
-    saveState();
-    setStatus(null);
-    showToast('Script généré : ' + parsed.scenes.length + ' scènes', 'success');
-    render();
-  } catch (e) {
-    setStatus(null);
-    logDebug('err', 'SCRIPT', e.message);
-    showToast('Erreur : ' + e.message.slice(0, 70), 'error', 4000);
-    if (e.message && e.message.indexOf('CORS') >= 0) {
-      state.textProvider = 'copier-coller';
-      render();
-    }
-  }
-}
-
-/* ============================================================
-   COPIER-COLLER MANUEL
-   ============================================================ */
-function showCopyPaste(prompt, scenes, totalSec) {
-  var out = $('script-output');
-  if (!out) return;
-  out.innerHTML = '<div class="hotbox">' +
-    '<b>Mode copier-coller</b>' +
-    '<p class="small">1. Copie le prompt ci-dessous. 2. Colle-le dans l\'IA de ton choix. 3. Copie sa réponse (le JSON) et colle-la dans la case. 4. Clique Valider.</p>' +
-    '</div>' +
-    '<label class="q">Prompt à copier</label>' +
-    '<textarea id="cp-prompt" readonly style="min-height:220px;font-family:ui-monospace,monospace;font-size:.8rem;">' + esc(prompt) + '</textarea>' +
-    '<button class="btn ghost" data-act="copy-cp">Copier le prompt</button>' +
-    '<label class="q">Réponse de l\'IA</label>' +
-    '<textarea id="cp-response" placeholder="Colle ici la réponse complète de l\'IA (le JSON avec title, logline et scenes)…" style="min-height:160px;"></textarea>' +
-    '<button class="btn big" data-act="use-cp">Valider la réponse</button>' +
-    '<p class="small muted">' + scenes + ' scènes attendues, environ ' + totalSec + ' secondes au total.</p>';
-  setTimeout(function () {
-    out.addEventListener('click', cpClick, true);
-  }, 20);
-  out.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function cpClick(e) {
-  var b = e.target.closest('[data-act]');
-  if (!b) return;
-  var a = b.getAttribute('data-act');
-  if (a === 'copy-cp') {
-    var ta = $('cp-prompt');
-    if (ta) { copyText(ta.value); showToast('Prompt copié', 'success'); }
-    e.stopPropagation();
-  }
-  else if (a === 'use-cp') {
-    var txt = $('cp-response');
-    if (!txt || !txt.value.trim()) { showToast('Colle d\'abord la réponse', 'error'); return; }
-    var parsed = extractJson(txt.value, 'scenario');
-    if (!parsed || !parsed.scenes || !parsed.scenes.length) {
-      showToast('Réponse illisible après 5 tentatives', 'error', 4000);
-      logDebug('err', 'PARSE', 'Échec copier-coller');
-      return;
-    }
-    state.episode = {
-      title: parsed.title || 'Épisode sans titre',
-      logline: parsed.logline || '',
-      scenes: parsed.scenes,
-      targetSeconds: (parsed.scenes.length * (state.durationFrames / FRAME_RATE))
-    };
-    saveState();
-    showToast('Script chargé : ' + parsed.scenes.length + ' scènes', 'success');
-    render();
-  }
-}
-
-/* ============================================================
-   GÉNÉRATION DE RÉFÉRENCES (images)
-   ============================================================ */
-async function doGenerateRefs() {
-  if (!state.episode) { showToast('Pas d\'épisode à référencer', 'error'); return; }
-  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
-  
-  var grid = $('refs-grid');
-  if (grid) grid.innerHTML = '';
-  
-  setStatus('Génération des références…');
-  logDebug('info', 'REFS', 'Début génération de ' + state.episode.scenes.length + ' références');
-  
-  for (var i = 0; i < state.episode.scenes.length; i++) {
-    var sc = state.episode.scenes[i];
-    var prompt = 'Reference image for a scene. ' +
-      (sc.lieu ? 'Location: ' + sc.lieu + '. ' : '') +
-      (sc.persos ? 'Characters: ' + sc.persos + '. ' : '') +
-      (sc.ambiance ? 'Atmosphere: ' + sc.ambiance + '. ' : '') +
-      (sc.action_prompt || '') +
-      '. Portrait 9:16, cinematic, no text, no watermark.';
-    
-    try {
-      var url = await callAgnesImage(prompt);
-      addMediaLog('image', url, 'Réf ' + (i + 1));
-      if (grid) {
-        grid.innerHTML += '<div class="image-card"><img src="' + url + '" alt=""></div>';
-      }
-      logDebug('ok', 'REFS', 'Réf ' + (i + 1) + ' OK');
-    } catch (e) {
-      logDebug('err', 'REFS', 'Réf ' + (i + 1) + ' échec : ' + e.message);
-    }
-    await sleep(IMAGE_INTERVAL_MS);
-  }
-  
-  setStatus(null);
-  showToast('Références générées', 'success');
-}
-
-/* ============================================================
-   GÉNÉRATION DE VIDÉOS
-   ============================================================ */
-function updateVideoEstimate() {
-  var el = $('video-estimate');
-  if (!el || !state.episode) return;
-  var n = state.episode.scenes.length;
-  var frames = state.durationFrames;
-  var totalSec = (frames / FRAME_RATE) * n;
-  var minutes = Math.ceil((n * (VIDEO_INTERVAL_SAFE / 1000 + 90)) / 60);
-  el.textContent = n + ' clips de ' + (frames / FRAME_RATE).toFixed(1) + ' s = ' + totalSec.toFixed(0) + ' s de quota. Durée estimée : environ ' + minutes + ' min.';
-}
-
-async function startVideoGeneration() {
-  if (state.isRunning) return;
-  if (!getApiKey()) { showToast('Ajoute ta clé Agnes', 'error'); return; }
-  if (!state.episode) { showToast('Pas d\'épisode à générer', 'error'); return; }
-  
-  state.isRunning = true;
-  state.stopRequested = false;
-  state.completed = 0;
-  state.failed = 0;
-  state.queue = state.episode.scenes.map(function (sc, i) {
-    return {
-      index: i,
-      scene: sc,
-      status: 'pending',
-      progress: null,
-      videoId: null,
-      videoUrl: null,
-      startTime: null
-    };
-  });
-  
-  checkQuotaWarn(state.durationFrames, state.queue.length);
-  setStatus('Génération de ' + state.queue.length + ' clips…');
-  render();
-  
-  var pollingTasks = [];
-  for (var i = 0; i < state.queue.length; i++) {
-    if (state.stopRequested) break;
-    var item = state.queue[i];
-    try {
-      item.status = 'creating';
-      render();
-      
-      var prompt = buildVideoPromptFromScene(item.scene);
-      var refImg = null;
-      if (state.images.length > i) refImg = state.images[i].dataUri;
-      
-      if (!refImg) {
-        logDebug('warn', 'VIDÉO', 'Scène ' + (i + 1) + ' sans image de référence, on génère sans');
-        continue;
-      }
-      
-      var id = await createVideoTask(prompt, refImg, null, state.durationFrames);
-      item.videoId = id;
-      item.startTime = Date.now();
-      item.status = 'processing';
-      render();
-      
-      pollingTasks.push(pollTaskAndDisplay(item));
-      
-      if (i < state.queue.length - 1 && !state.stopRequested) {
-        var wait = Math.ceil(VIDEO_INTERVAL_SAFE / 1000);
-        for (var r = wait; r > 0; r--) {
-          if (state.stopRequested) break;
-          setStatus('Prochain clip dans ' + r + ' s…');
-          await sleep(1000);
-        }
-      }
-    } catch (e) {
-      item.status = 'failed';
-      item.progress = e.message.slice(0, 60);
-      state.failed++;
-      logDebug('err', 'VIDÉO', 'Scène ' + (i + 1) + ' échec : ' + e.message);
-      render();
-    }
-  }
-  
-  if (pollingTasks.length) {
-    setStatus('Finalisation…');
-    await Promise.allSettled(pollingTasks);
-  }
-  
-  state.isRunning = false;
-  state.stopRequested = false;
-  setStatus(null);
-  showToast(state.completed + ' clip' + (state.completed > 1 ? 's' : '') + ' prêt' + (state.completed > 1 ? 's' : ''), 'success');
-}
-
-async function pollTaskAndDisplay(item) {
-  try {
-    var vurl = await pollVideo(item.videoId, function (progress) {
-      item.progress = progress;
-      render();
-    }, state.durationFrames);
-    
-    var elapsed = Date.now() - item.startTime;
-    recordGenerationTime('video', elapsed);
-    item.status = 'done';
-    item.videoUrl = vurl;
-    item.progress = 'Prêt en ' + Math.round(elapsed / 1000) + 's';
-    state.completed++;
-    render();
-    renderGallery();
-    addMediaLog('video', vurl, 'Scène ' + (item.index + 1));
-    logDebug('ok', 'VIDÉO', 'Scène ' + (item.index + 1) + ' prête en ' + (elapsed / 1000).toFixed(1) + 's');
-    showToast('Scène ' + (item.index + 1) + ' prête', 'success');
-  } catch (e) {
-    item.status = 'failed';
-    item.progress = e.message.slice(0, 60);
-    state.failed++;
-    render();
-    logDebug('err', 'VIDÉO', 'Scène ' + (item.index + 1) + ' échec : ' + e.message);
-  }
-}
-
-/* ============================================================
-   ANTI-RECHARGEMENT
-   ============================================================ */
-document.addEventListener('submit', function (e) { e.preventDefault(); }, true);
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'submit' && e.target.id !== 'api-key-input') {
-    e.preventDefault();
-  }
-}, true);
-document.addEventListener('click', function (e) {
-  var a = e.target.closest && e.target.closest('a');
-  if (a && (!a.getAttribute('href') || a.getAttribute('href') === '#')) e.preventDefault();
-}, true);
-window.addEventListener('beforeunload', function (e) {
-  if (state.isRunning) { e.preventDefault(); e.returnValue = ''; }
-});
-
-/* ============================================================
-   INITIALISATION
-   ============================================================ */
-function init() {
-  /* Navigation */
-  document.querySelectorAll('.dock button').forEach(function (b) {
-    b.addEventListener('click', function () {
-      state.tab = b.getAttribute('data-tab');
-      render();
-      window.scrollTo(0, 0);
-    });
-  });
-  
-  /* API */
-  var saveBtn = $('api-save-btn');
-  if (saveBtn) saveBtn.addEventListener('click', saveApiKey);
-  var clearBtn = $('api-clear-btn');
-  if (clearBtn) clearBtn.addEventListener('click', clearAllKeys);
-  var apiInp = $('api-key-input');
-  if (apiInp) {
-    apiInp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); saveApiKey(); }
-    });
-  }
-  
-  /* Clés de secours */
-  var groqInput = $('groq-key');
-  if (groqInput) {
-    try { groqInput.value = localStorage.getItem('groq_key') || ''; } catch (e) {}
-    groqInput.addEventListener('input', function () {
-      try { localStorage.setItem('groq_key', groqInput.value.trim()); } catch (e) {}
-    });
-  }
-  var orInput = $('openrouter-key');
-  if (orInput) {
-    try { orInput.value = localStorage.getItem('openrouter_key') || ''; } catch (e) {}
-    orInput.addEventListener('input', function () {
-      try { localStorage.setItem('openrouter_key', orInput.value.trim()); } catch (e) {}
-    });
-  }
-  
-  /* Wake lock */
-  var wakeBtn = $('wake-toggle-btn');
-  if (wakeBtn) wakeBtn.addEventListener('click', toggleWakeLock);
-  
-  /* Upload photos de référence */
-  document.addEventListener('change', function (e) {
-    if (e.target && e.target.id === 'refs-file-input') {
-      handleFiles(e.target.files);
-      e.target.value = '';
-    }
-  });
-  
-  /* Restauration wake lock */
-  try {
-    if (localStorage.getItem(WAKE_LOCK_PREF) === '1') {
-      state.wakeEnabled = true;
-      activateWakeLock().then(updateWakeStatus);
-    }
-  } catch (e) {}
-  
-  /* Restauration clé externe */
-  try {
-    var ek = localStorage.getItem(EXTERNAL_KEY_STORAGE);
-    if (ek) state.externalKey = ek;
-  } catch (e) {}
-  
-  /* Chargement état + rendu */
-  loadState();
-  updateApiPanel();
-  updateApiPanelVisibility();
-  updateQuotaPanel();
-  updateWakeStatus();
-  render();
-  logDebug('ok', 'INIT', 'Fabrik des Idées prêt');
-  logDebug('info', 'INIT', 'Modèles : ' + MODEL_TEXT + ' / ' + MODEL_IMAGE_DEFAULT + ' / ' + MODEL_VIDEO);
-  logDebug('info', 'INIT', 'Délais : 62 s min entre créations, premier poll 80 s, poll 8/8/12/12/20/20/25');
-}
-
-/* Traitement des images */
-function processImageFile(file) {
-  return new Promise(function (resolve) {
-    if (!file.type.startsWith('image/')) { resolve(null); return; }
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var dataUri = e.target.result;
-      var img = new Image();
-      img.onload = function () {
-        try {
-          var c = document.createElement('canvas');
-          var ratio = img.height / img.width;
-          var w = 200;
-          c.width = w;
-          c.height = Math.round(w * ratio);
-          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-          var thumb = c.toDataURL('image/jpeg', 0.7);
-          resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: thumb });
-        } catch (err) { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri }); }
-      };
-      img.onerror = function () { resolve({ id: Date.now() + Math.random(), dataUri: dataUri, thumbnail: dataUri }); };
-      img.src = dataUri;
-    };
-    reader.onerror = function () { resolve(null); };
-    reader.readAsDataURL(file);
-  });
-}
-async function handleFiles(files) {
-  var list = Array.prototype.slice.call(files).filter(function (f) { return f.type.startsWith('image/'); });
-  if (!list.length) return;
-  showToast('Chargement de ' + list.length + ' photo' + (list.length > 1 ? 's' : '') + '…', 'warn');
-  for (var i = 0; i < list.length; i++) {
-    var im = await processImageFile(list[i]);
-    if (im) state.images.push(im);
-  }
-  render();
-  showToast(state.images.length + ' photo' + (state.images.length > 1 ? 's' : '') + ' prête' + (state.images.length > 1 ? 's' : ''), 'success');
-}
-
-/* Démarrage */
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
-</script>
-</body>
-</html>
+=== FIN PARTIE A ===
