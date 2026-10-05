@@ -691,9 +691,13 @@ pre.fin {
     <div class="api-security">
       🔒 Utilise une clé limitée, uniquement sur tes appareils. Ne partage jamais ce fichier après avoir saisi une clé.
     </div>
-    <div class="row">
-      <button type="button" class="btn ghost big" id="api-clear-btn">Effacer mes clés</button>
-    </div>
+        <label class="q" style="margin-top:12px;">Moteur d'images</label>
+    <select id="engine-select">
+      <option value="pollinations">🌻 Pollinations (gratuit, sans clé)</option>
+      <option value="agnes">🎨 Agnes</option>
+      <option value="auto">🔄 Auto (essaie Agnes puis Pollinations)</option>
+    </select>
+    <p class="small muted" style="margin-top:4px;">Pollinations fonctionne sans clé et génère des images 9:16 en quelques secondes.</p>
   </section>
 
   <section class="glass quota-panel" id="quota-panel">
@@ -837,6 +841,7 @@ var PREFS_KEY = 'fabrique_agnes_prefs';
 var state = {
   tab: 'idees',
   mode: 'serie',
+  imageEngine: 'pollinations',
   idea: '',
   tone: 'neutre',
   theme: '',
@@ -951,7 +956,7 @@ function loadState() {
     if (raw) {
       var d = JSON.parse(raw);
       if (d && typeof d === 'object') {
-                ['mode','tab','idea','theme','tone','totalDuration','durationFrames','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','casting','decors','scenes','episode','queue','uid'].forEach(function (k) {
+                ['mode','tab','imageEngine','idea','theme','tone','totalDuration','durationFrames','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','casting','decors','scenes','episode','queue','uid'].forEach(function (k) {
           if (d[k] !== undefined) state[k] = d[k];
         });
       }
@@ -961,7 +966,7 @@ function loadState() {
 function saveState() {
   try {
     var d = {};
-    ['mode','tab','idea','theme','tone','totalDuration','durationFrames','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','casting','decors','scenes','episode','queue','uid'].forEach(function (k) {
+    ['mode','tab','imageEngine','idea','theme','tone','totalDuration','durationFrames','imageModel','textProvider','externalService','externalUrl','externalModel','styles','skin','teint','yeux','casting','decors','scenes','episode','queue','uid'].forEach(function (k) {
       d[k] = state[k];
     });
     localStorage.setItem(STORE, JSON.stringify(d));
@@ -1002,8 +1007,8 @@ function clearAllKeys() {
   showToast('Clés effacées', 'warn');
 }
 function updateApiPanel() {
-  var line = $('api-status-line'), txt = $('api-status-text'), inp = $('api-key-input');
-  if (!line || !txt || !inp) return;
+  var sel = $('engine-select');
+  if (sel) sel.value = state.imageEngine || 'pollinations';
   var k = getApiKey();
   if (k) {
     line.classList.add('ok');
@@ -1470,10 +1475,23 @@ async function callPollinationsImage(prompt) {
    APPEL IMAGE — Cascade Agnes → Pollinations
    ═══════════════════════════════════════════════════════════════ */
 async function callBestImage(prompt) {
+  var engine = state.imageEngine || 'pollinations';
+
+  if (engine === 'pollinations') {
+    logDebug('api', 'IMAGE', 'Moteur : Pollinations');
+    return await callPollinationsImage(prompt);
+  }
+
+  if (engine === 'agnes') {
+    logDebug('api', 'IMAGE', 'Moteur : Agnes');
+    return await callAgnesImage(prompt);
+  }
+
+  // Mode auto : essaie Agnes puis Pollinations
   try {
     return await callAgnesImage(prompt);
   } catch (e) {
-    logDebug('warn', 'FALLBACK', 'Agnes image échoue, essai Pollinations');
+    logDebug('warn', 'FALLBACK', 'Agnes échoue, bascule Pollinations');
     showToast('Secours Pollinations utilisé', 'warn', 2000);
     return await callPollinationsImage(prompt);
   }
@@ -2730,6 +2748,7 @@ function onTabClick(e) {
    ═══════════════════════════════════════════════════════════════ */
 function onTabChange(e) {
   var id = e.target.id;
+    if (id === 'engine-select') { state.imageEngine = e.target.value; saveState(); showToast('Moteur : ' + e.target.value, 'success', 1500); return; }
   if (id === 'total-duration') { state.totalDuration = parseInt(e.target.value, 10); saveState(); }
   else if (id === 'duration-select') { state.durationFrames = parseInt(e.target.value, 10); saveState(); }
   else if (id === 'tone-select') { state.tone = e.target.value; saveState(); }
