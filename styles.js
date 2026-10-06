@@ -2,7 +2,7 @@
    FABRIK DES IDÉES : Bibliothèque de styles
    Version complète : 302 styles, 24 catégories
    ============================================================ */
-
+ 
 var STYLES_LIBRARY = {
 
   /* ---- CATÉGORIE 1 : 3D ---- */
