@@ -1260,6 +1260,42 @@ function scriptBody(ep) {
     '\nIMPORTANT : le champ "script" doit être un TABLEAU de lignes (pas une seule string). Chaque ligne est un élément séparé, ce qui évite les problèmes de guillemets.' +
     '\nFormat : {"titre":"","resume":"3 phrases","question_fin":"' + (isLast(ep) ? "chute" : "") + '","script":["[00:00] [HOOK] GROS PLAN - Mango (sarcastique) : C\'est ça, ton grand secret ?","[00:03] CHAMP/CONTRECHAMP - Aïcha (froide) : Tais-toi."]' + (P.rec !== "oui" ? ',"personnages":[{"nom":"","role":"","visuel":""}]' : '') + '}';
 }
+  function applyScript(ep, r) {
+  if (!r || !r.script) throw new Error("vide");
+  ep = epBy(ep.n) || ep;
+  ep.titre = r.titre || ep.titre;
+  ep.resume = Array.isArray(r.resume) ? r.resume.join(" ") : String(r.resume || "");
+  ep.fin = Array.isArray(r.question_fin) ? r.question_fin.join(" ") : String(r.question_fin || "");
+
+  /* Agnes peut retourner script en string OU en tableau */
+  if (Array.isArray(r.script)) {
+    ep.script = r.script.map(function (line) {
+      if (typeof line === "string") return line;
+      if (line && typeof line === "object") {
+        var t = line.temps || line.time || line.t || "";
+        var p = line.personnage || line.qui || line.character || line.perso || "";
+        var txt = line.texte || line.replique || line.text || line.dialogue || "";
+        var ton = line.ton || line.tone || line.emotion || "";
+        var parts = [];
+        if (t) parts.push("[" + t + "]");
+        if (p) parts.push(p);
+        if (ton) parts.push("(" + ton + ")");
+        var lineStr = parts.join(" ");
+        if (lineStr) lineStr += " : ";
+        return lineStr + txt;
+      }
+      return String(line);
+    }).join("\n");
+  } else if (r.script && typeof r.script === "object") {
+    ep.script = JSON.stringify(r.script, null, 2);
+  } else {
+    ep.script = String(r.script || "");
+  }
+
+  if (P.rec !== "oui") ep.cast = (r.personnages || []).map(function (p) {
+    return { id: uid(), nom: p.nom || "", role: p.role || "", visuel: p.visuel || "", ok: false };
+  });
+}
 function genScript(ep) { return ask("le script de " + unit(ep.n), scriptBody(ep), function (r) { applyScript(ep, r); }); }
 
 /* ============================================================
