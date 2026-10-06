@@ -1122,6 +1122,8 @@ function genCast() {
 function scriptBody(ep) {
   var rec = P.rec, last = isLast(ep);
   var structure = "accroche de 3 secondes, " + (ep.n > 1 && rec === "oui" && P.nb > 1 ? "rappel de 5 secondes de l'épisode précédent, " : "") + "mise en place, conflit, retournement, " + (last ? "fin nette." : "fin sur une question.");
+  var rehook = P.duree >= 45 ? "3. RE-HOOK AU MILIEU : Vers la moitié du script (autour de " + Math.round(P.duree/2) + "s), place une seconde accroche forte (révélation, retournement, question choc) marquée [RE-HOOK].\n" : "";
+  var rehookEx = P.duree >= 45 ? "[00:" + String(Math.round(P.duree/2)).padStart(2,"0") + "] [RE-HOOK] GROS PLAN - Aïcha (paniquée) : Attends... tu savais ?\n" : "";
   return "Écris " + unit(ep.n) + " d'une production animée verticale en français.\n" +
     "Titre : " + (P.titre || "sans titre") + ". Idée : " + P.idee.trim() + "\nConcept : " + P.concept + "\nRègle : " + P.regle + "\nTon : " + P.ton + "\n" + briefText() +
     (P.nb > 1 ? "Format : " + P.nb + " vidéos, celle-ci la n° " + ep.n + ".\n" : "Format : une vidéo unique.\n") +
@@ -1130,55 +1132,23 @@ function scriptBody(ep) {
     (has(ep.note) ? "Idée de départ : " + ep.note.trim() + "\n" : "") +
     (ep.n > 1 && rec === "oui" ? "Résumé précédent : " + (recapFor(ep.n) || "non fourni") + "\n" : "") +
     (rec !== "oui" ? "Invente les personnages (4 max), description visuelle en anglais 40-60 mots terminée par : " + phrase() + "\n" : "") +
-    "\nDurée cible : " + P.duree + " s. Structure : " + structure + " Max 2 personnages par scène, une seule personne parle à la fois. " + DIALOGUE_RULES +
-    "RYTHME OBLIGATOIRE : " +
-    "- Une réplique TOUTES LES 2 À 3 SECONDES (pas 5 !). Si la vidéo dure " + P.duree + " s, prévois environ " + Math.round(P.duree / 2.5) + " répliques au total. " +
-    "- Répliques COURTES : 5 à 10 mots maximum (2 à 3 mots par seconde à l'oral). " +
-    "- Chaque réplique doit avoir une indication de TON entre parenthèses au début : (fâchée), (chuchote), (rire nerveux), (froide), (paniquée), (sarcastique), etc. " +
-    "- Alterner les tons d'une réplique à l'autre pour créer du rythme (une calme, une tendue, une drôle, une froide). " +
-    "- Pas de silence long : chaque seconde de silence doit être justifiée par une action visuelle forte. " +
-    "FORMAT DU SCRIPT : une ligne par réplique, comme ceci :\n" +
-    "[00:03] Mango (sarcastique) : C'est ça, ton grand secret ?\n" +
-    "[00:05] Aïcha (froide) : Tais-toi. Elle arrive.\n" +
-    "[00:08] Mango (chuchote) : On en reparle.\n" +
-    "[00:11] (silence) — plan large sur la porte qui s'ouvre\n" + JSONNOTE +
+    "\nDurée cible : " + P.duree + " s. Structure : " + structure + " Max 2 personnages par scène, une seule personne parle à la fois. " + DIALOGUE_RULES + "\n" +
+    "RÈGLES TIKTOK OBLIGATOIRES (pour maximiser la viralité) :\n" +
+    "1. HOOK EN 3 SECONDES : La toute première réplique ou action doit créer une surprise, une tension ou une question immédiate. Marque cette ligne avec [HOOK] au début.\n" +
+    "2. CHANGEMENT VISUEL TOUTES LES 2 À 3 SECONDES : Chaque ligne doit avoir une indication de cadrage DIFFÉRENTE de la précédente : GROS PLAN, PLAN MOYEN, PLAN LARGE, CHAMP/CONTRECHAMP, CAMÉRA À L'ÉPAULE, ORBITE, PLAN SERRÉ, PLONGÉE, CONTRE-PLONGÉE, etc.\n" +
+    rehook +
+    "4. FIN : " + (last ? "Fin nette, mémorable, qui boucle l'histoire." : "Termine sur un cliffhanger ou une question sans réponse.") + "\n" +
+    "5. RYTHME : " + Math.round(P.duree / 2.5) + " répliques minimum au total (une toutes les 2 à 3 secondes). Répliques COURTES : 5 à 10 mots maximum.\n" +
+    "6. TON : Chaque réplique commence par une indication de ton entre parenthèses : (fâchée), (chuchote), (rire nerveux), (froide), (paniquée), (sarcastique), etc. Alterne les tons pour créer du rythme.\n" +
+    "\nFORMAT DU SCRIPT (une ligne par réplique, respecte EXACTEMENT ce format) :\n" +
+    "[00:00] [HOOK] GROS PLAN - Mango (sarcastique) : C'est ça, ton grand secret ?\n" +
+    "[00:03] CHAMP/CONTRECHAMP - Aïcha (froide) : Tais-toi. Elle arrive.\n" +
+    "[00:06] PLAN MOYEN - Mango (chuchote) : On en reparle.\n" +
+    "[00:09] PLAN LARGE - (silence) — la porte s'ouvre lentement\n" +
+    rehookEx +
+    "\nLes indications de cadrage sont OBLIGATOIRES sur CHAQUE ligne. Si une ligne est le HOOK ou le RE-HOOK, ajoute [HOOK] ou [RE-HOOK] juste après le timestamp.\n" +
+    JSONNOTE +
     '\nFormat : {"titre":"","resume":"3 phrases","question_fin":"' + (isLast(ep) ? "chute" : "") + '","script":"' + (P.rec !== "oui" ? '","personnages":[{"nom":"","role":"","visuel":""}' : '') + '"}';
-}
-function applyScript(ep, r) {
-  if (!r || !r.script) throw new Error("vide");
-  ep = epBy(ep.n) || ep;
-  ep.titre = r.titre || ep.titre;
-  ep.resume = Array.isArray(r.resume) ? r.resume.join(" ") : String(r.resume || "");
-  ep.fin = Array.isArray(r.question_fin) ? r.question_fin.join(" ") : String(r.question_fin || "");
-
-  /* Agnes peut retourner script en string OU en tableau d'objets */
-  if (Array.isArray(r.script)) {
-    ep.script = r.script.map(function (line) {
-      if (typeof line === "string") return line;
-      if (line && typeof line === "object") {
-        var t = line.temps || line.time || line.t || "";
-        var p = line.personnage || line.qui || line.character || line.perso || "";
-        var txt = line.texte || line.replique || line.text || line.dialogue || "";
-        var ton = line.ton || line.tone || line.emotion || "";
-        var parts = [];
-        if (t) parts.push("[" + t + "]");
-        if (p) parts.push(p);
-        if (ton) parts.push("(" + ton + ")");
-        var lineStr = parts.join(" ");
-        if (lineStr) lineStr += " : ";
-        return lineStr + txt;
-      }
-      return String(line);
-    }).join("\n");
-  } else if (r.script && typeof r.script === "object") {
-    ep.script = JSON.stringify(r.script, null, 2);
-  } else {
-    ep.script = String(r.script || "");
-  }
-
-  if (P.rec !== "oui") ep.cast = (r.personnages || []).map(function (p) {
-    return { id: uid(), nom: p.nom || "", role: p.role || "", visuel: p.visuel || "", ok: false };
-  });
 }
 function genScript(ep) { return ask("le script de " + unit(ep.n), scriptBody(ep), function (r) { applyScript(ep, r); }); }
 
@@ -1186,17 +1156,24 @@ function genScript(ep) { return ask("le script de " + unit(ep.n), scriptBody(ep)
    PLANS
    ============================================================ */
 function plansBody(ep, scriptText) {
-  var dp = perPlan();
-  var minPlans = Math.ceil(P.duree / (dp.v + 2));
-  var maxPlans = Math.ceil(P.duree / Math.max(3, dp.v - 2));
+  var minPlans = Math.ceil(P.duree / 10);
+  var maxPlans = Math.ceil(P.duree / 3);
   var durationsList = DUREES_PLAN.map(function (x) { return x.v + " s (" + x.frames + " frames)"; }).join(", ");
   return "Style visuel : " + phrase() + "\n" + bible(ep) + "\n\nScript :\n" + scriptText + "\n\n" +
-    "Découpe ce script en plans. La vidéo totale doit faire " + P.duree + " secondes. Durée moyenne visée par plan : " + dp.v + " secondes. Il te faudra entre " + minPlans + " et " + maxPlans + " plans + 2 réserves. " +
-    "Chaque plan peut avoir une durée DIFFÉRENTE selon ce qui se passe. Choisis parmi ces valeurs précises imposées par Agnes : " + durationsList + ". " +
-    "Pour chaque plan : un lieu, 2 personnages max, une action visible, un cadrage (gros plan, plan moyen ou plan large), une réplique en français (12 mots max), une phrase qui remplit le plan (3 mots/s), qui parle (ou « personne »), une émotion. " +
+    "Découpe ce script en plans. La vidéo totale doit faire " + P.duree + " secondes. " +
+    "IMPORTANT : TU décides de la durée de CHAQUE plan en fonction de l'ÉMOTION et du RYTHME de la scène, PAS d'une moyenne fixe.\n" +
+    "RÈGLES DE DURÉE PAR ÉMOTION :\n" +
+    "- [HOOK] / [RE-HOOK] / choc / retournement / punchline → plan COURT (5 à 6 s)\n" +
+    "- Dialogue tendu / dispute / confrontation → 5 à 7 s (rythme rapide)\n" +
+    "- Silence / contemplation / émotion forte / regard caméra → plan LONG (8 à 10 s)\n" +
+    "- Action physique / mouvement → 6 à 8 s\n" +
+    "- Cliffhanger de fin → 6 à 8 s, terminer sur un gros plan ou un plan large marquant.\n" +
+    "Chaque plan doit utiliser UNE des durées précises imposées par Agnes : " + durationsList + ". " +
+    "Il te faudra entre " + minPlans + " et " + maxPlans + " plans + 2 réserves. " +
+    "Pour chaque plan : un lieu, 2 personnages max, une action visible, un cadrage (gros plan, plan moyen ou plan large), une réplique en français (12 mots max), qui parle (ou « personne »), une émotion, un rythme (calme/rapide/tendu/choc). " +
     "prompt_image en anglais décrit UNIQUEMENT la scène (cadrage, positions, action, lumière). N'y mets AUCUNE description d'apparence ni de style. prompt_video en anglais : seulement le mouvement. " +
     "Somme des durées des plans 1 à N (sans les réserves) = " + P.duree + " secondes (tolérance ±3 s). " + JSONNOTE +
-    '\nFormat : {"plans":[{"n":1,"duree_s":6,"lieu":"","personnages":[""],"action":"","cadrage":"","replique":"","qui_parle":"","emotion":"","prompt_image":"","prompt_video":"","reserve":false}]}';
+    '\nFormat : {"plans":[{"n":1,"duree_s":6,"lieu":"","personnages":[""],"action":"","cadrage":"","replique":"","qui_parle":"","emotion":"","rythme":"","prompt_image":"","prompt_video":"","reserve":false}]}';
 }
 function applyPlans(ep, r) {
   if (!r || !r.plans || !r.plans.length) throw new Error("vide");
@@ -1213,7 +1190,7 @@ function applyPlans(ep, r) {
       id: uid(), n: x.n || i + 1, duree: closest.v, frames: closest.frames,
       lieu: x.lieu || "", persos: (x.personnages || []).join(", "),
       action: x.action || "", cadrage: x.cadrage || "", replique: x.replique || "", qui: x.qui_parle || "",
-      emotion: x.emotion || "", pi: x.prompt_image || "", pv: x.prompt_video || "", reserve: !!x.reserve,
+      emotion: x.emotion || "", rythme: x.rythme || "", pi: x.prompt_image || "", pv: x.prompt_video || "", reserve: !!x.reserve,
       st: 0, v2: true, photoUri: null, videoUrl: null, videoStatus: null, videoError: "", videoMsg: ""
     };
   });
@@ -1415,9 +1392,6 @@ function universHtml() {
     '</div></div>' +
     '<div class="fld"><span class="q">Durée totale de la vidéo<span class="q-hint">Nombre de plans calculé automatiquement selon le script.</span></span><div class="chips">' +
     DUREES_TOTALES.map(function (x) { return '<button type="button" class="chip" data-act="duree" data-v="' + x.v + '" aria-pressed="' + (P.duree === x.v) + '">' + x.t + '</button>'; }).join("") +
-    '</div></div>' +
-    '<div class="fld"><span class="q">Durée moyenne d\'un plan<span class="q-hint">Chaque plan sera ajusté à la durée Agnes la plus proche.</span></span><div class="chips">' +
-    DUREES_PLAN.map(function (x) { return '<button type="button" class="chip" data-act="duree-plan" data-v="' + x.v + '" aria-pressed="' + (P.dureePlan === x.v) + '">' + x.t + '</button>'; }).join("") +
     '</div></div>' +
     '<div class="fld"><span class="q">Personnages récurrents ?</span><div class="opt">' +
     RECS.map(function (r) { return '<button type="button" class="optb" data-act="rec" data-v="' + r.id + '" aria-pressed="' + (P.rec === r.id) + '"><b>' + esc(r.t) + '</b><span>' + esc(r.d) + '</span></button>'; }).join("") +
@@ -1740,7 +1714,6 @@ document.addEventListener("click", function (e) {
   else if (a === "speech") { P.speech = v; save(); render(); }
   else if (a === "nb") { P.nb = +v; save(); render(); }
   else if (a === "duree") { P.duree = +v; save(); render(); }
-  else if (a === "duree-plan") { P.dureePlan = +v; save(); render(); }
   else if (a === "rec") { P.rec = v; save(); render(); }
   else if (a === "skin") { P.skin = P.skin === v ? "" : v; save(); render(); }
   else if (a === "yeux") {
