@@ -1280,7 +1280,19 @@ function genPlans(ep) { return ask("le storyboard de " + unit(ep.n), plansBody(e
    ============================================================ */
 function montBody(ep, list, titre, fin) {
   return "Série : " + (P.titre || "sans titre") + ". Épisode " + ep.n + " : " + titre + "\nPlans :\n" + list + "\nQuestion de fin : " + fin + "\nMéthode de parole : " + SPEECH.filter(function (s) { return s.id === P.speech; })[0].t + "\n\n" +
-    "Écris en français, avec ces 4 titres : 1. PLAN DE MONTAGE CAPCUT (ordre, durées gardées, coupes, bruitages). 2. SOUS-TITRES ET TEXTES À L'ÉCRAN (styles choisis : " + sousPhrase() + "). 3. SONS (ambiances, bruitages, musique libre). 4. PUBLICATION (description, hashtags, texte de couverture, premier commentaire). Durée finale : " + (P.duree - 5) + " à " + (P.duree + 5) + " s.";
+        "Écris en français, avec ces 4 titres :\n" +
+    "1. PLAN DE MONTAGE CAPCUT (ordre, durées gardées, coupes précises).\n" +
+    "2. SOUS-TITRES ET TEXTES À L'ÉCRAN (styles choisis : " + sousPhrase() + ").\n" +
+    "3. SONS — Tu dois TOI-MÊME choisir la musique et les bruitages, pas me laisser chercher. Pour chaque son, donne EXACTEMENT :\n" +
+    "   • Moment précis dans la vidéo (ex: 00:00 à 00:03, ou plan 4)\n" +
+    "   • Type (musique de fond / bruitage d'ambiance / effet ponctuel)\n" +
+    "   • Nom de la piste ou du son tel qu'il apparaît dans la banque\n" +
+    "   • Auteur / chaîne\n" +
+    "   • Plateforme gratuite où le trouver : Pixabay Music, Freesound.org, YouTube Audio Library, Free Music Archive, Mixkit\n" +
+    "   • Pourquoi ce son colle à cette scène (1 phrase)\n" +
+    "   N'utilise QUE des sons libres de droits disponibles sur ces plateformes. Choisis une musique de fond cohérente avec le ton (" + P.ton + ") et adapte son volume aux moments clés (HOOK, RE-HOOK, fin).\n" +
+    "4. PUBLICATION (description, hashtags, texte de couverture, premier commentaire).\n" +
+    "Durée finale : " + (P.duree - 5) + " à " + (P.duree + 5) + " s.";
 }
 function montList(ep) {
   return ep.plans.filter(function (p) { return !p.reserve; }).map(function (p) {
@@ -1435,6 +1447,64 @@ function bind(path, val, rows, label, hint) {
       ? '<textarea id="b-' + path + '" data-path="' + path + '" style="min-height:' + (rows * 24 + 30) + 'px">' + esc(val) + '</textarea>'
       : '<input type="text" id="b-' + path + '" data-path="' + path + '" value="' + esc(val) + '">') + '</div>';
 }
+  /* ============================================================
+   SCRIPT — RENDU EN BLOCS COLORÉS
+   ============================================================ */
+function parseScriptLine(line) {
+  var s = String(line || "").trim();
+  if (!s) return null;
+  var out = { time:"", flag:"", cadrage:"", perso:"", ton:"", texte:"", type:"action", raw:s };
+  /* Timestamp */
+  var mT = /^\[(\d{1,2}:\d{2})\]\s*/.exec(s);
+  if (mT) { out.time = mT[1]; s = s.slice(mT[0].length); }
+  /* Flag [HOOK] / [RE-HOOK] */
+  var mF = /^\[(HOOK|RE-HOOK)\]\s*/i.exec(s);
+  if (mF) { out.flag = mF[1].toUpperCase(); s = s.slice(mF[0].length); }
+  /* Cadrage : mot(s) en MAJ suivi de " - " */
+  var mC = /^([A-ZÀ-Ÿ][A-ZÀ-Ÿ\/\s\-]{2,40}?)\s+-\s+/.exec(s);
+  if (mC) { out.cadrage = mC[1].trim(); s = s.slice(mC[0].length); }
+  /* Perso (ton) : texte  OU  (silence) — action */
+  var mP = /^([A-Za-zÀ-ÿ0-9' \-]{1,30}?)\s*\(([^)]{1,40})\)\s*:\s*(.+)$/.exec(s);
+  if (mP) {
+    out.perso = mP[1].trim();
+    out.ton = mP[2].trim();
+    out.texte = mP[3].trim();
+    out.type = "dialogue";
+  } else {
+    out.texte = s;
+    out.type = "action";
+  }
+  /* Classification finale */
+  if (out.flag === "HOOK") out.type = "hook";
+  else if (out.flag === "RE-HOOK") out.type = "rehook";
+  return out;
+}
+function scriptBlocksHtml(scriptText) {
+  var lines = String(scriptText || "").split("\n").map(parseScriptLine).filter(Boolean);
+  if (!lines.length) return "";
+  var colors = {
+    hook:    { bg: "rgba(255, 90, 120, .18)",  border: "#E85A7D", label: "🎣 HOOK" },
+    rehook:  { bg: "rgba(255, 150, 60, .18)",  border: "#E8913A", label: "🔄 RE-HOOK" },
+    dialogue:{ bg: "rgba(109, 74, 232, .12)",  border: "#6D4AE8", label: "" },
+    action:  { bg: "rgba(120, 120, 140, .12)", border: "#9E9EAF", label: "" }
+  };
+  return '<div class="stack" style="gap:8px">' + lines.map(function (l) {
+    var c = colors[l.type] || colors.action;
+    var timeTag = l.time ? '<span class="badge" style="background:' + c.border + ';color:#fff;font-size:.65rem">' + esc(l.time) + '</span>' : '';
+    var flagTag = l.flag ? '<span class="badge" style="background:' + c.border + ';color:#fff;font-size:.65rem;margin-left:4px">' + esc(c.label) + '</span>' : '';
+    var cadrage = l.cadrage ? '<span class="small" style="color:' + c.border + ';font-weight:700;text-transform:uppercase;font-size:.7rem;letter-spacing:.05em">' + esc(l.cadrage) + '</span>' : '';
+    var persoHtml = "";
+    if (l.perso) {
+      persoHtml = '<b style="color:' + c.border + '">' + esc(l.perso) + '</b>';
+      if (l.ton) persoHtml += ' <i class="small" style="color:var(--muted)">(' + esc(l.ton) + ')</i>';
+      persoHtml += ' : ';
+    }
+    return '<div style="background:' + c.bg + ';border-left:4px solid ' + c.border + ';border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">' +
+      '<div class="row" style="gap:6px;flex-wrap:wrap">' + timeTag + flagTag + cadrage + '</div>' +
+      '<div>' + persoHtml + esc(l.texte) + '</div>' +
+    '</div>';
+  }).join("") + '</div>';
+}
 
 /* ============================================================
    IDÉES
@@ -1562,7 +1632,7 @@ function universHtml() {
     '<label class="btn ghost big" for="bk-file" style="display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer">Ouvrir un fichier de sauvegarde</label><input type="file" id="bk-file" accept=".json" style="position:absolute;width:1px;height:1px;opacity:0">' +
     '<textarea id="bk-in" placeholder="Colle ici une sauvegarde pour la restaurer" style="min-height:80px"></textarea>' +
     '<button type="button" class="btn ghost big" data-act="bkrestore">Restaurer</button>' +
-    '<button type="button" class="btn ghost big" data-act="reset">Nouveau projet</button></section>';
+    '<button type="button" class="btn big" data-act="reset" style="background:linear-gradient(135deg,#E85A7D,#B5348F)">🗑️ Tout effacer pour recommencer</button></section>';
 
   return h;
 }
@@ -1590,9 +1660,9 @@ function refsHtml() {
             '<div class="stack"><b class="small">Image de référence (à joindre dans ChatGPT/Gemini)</b>' +
         (x.o.refUri
           ? '<div class="plan-thumb" style="max-width:200px"><img src="' + esc(x.o.refUri) + '" alt=""><div class="bar"><button type="button" class="btn ghost" data-act="ref-change" data-v="' + i + '">🔄 Changer</button><button type="button" class="btn ghost" data-act="ref-clear" data-v="' + i + '" style="color:var(--warn)">🗑️</button></div></div>'
-          : '<button type="button" class="plan-drop" data-act="ref-upload" data-v="' + i + '">📥 Télécharger l\'image de référence</button>' +
-            '<input type="file" class="ref-file-input" id="rf-in-' + i + '" accept="image/*" data-v="' + i + '" style="display:none">'
+          : '<button type="button" class="plan-drop" data-act="ref-upload" data-v="' + i + '">📥 Télécharger l\'image de référence</button>'
         ) +
+        '<input type="file" class="ref-file-input" id="rf-in-' + i + '" accept="image/*" data-v="' + i + '" style="display:none">' +
         '<p class="small muted">Cette image garantit la cohérence du ' + (x.k === "lieu" ? "décor" : "visage") + ' dans tous les plans.</p>' +
       '</div>' +
       '<div class="stack"><b class="small">Prompt (anglais)</b><pre class="fin" id="rf' + i + '">' + esc(refPrompt(x.k, x.o.visuel)) + '</pre><button type="button" class="btn ghost" data-act="copypre" data-v="rf' + i + '">📋 Copier le prompt</button></div>' +
@@ -1683,7 +1753,11 @@ function epHtml(e) {
     bind("eps." + i + ".note", e.note, 2, "Note pour cette vidéo") +
     '<button type="button" class="btn big" data-act="genscript" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>' + (has(e.script) ? "Réécrire le script" : "Écrire le script") + '</button>' +
     (has(e.script)
-      ? bind("eps." + i + ".script", e.script, 12, "Script (modifiable)") +
+          (has(e.script)
+      ? '<div class="stack"><b class="small">📜 Aperçu en blocs</b>' + scriptBlocksHtml(e.script) + '</div>' +
+        '<details class="stack"><summary class="small" style="cursor:pointer;padding:6px 0"><b>✏️ Modifier le script à la main</b></summary>' +
+        bind("eps." + i + ".script", e.script, 12, "") +
+        '</details>' +
         bind("eps." + i + ".resume", e.resume, 3, "Résumé") +
         bind("eps." + i + ".fin", e.fin, 2, "Question de fin")
       : '') +
@@ -1960,12 +2034,25 @@ document.addEventListener("click", function (e) {
       toast("Sauvegarde restaurée.");
     } catch (err) { toast("Sauvegarde illisible."); }
   }
-  else if (a === "reset") {
-    if (arm("reset", "Touche encore pour tout effacer.")) {
-      P = fresh();
-      save();
-      go("univers");
-      toast("Nouveau projet.");
+   else if (a === "reset") {
+    if (arm("reset", "Touche encore : TOUT sera effacé (photos, références, scripts).")) {
+      (async function () {
+        try {
+          if (typeof idbKeyval !== "undefined") {
+            var keys = await idbKeyval.keys();
+            for (var i = 0; i < keys.length; i++) {
+              var k = String(keys[i]);
+              if (k.indexOf("plan-photo-") === 0 || k.indexOf("ref-") === 0) {
+                await idbKeyval.del(k);
+              }
+            }
+          }
+        } catch (e) { console.warn("Reset IndexedDB :", e); }
+        P = fresh();
+        save();
+        go("univers");
+        toast("Tout est effacé. Nouvelle histoire !");
+      })();
     }
   }
 });
