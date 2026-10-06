@@ -230,7 +230,12 @@ var SKINS = [
   { id:"K17", nom:"Laquée très brillante", d:"Effet vernis.", p:"lacquered high-gloss skin with circular specular highlights, clearcoat finish" },
   { id:"K18", nom:"Latex ou caoutchouc", d:"Surface souple brillante.", p:"glossy latex rubber skin, soft squishy surface" },
   { id:"K21", nom:"Peluche", d:"Fourrure douce, coutures.", p:"plush fabric skin, soft faux fur, visible stitching" },
-  { id:"K22", nom:"Céramique émaillée", d:"Brillant de vaisselle.", p:"glazed ceramic skin, glossy enamel finish" }
+  { id:"K22", nom:"Céramique émaillée", d:"Brillant de vaisselle.", p:"glazed ceramic skin, glossy enamel finish" },
+  { id:"K23", nom:"Fruit anthropomorphe", d:"Personnage EN FORME de fruit, avec visage, bras et jambes.", p:"anthropomorphic fruit or vegetable character in 3D cartoon Pixar style, the entire body IS the fruit (round shape, matching silhouette of the fruit or vegetable), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs with small hands and feet, stem and leaf on top of the head, glossy realistic fruit skin texture with natural colors and highlights, seeds or surface details matching the fruit type, no human body parts visible" },
+  { id:"K24", nom:"Animal anthropomorphe", d:"Chat, chien, lapin debout comme un humain.", p:"anthropomorphic animal character in 3D cartoon Pixar style, standing upright like a human, human-like expressive face with big cartoon eyes on the animal head, thin cartoon arms and legs, wearing simple clothes, soft fur texture with natural animal colors and highlights, no human features on the body" },
+  { id:"K25", nom:"Objet anthropomorphe", d:"Un objet du quotidien qui prend vie.", p:"anthropomorphic everyday object character in 3D cartoon Pixar style, the entire body IS the object (matching silhouette and shape), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs with small hands and feet, glossy realistic surface texture matching the object material, no human body parts visible" },
+  { id:"K26", nom:"Nourriture anthropomorphe", d:"Burger, pizza, donut vivant.", p:"anthropomorphic food character in 3D cartoon Pixar style, the entire body IS the food item (matching silhouette), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs, glossy appetizing food texture with natural colors, steam or small details for realism, no human body parts visible" }
+];
 ];
 var TEINTS = [
   { id:"T1", nom:"Très clair", p:"very fair skin with a pink undertone" },
@@ -1038,7 +1043,9 @@ function videoPrompt(pl) {
     (has(pl.duree) ? "Clip length about " + pl.duree + " seconds. " : "") +
     (camPhrase() ? camPhrase() + " " : "") +
     rule +
-    " CRITICAL: Show ONLY the characters visible in the starting image. Do NOT add new people. Do NOT change faces, hair or clothes. Keep every identity exactly as in the input image. Stable face, natural motion, no text, vertical 9:16.";
+        " CRITICAL: Show ONLY the characters visible in the starting image. Do NOT add new people. Do NOT change faces, hair or clothes. Keep every identity exactly as in the input image. " +
+    "ANIMATION STYLE: If the character is anthropomorphic (fruit, animal, food, object), use exaggerated cartoon animation with bouncy movements, squash and stretch, big expressive eyes, and lively gestures. " +
+    "Stable face, natural motion, no text, vertical 9:16.";
 }
 
 /* ============================================================
