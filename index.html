@@ -450,6 +450,7 @@ var tt = 0;
 function toast(m) { var t = document.getElementById("toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(function () { t.hidden = true; }, 3000); }
 function byId(arr, id) { return arr.filter(function (x) { return x.id === id; })[0]; }
 function sentence(t) { t = String(t || "").trim(); return t && !/[.!?]$/.test(t) ? t + "." : t; }
+function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function setPath(o, path, v) { var a = path.split("."), i; for (i = 0; i < a.length - 1; i++) o = o[a[i]]; o[a[a.length - 1]] = v; }
 
 /* ============================================================
@@ -1020,6 +1021,52 @@ var JSONNOTE = "\n\nRéponds uniquement avec un objet JSON valide, sans texte av
 /* ============================================================
    GÉNÉRATEURS DE CONTENU
    ============================================================ */
+  function genSurprise() {
+  var amb = P.ambs.map(function (id) { var a = byId(AMBS, id); return a ? a.nom : ""; }).filter(has);
+  var genres = ["Drame familial", "Thriller domestique", "Comédie de couple", "Mystère de quartier", "Romance contrariée", "Amitié trahie", "Secret de famille", "Humour absurde"];
+  var contexts = [
+    "un immeuble où tous les voisins se connaissent",
+    "un mariage qui tourne mal",
+    "un héritage inattendu",
+    "une laverie de quartier",
+    "un camping en été",
+    "une réunion de famille après 10 ans",
+    "un repas de Noël",
+    "une soirée entre amis qui dérape",
+    "un premier jour dans un nouveau travail",
+    "une colocation chaotique",
+    "un examen médical qui révèle tout",
+    "une lettre jamais ouverte",
+    "un retour au village natal",
+    "un match de foot qui change une vie"
+  ];
+  var seed = Math.random().toString(36).slice(2, 8);
+  var prompt = "Tu es scénariste professionnel de séries courtes verticales (TikTok/Shorts/Reels) en français.\n" +
+    "Ta mission : invente UNE histoire COMPLÈTE, ORIGINALE et COHÉRENTE, qui tiendra le spectateur du début à la fin.\n\n" +
+    "CONTRAINTES :\n" +
+    "- Genre : " + randomItem(genres) + "\n" +
+    (amb.length ? "- Ambiance : " + amb.join(", ") + "\n" : "") +
+    "- Contexte de départ (inspire-toi, ne copie pas tel quel) : " + randomItem(contexts) + "\n" +
+    "- Format : " + (P.nb === 1 ? "une vidéo" : P.nb + " épisodes") + " de " + P.duree + " secondes\n" +
+    "- Style visuel : " + (sty() ? sty().nom : "non précisé") + "\n" +
+    "- Graine d'unicité : " + seed + " (utilise-la pour rendre l'histoire différente à chaque fois)\n\n" +
+    "RÈGLES D'OR :\n" +
+    "1. Le titre doit être COURT (3 à 6 mots), accrocheur, poétique ou intrigant. Il doit donner envie de cliquer.\n" +
+    "2. L'histoire doit avoir : un personnage principal avec un objectif clair, un obstacle concret, un secret qui change tout, un retournement que personne ne voit venir.\n" +
+    "3. INTERDIT : amnésie, jumeau caché, « c'était un rêve », héritage caché cliché, vengeance basique, triangle amoureux banal.\n" +
+    "4. INSPIRE-TOI des codes TikTok (hook en 3s, cliffhanger, choix A/B) mais NE COPIE JAMAIS une histoire existante.\n" +
+    "5. La fin du premier épisode doit poser une question sans réponse pour forcer à regarder la suite.\n\n" +
+    "Réponds en JSON." + JSONNOTE +
+    '\nFormat : {"titre":"","idee":"3 à 5 phrases qui racontent toute l\'histoire, personnages inclus","ton":"1 mot","genre":"1 mot","cible":"public visé en 5 mots"}';
+  return ask("une histoire surprise", prompt, function (r) {
+    if (!r || !r.titre) throw new Error("vide");
+    P.titre = r.titre;
+    P.idee = Array.isArray(r.idee) ? r.idee.join(" ") : String(r.idee || "");
+    if (has(r.ton)) P.ton = r.ton;
+    if (has(r.genre)) P.genre = r.genre;
+    if (has(r.cible)) P.cible = r.cible;
+  });
+}
 function genUnivers() {
   var st = sty(), ph = phrase(), sk = skinPhrase();
   var fmt = P.nb === 1 ? "Une seule vidéo de " + P.duree + " secondes." : P.nb + " vidéos de " + P.duree + " secondes chacune.";
@@ -1083,16 +1130,52 @@ function scriptBody(ep) {
     (has(ep.note) ? "Idée de départ : " + ep.note.trim() + "\n" : "") +
     (ep.n > 1 && rec === "oui" ? "Résumé précédent : " + (recapFor(ep.n) || "non fourni") + "\n" : "") +
     (rec !== "oui" ? "Invente les personnages (4 max), description visuelle en anglais 40-60 mots terminée par : " + phrase() + "\n" : "") +
-    "\nDurée cible : " + P.duree + " s. Structure : " + structure + " Max 2 personnages par scène, une seule personne parle à la fois. " + DIALOGUE_RULES + "12 mots max par réplique. Une réplique toutes les 3 à 5 s." + JSONNOTE +
+    "\nDurée cible : " + P.duree + " s. Structure : " + structure + " Max 2 personnages par scène, une seule personne parle à la fois. " + DIALOGUE_RULES +
+    "RYTHME OBLIGATOIRE : " +
+    "- Une réplique TOUTES LES 2 À 3 SECONDES (pas 5 !). Si la vidéo dure " + P.duree + " s, prévois environ " + Math.round(P.duree / 2.5) + " répliques au total. " +
+    "- Répliques COURTES : 5 à 10 mots maximum (2 à 3 mots par seconde à l'oral). " +
+    "- Chaque réplique doit avoir une indication de TON entre parenthèses au début : (fâchée), (chuchote), (rire nerveux), (froide), (paniquée), (sarcastique), etc. " +
+    "- Alterner les tons d'une réplique à l'autre pour créer du rythme (une calme, une tendue, une drôle, une froide). " +
+    "- Pas de silence long : chaque seconde de silence doit être justifiée par une action visuelle forte. " +
+    "FORMAT DU SCRIPT : une ligne par réplique, comme ceci :\n" +
+    "[00:03] Mango (sarcastique) : C'est ça, ton grand secret ?\n" +
+    "[00:05] Aïcha (froide) : Tais-toi. Elle arrive.\n" +
+    "[00:08] Mango (chuchote) : On en reparle.\n" +
+    "[00:11] (silence) — plan large sur la porte qui s'ouvre\n" + JSONNOTE +
     '\nFormat : {"titre":"","resume":"3 phrases","question_fin":"' + (isLast(ep) ? "chute" : "") + '","script":"' + (P.rec !== "oui" ? '","personnages":[{"nom":"","role":"","visuel":""}' : '') + '"}';
 }
 function applyScript(ep, r) {
   if (!r || !r.script) throw new Error("vide");
   ep = epBy(ep.n) || ep;
   ep.titre = r.titre || ep.titre;
-  ep.resume = r.resume || "";
-  ep.fin = r.question_fin || "";
-  ep.script = r.script;
+  ep.resume = Array.isArray(r.resume) ? r.resume.join(" ") : String(r.resume || "");
+  ep.fin = Array.isArray(r.question_fin) ? r.question_fin.join(" ") : String(r.question_fin || "");
+
+  /* Agnes peut retourner script en string OU en tableau d'objets */
+  if (Array.isArray(r.script)) {
+    ep.script = r.script.map(function (line) {
+      if (typeof line === "string") return line;
+      if (line && typeof line === "object") {
+        var t = line.temps || line.time || line.t || "";
+        var p = line.personnage || line.qui || line.character || line.perso || "";
+        var txt = line.texte || line.replique || line.text || line.dialogue || "";
+        var ton = line.ton || line.tone || line.emotion || "";
+        var parts = [];
+        if (t) parts.push("[" + t + "]");
+        if (p) parts.push(p);
+        if (ton) parts.push("(" + ton + ")");
+        var lineStr = parts.join(" ");
+        if (lineStr) lineStr += " : ";
+        return lineStr + txt;
+      }
+      return String(line);
+    }).join("\n");
+  } else if (r.script && typeof r.script === "object") {
+    ep.script = JSON.stringify(r.script, null, 2);
+  } else {
+    ep.script = String(r.script || "");
+  }
+
   if (P.rec !== "oui") ep.cast = (r.personnages || []).map(function (p) {
     return { id: uid(), nom: p.nom || "", role: p.role || "", visuel: p.visuel || "", ok: false };
   });
@@ -1307,7 +1390,10 @@ function ideesHtml() {
     return '<button type="button" class="chip small" data-act="amb" data-v="' + a.id + '" aria-pressed="' + (P.ambs.indexOf(a.id) >= 0) + '">' + esc(a.nom) + '</button>';
   }).join("") + '</div>' +
     '<p class="small muted" style="margin-top:10px">Rends-toi dans l\'onglet Univers pour écrire ton idée et générer le concept, le casting et l\'univers complet.</p>' +
-    '<button type="button" class="btn big" data-act="tab" data-v="univers" style="margin-top:8px">Aller à l\'Univers ›</button></section>';
+    '<div class="rowbtns" style="margin-top:8px">' +
+    '<button type="button" class="btn big" data-act="surprise">🎲 Surprends-moi (titre + histoire)</button>' +
+    '<button type="button" class="btn ghost big" data-act="tab" data-v="univers">Aller à l\'Univers ›</button>' +
+    '</div></section>';
   return h;
 }
 
@@ -1345,10 +1431,12 @@ function universHtml() {
 
   /* 3. Styles (dropdown + chips) */
   h += '<section class="glass card"><h2>3. Mon look</h2><div class="fld"><span class="q">Styles visuels (max ' + MAX_STYLES + ')<span class="q-hint">Le style est appliqué à toutes les images et vidéos de la série.</span></span>' +
-    '<select id="style-add" data-act="styles-add" style="margin-top:8px;margin-bottom:8px"><option value="">+ Ajouter un style…</option>' +
+    '<input type="search" id="style-search" placeholder="🔍 Rechercher un style…" style="margin-top:8px;margin-bottom:8px">' +
+    '<select id="style-add" data-act="styles-add" style="margin-bottom:8px"><option value="">+ Ajouter un style…</option>' +
     GROUPS.map(function (g, gi) {
-      return '<optgroup label="' + esc(g) + '">' + STYLES.filter(function (s) { return s.g === gi; }).map(function (s) {
-        return '<option value="' + s.id + '">' + (s.emoji ? s.emoji + ' ' : '') + esc(s.nom) + '</option>';
+        return '<optgroup label="' + esc(g) + '">' + STYLES.filter(function (s) { return s.g === gi; }).map(function (s) {
+        var deprecated = ["S31", "S11", "S09"].indexOf(s.id) >= 0;
+        return '<option value="' + s.id + '"' + (deprecated ? ' style="color:#999;text-decoration:line-through"' : '') + '>' + (s.emoji ? s.emoji + ' ' : '') + esc(s.nom) + (deprecated ? ' (obsolète)' : '') + '</option>';
       }).join("") + '</optgroup>';
     }).join("") +
     '</select>' +
@@ -1672,6 +1760,7 @@ document.addEventListener("click", function (e) {
     save(); render();
   }
   else if (a === "amb") { var ai = P.ambs.indexOf(v); if (ai >= 0) P.ambs.splice(ai, 1); else P.ambs.push(v); save(); render(); }
+  else if (a === "surprise") { genSurprise(); }
   else if (a === "agnes-save") { saveAgnesKey(); }
   else if (a === "style-remove") {
     if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
@@ -1790,6 +1879,21 @@ document.addEventListener("click", function (e) {
    ============================================================ */
 document.addEventListener("input", function (e) {
   var el = e.target;
+    if (el.id === "style-search") {
+    var q = String(el.value || "").toLowerCase().trim();
+    var sel = document.getElementById("style-add");
+    if (!sel) return;
+    Array.prototype.forEach.call(sel.querySelectorAll("optgroup"), function (grp) {
+      var visible = 0;
+      Array.prototype.forEach.call(grp.querySelectorAll("option"), function (opt) {
+        var match = !q || opt.textContent.toLowerCase().indexOf(q) >= 0;
+        opt.style.display = match ? "" : "none";
+        if (match) visible++;
+      });
+      grp.style.display = visible ? "" : "none";
+    });
+    return;
+  }
   if (el.hasAttribute("data-path")) {
     setPath(P, el.getAttribute("data-path"), el.value);
     save();
