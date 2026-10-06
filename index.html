@@ -1090,10 +1090,33 @@ function ask(label, prompt, apply) {
   return p;
 }
 function extractJson(t) {
-  var s = String(t || "");
+  var s = String(t || "").trim();
+  /* Enlève les balises markdown ```json ... ``` */
+  s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
   var a = s.indexOf("{"), b = s.lastIndexOf("}");
   if (a < 0 || b < a) throw new Error("no json");
-  return JSON.parse(s.slice(a, b + 1));
+  var raw = s.slice(a, b + 1);
+  /* Essai 1 : parse direct */
+  try { return JSON.parse(raw); } catch (e1) {}
+  /* Essai 2 : corrige les \n non échappés */
+  try { return JSON.parse(raw.replace(/(?<!\\)\n/g, "\\n")); } catch (e2) {}
+  /* Essai 3 : répare les guillemets mal échappés dans les valeurs string */
+  try {
+    var fixed = raw.replace(/:(\s*)"((?:[^"\\]|\\.)*?)"/g, function (m, sp, inner) {
+      return ":" + sp + '"' + inner.replace(/\n/g, "\\n").replace(/\r/g, "").replace(/(?<!\\)"/g, '\\"') + '"';
+    });
+    return JSON.parse(fixed);
+  } catch (e3) {}
+  /* Essai 4 : transforme le script en array si c'est une string avec des sauts de ligne */
+  try {
+    var m = raw.match(/"script"\s*:\s*"([\s\S]*?)"\s*[,}]/);
+    if (m) {
+      var scriptLines = m[1].split(/\\n|\n/).map(function (l) { return l.replace(/\\"/g, '"').replace(/"/g, '\\"'); });
+      var newRaw = raw.replace(m[0], '"script":["' + scriptLines.join('","') + '"]');
+      return JSON.parse(newRaw);
+    }
+  } catch (e4) {}
+  throw new Error("JSON invalide");
 }
 function overlay() {
   var o = document.getElementById("overlay");
@@ -1231,8 +1254,9 @@ function scriptBody(ep) {
     "[00:09] PLAN LARGE - (silence) — la porte s'ouvre lentement\n" +
     rehookEx +
     "\nLes indications de cadrage sont OBLIGATOIRES sur CHAQUE ligne. Si une ligne est le HOOK ou le RE-HOOK, ajoute [HOOK] ou [RE-HOOK] juste après le timestamp.\n" +
-    JSONNOTE +
-    '\nFormat : {"titre":"","resume":"3 phrases","question_fin":"' + (isLast(ep) ? "chute" : "") + '","script":"' + (P.rec !== "oui" ? '","personnages":[{"nom":"","role":"","visuel":""}' : '') + '"}';
+        JSONNOTE +
+    '\nIMPORTANT : le champ "script" doit être un TABLEAU de lignes (pas une seule string). Chaque ligne est un élément séparé, ce qui évite les problèmes de guillemets.' +
+    '\nFormat : {"titre":"","resume":"3 phrases","question_fin":"' + (isLast(ep) ? "chute" : "") + '","script":["[00:00] [HOOK] GROS PLAN - Mango (sarcastique) : C\'est ça, ton grand secret ?","[00:03] CHAMP/CONTRECHAMP - Aïcha (froide) : Tais-toi."]' + (P.rec !== "oui" ? ',"personnages":[{"nom":"","role":"","visuel":""}]' : '') + '}';
 }
 function genScript(ep) { return ask("le script de " + unit(ep.n), scriptBody(ep), function (r) { applyScript(ep, r); }); }
 
