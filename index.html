@@ -1073,8 +1073,10 @@ function ask(label, prompt, apply) {
   var p = new Promise(function (resolve, reject) {
     if (!getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); reject(new Error("no key")); return; }
     R.busy = { label: label, sub: R.chain ? R.chain.sub : "" }; overlay();
-    callAgnesText("", prompt).then(function (txt) {
+        callAgnesText("", prompt).then(function (txt) {
       R.busy = null; overlay();
+      /* DÉBOGAGE TEMPORAIRE : affiche la réponse brute d'Agnes */
+      console.log("🔴 RÉPONSE BRUTE AGNES :", txt);
       try {
         var data = extractJson(txt);
         apply(data); save(); render(); toast(label + " : terminé.");
