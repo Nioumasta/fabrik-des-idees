@@ -438,6 +438,13 @@ function fixEps() {
   if (!P.concepts) P.concepts = [];
   if (!P.effets) P.effets = [];
   if (!P.sous) P.sous = ["U1"];
+
+  /* Références d'images */
+  P.persos.forEach(function (p) { if (p.refUri === undefined) p.refUri = null; });
+  P.lieux.forEach(function (l) { if (l.refUri === undefined) l.refUri = null; });
+  P.eps.forEach(function (e) {
+    (e.cast || []).forEach(function (c) { if (c.refUri === undefined) c.refUri = null; });
+  });
 }
 
 /* ============================================================
@@ -870,6 +877,66 @@ async function planClearPhoto(i, j) {
   await planPhotoDelete(i, j);
   save(); render();
 }
+  async function refStore(kind, id, dataUri) {
+  if (typeof idbKeyval === "undefined") return;
+  try { await idbKeyval.set("ref-" + kind + "-" + id, dataUri); } catch (e) {}
+}
+async function refLoad(kind, id) {
+  if (typeof idbKeyval === "undefined") return null;
+  try { return await idbKeyval.get("ref-" + kind + "-" + id); } catch (e) { return null; }
+}
+async function refDelete(kind, id) {
+  if (typeof idbKeyval === "undefined") return;
+  try { await idbKeyval.del("ref-" + kind + "-" + id); } catch (e) {}
+}
+function findRefObj(kind, id) {
+  if (kind === "perso") {
+    var p = P.persos.filter(function (x) { return x.id === id; })[0];
+    if (p) return p;
+    for (var i = 0; i < P.eps.length; i++) {
+      var c = (P.eps[i].cast || []).filter(function (x) { return x.id === id; })[0];
+      if (c) return c;
+    }
+  } else if (kind === "lieu") {
+    return P.lieux.filter(function (x) { return x.id === id; })[0];
+  }
+  return null;
+}
+async function refUpload(kind, id, file) {
+  if (!file || !file.type.startsWith("image/")) { toast("Ce fichier n'est pas une image."); return; }
+  try {
+    var uri = await planFileToDataUri(file);
+    if (uri.length > 1500000) uri = await compressImage(uri, 1080, 0.85);
+    await refStore(kind, id, uri);
+    var obj = findRefObj(kind, id);
+    if (obj) { obj.refUri = uri; save(); render(); toast("Référence ajoutée."); }
+  } catch (e) { toast("Impossible de lire cette image."); }
+}
+async function refClear(kind, id) {
+  if (!confirm("Retirer cette image de référence ?")) return;
+  await refDelete(kind, id);
+  var obj = findRefObj(kind, id);
+  if (obj) { obj.refUri = null; save(); render(); }
+}
+async function refsRestoreAll() {
+  if (typeof idbKeyval === "undefined") return;
+  for (var i = 0; i < P.persos.length; i++) {
+    var u1 = await refLoad("perso", P.persos[i].id);
+    if (u1) P.persos[i].refUri = u1;
+  }
+  for (var j = 0; j < P.lieux.length; j++) {
+    var u2 = await refLoad("lieu", P.lieux[j].id);
+    if (u2) P.lieux[j].refUri = u2;
+  }
+  for (var k = 0; k < P.eps.length; k++) {
+    var cast = P.eps[k].cast || [];
+    for (var l = 0; l < cast.length; l++) {
+      var u3 = await refLoad("perso", cast[l].id);
+      if (u3) cast[l].refUri = u3;
+    }
+  }
+  if (R.tab === "refs" || R.tab === "eps") render();
+}
 
 /* ============================================================
    PLAN — GÉNÉRATION VIDÉO (multi-moteur)
@@ -940,6 +1007,17 @@ function imagePrompt(pl) {
   if (ph) parts.push(ph + ".");
   return parts.filter(Boolean).join(" ");
 }
+  function imagePromptWithCoherence(pl) {
+  var base = imagePrompt(pl);
+  var noms = String(pl.persos || "").split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
+  var note = "\n\n⚠️ COHÉRENCE OBLIGATOIRE: " +
+    "The characters must match EXACTLY the reference images provided (same face, same hair, same skin tone, same clothes). " +
+    "Do NOT invent new characters. " +
+    (noms.length ? "Only these characters may appear: " + noms.join(", ") + ". " : "") +
+    "Any character not listed must NOT appear in the image. " +
+    "Do not change the identity of any character shown.";
+  return base + note;
+}
 function videoPrompt(pl) {
   var who = String(pl.qui || "").trim();
   var spoke = NONE.indexOf(who.toLowerCase()) < 0;
@@ -956,11 +1034,11 @@ function videoPrompt(pl) {
   } else {
     rule = who + " talks animatedly, mouth opening and closing. Every other character keeps the mouth closed. AUDIO: silence.";
   }
-  return sentence(pl.pv) + " " +
+    return sentence(pl.pv) + " " +
     (has(pl.duree) ? "Clip length about " + pl.duree + " seconds. " : "") +
     (camPhrase() ? camPhrase() + " " : "") +
     rule +
-    " Keep the character exactly as in the image. Stable face, natural motion, no text, vertical 9:16.";
+    " CRITICAL: Show ONLY the characters visible in the starting image. Do NOT add new people. Do NOT change faces, hair or clothes. Keep every identity exactly as in the input image. Stable face, natural motion, no text, vertical 9:16.";
 }
 
 /* ============================================================
@@ -1509,6 +1587,14 @@ function refsHtml() {
   var h = '<header class="hero"><span class="kicker">Étape 3</span><h1>Références</h1><p class="muted">' + d + ' sur ' + all.length + ' faites.</p></header>';
   all.forEach(function (x, i) {
     h += '<section class="glass card"><div class="row" style="justify-content:space-between"><h2>' + esc(x.o.nom || "Sans nom") + '</h2><span class="badge' + (x.o.ok ? " done" : "") + '">' + (x.k === "lieu" ? "Lieu" : "Personnage") + '</span></div>' +
+            '<div class="stack"><b class="small">Image de référence (à joindre dans ChatGPT/Gemini)</b>' +
+        (x.o.refUri
+          ? '<div class="plan-thumb" style="max-width:200px"><img src="' + esc(x.o.refUri) + '" alt=""><div class="bar"><button type="button" class="btn ghost" data-act="ref-change" data-v="' + i + '">🔄 Changer</button><button type="button" class="btn ghost" data-act="ref-clear" data-v="' + i + '" style="color:var(--warn)">🗑️</button></div></div>'
+          : '<button type="button" class="plan-drop" data-act="ref-upload" data-v="' + i + '">📥 Télécharger l\'image de référence</button>' +
+            '<input type="file" class="ref-file-input" id="rf-in-' + i + '" accept="image/*" data-v="' + i + '" style="display:none">'
+        ) +
+        '<p class="small muted">Cette image garantit la cohérence du ' + (x.k === "lieu" ? "décor" : "visage") + ' dans tous les plans.</p>' +
+      '</div>' +
       '<div class="stack"><b class="small">Prompt (anglais)</b><pre class="fin" id="rf' + i + '">' + esc(refPrompt(x.k, x.o.visuel)) + '</pre><button type="button" class="btn ghost" data-act="copypre" data-v="rf' + i + '">📋 Copier le prompt</button></div>' +
       '<button type="button" class="chip" data-act="refok" data-v="' + i + '" aria-pressed="' + !!x.o.ok + '">' + (x.o.ok ? "✓ Référence faite" : "Marquer comme faite") + '</button>' +
       '<details class="glass acc"><summary><div><b>Modifier</b></div></summary><div class="in">' +
@@ -1626,9 +1712,15 @@ function epHtml(e) {
 
     pl.forEach(function (p, j) {
       var pre = "eps." + i + ".plans." + j + ".";
-      h += '<details class="glass acc"><summary><div class="shot-h"><b>Plan ' + esc(p.n) + (p.reserve ? " (réserve)" : "") + ' · ' + esc(p.duree) + ' s · ' + esc(p.lieu) + '</b><span>' + esc(p.action) + '</span></div><span class="badge' + (p.st === 2 ? " done" : "") + '">' + STAT[p.st] + '</span></summary><div class="in">' +
+            h += '<details class="glass acc"><summary><div class="shot-h"><b>Plan ' + esc(p.n) + (p.reserve ? " (réserve)" : "") + ' · ' + esc(p.duree) + ' s · ' + esc(p.lieu) + (p.cadrage ? " · " + esc(p.cadrage) : "") + '</b><span>' + esc(p.action) + '</span></div><span class="badge' + (p.st === 2 ? " done" : "") + '">' + STAT[p.st] + '</span></summary><div class="in">' +
         '<div class="chips">' + STAT.map(function (s, k) { return '<button type="button" class="chip small" data-act="shotst" data-i="' + i + '" data-j="' + j + '" data-v="' + k + '" aria-pressed="' + (p.st === k) + '">' + s + '</button>'; }).join("") + '</div>' +
-        '<div class="stack"><b class="small">Prompt image</b><pre class="fin" id="pi-' + i + '-' + j + '">' + esc(imagePrompt(p)) + '</pre><button type="button" class="btn big" data-act="copypre" data-v="pi-' + i + '-' + j + '">📋 Copier le prompt image</button></div>' +
+        planRefsHtml(p) +
+        '<div class="stack"><b class="small">Prompt image</b><pre class="fin" id="pi-' + i + '-' + j + '">' + esc(imagePrompt(p)) + '</pre>' +
+          '<div class="rowbtns">' +
+            '<button type="button" class="btn ghost" data-act="copypre" data-v="pi-' + i + '-' + j + '">📋 Copier simple</button>' +
+            '<button type="button" class="btn" data-act="copypre-coherent" data-i="' + i + '" data-j="' + j + '">📋 Copier + note cohérence</button>' +
+          '</div>' +
+        '</div>' +
         '<div class="stack"><b class="small">Photo du plan</b><div id="ph-' + i + '-' + j + '">' + planPhotoHtml(i, j, p) + '</div></div>' +
         '<div class="stack"><b class="small">Prompt vidéo</b><pre class="fin" id="pv-' + i + '-' + j + '">' + esc(videoPrompt(p)) + '</pre><button type="button" class="btn big" data-act="copypre" data-v="pv-' + i + '-' + j + '">📋 Copier le prompt vidéo</button></div>' +
         '<div class="stack"><b class="small">Vidéo (' + P.videoEngine + ')</b><div id="vv-' + i + '-' + j + '">' + planVideoHtml(i, j, p) + '</div></div>' +
@@ -1645,6 +1737,27 @@ function epHtml(e) {
     });
     h += '<button type="button" class="btn ghost big" data-act="genplans" data-v="' + e.n + '">Refaire le découpage</button>';
   }
+  function planRefsHtml(p) {
+  var noms = String(p.persos || "").split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
+  var thumbs = [];
+  noms.forEach(function (nom) {
+    var c = persoBy(nom);
+    if (!c) return;
+    if (c.refUri) {
+      thumbs.push('<div style="text-align:center"><img src="' + esc(c.refUri) + '" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:2px solid var(--accent-a)"><div class="small" style="font-size:.7rem;margin-top:2px">' + esc(c.nom) + '</div></div>');
+    } else {
+      thumbs.push('<div style="text-align:center"><div style="width:64px;height:64px;border-radius:12px;border:2px dashed var(--warn);display:grid;place-items:center;font-size:1.4rem;color:var(--warn)">?</div><div class="small" style="font-size:.7rem;margin-top:2px">' + esc(c.nom) + '</div></div>');
+    }
+  });
+  if (p.lieu) {
+    var l = findLieu(p.lieu);
+    if (l && l.refUri) {
+      thumbs.push('<div style="text-align:center"><img src="' + esc(l.refUri) + '" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:2px solid var(--accent-b)"><div class="small" style="font-size:.7rem;margin-top:2px">📍 ' + esc(l.nom) + '</div></div>');
+    }
+  }
+  if (!thumbs.length) return "";
+  return '<div class="stack"><b class="small">📎 Images à joindre au prompt image</b><div class="row" style="gap:10px;flex-wrap:wrap">' + thumbs.join("") + '</div><p class="small muted">Copie le prompt, puis joins ces images dans ChatGPT / Gemini.</p></div>';
+}
   h += '</section>';
 
   h += '<section class="glass card"><h2>3. Montage et publication</h2>' +
@@ -1764,6 +1877,16 @@ document.addEventListener("click", function (e) {
     if (inp) inp.click();
   }
   else if (a === "plan-photo-clear") { planClearPhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
+      else if (a === "ref-upload" || a === "ref-change") {
+    var rIn = document.getElementById("rf-in-" + v);
+    if (rIn) rIn.click();
+  }
+  else if (a === "ref-clear") { var r = R.refs[+v]; if (r) refClear(r.k, r.o.id); }
+  else if (a === "copypre-coherent") {
+    var ci = +b.getAttribute("data-i"), cj = +b.getAttribute("data-j");
+    var cpl = P.eps[ci] && P.eps[ci].plans[cj];
+    if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + note cohérence copiés. Joins les images de référence.");
+  }
   else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "genseason") { genSeason(); }
   else if (a === "genall") {
@@ -1920,6 +2043,12 @@ document.addEventListener("change", function (e) {
     planUploadPhoto(+e.target.getAttribute("data-i"), +e.target.getAttribute("data-j"), e.target.files[0]);
     e.target.value = "";
   }
+    else if (e.target.classList && e.target.classList.contains("ref-file-input")) {
+    var rv = +e.target.getAttribute("data-v");
+    var ro = R.refs[rv];
+    if (ro) refUpload(ro.k, ro.o.id, e.target.files[0]);
+    e.target.value = "";
+  }
 });
 
 /* ============================================================
@@ -1935,6 +2064,6 @@ document.querySelectorAll(".dock button").forEach(function (b) {
 load();
 render();
 setTimeout(planPhotosRestore, 800);
-if (memOnly) setTimeout(function () { toast("Ce navigateur ne garde pas tes données."); }, 600);
+setTimeout(refsRestoreAll, 900);
 </script>
 </body></html>
