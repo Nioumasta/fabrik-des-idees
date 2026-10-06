@@ -1758,7 +1758,6 @@ function epHtml(e) {
     bind("eps." + i + ".titre", e.titre, 0, "Titre") +
     bind("eps." + i + ".note", e.note, 2, "Note pour cette vidéo") +
     '<button type="button" class="btn big" data-act="genscript" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>' + (has(e.script) ? "Réécrire le script" : "Écrire le script") + '</button>' +
-    (has(e.script)
           (has(e.script)
       ? '<div class="stack"><b class="small">📜 Aperçu en blocs</b>' + scriptBlocksHtml(e.script) + '</div>' +
         '<details class="stack"><summary class="small" style="cursor:pointer;padding:6px 0"><b>✏️ Modifier le script à la main</b></summary>' +
