@@ -226,6 +226,9 @@ function fixEps() {
       if (p.videoStatus === undefined) p.videoStatus = null;
       if (p.videoError === undefined) p.videoError = "";
       if (p.videoMsg === undefined) p.videoMsg = "";
+      if (p.photoStatus === undefined) p.photoStatus = null;
+      if (p.photoMsg === undefined) p.photoMsg = "";
+      if (p.photoError === undefined) p.photoError = "";
       if (!p.duree || isNaN(parseFloat(p.duree))) {
         var closest = DUREES_PLAN[1];
         p.duree = closest.v;
@@ -426,6 +429,29 @@ async function callAgnesText(system, user) {
   var content = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
   if (!content) throw new Error("Pas de contenu.");
   return content;
+}
+async function agnesCreateImage(prompt) {
+  var res = await agnesFetch(AGNES_API + "/images/generations", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + getAgnesKey(), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "agnes-image-2.1-flash",
+      prompt: prompt,
+      n: 1,
+      size: "1024x1792",
+      response_format: "url"
+    })
+  }, "Image");
+  if (!res.ok) {
+    var t = await res.text();
+    throw new Error("Image HTTP " + res.status + " : " + t.slice(0, 200));
+  }
+  var d = await res.json();
+  var item = d.data && d.data[0];
+  if (!item) throw new Error("Pas d'image dans la réponse.");
+  if (item.url) return item.url;
+  if (item.b64_json) return "data:image/png;base64," + item.b64_json;
+  throw new Error("Format image inconnu.");
 }
 
 async function agnesCreateVideoModel(prompt, imageDataUri, numFrames, model) {
@@ -712,6 +738,38 @@ async function refsRestoreAll() {
 /* ============================================================
    GÉNÉRATION VIDÉO PAR PLAN
    ============================================================ */
+
+async function planGeneratePhoto(i, j) {
+  var ep = P.eps[i], p = ep && ep.plans[j];
+  if (!p) return;
+  if (!getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); return; }
+
+  p.photoStatus = "busy";
+  p.photoMsg = "Agnes dessine…";
+  p.photoError = "";
+  save(); render();
+
+  try {
+    var prompt = imagePrompt(p);
+    p.photoMsg = "Génération (10 à 30 s)…"; save(); render();
+    var url = await agnesCreateImage(prompt);
+    p.photoUri = url;
+    p.photoStatus = "done";
+    p.photoMsg = "";
+    p.videoUrl = null;
+    p.videoStatus = null;
+    await planPhotoStore(i, j, url);
+    save(); render();
+    toast("Photo du plan " + p.n + " prête.");
+  } catch (e) {
+    p.photoStatus = "err";
+    p.photoError = (e.message || "Erreur").slice(0, 140);
+    p.photoMsg = "";
+    save(); render();
+    toast("Échec : " + p.photoError);
+  }
+}
+
 async function planGenerateVideo(i, j) {
   var ep = P.eps[i], p = ep && ep.plans[j];
   if (!p || !p.photoUri) return;
@@ -1560,9 +1618,14 @@ function planPhotoHtml(i, j, p) {
       '<div class="bar"><button type="button" class="btn ghost" data-act="plan-photo-change" data-i="' + i + '" data-j="' + j + '">🔄 Changer</button>' +
       '<button type="button" class="btn ghost" data-act="plan-photo-clear" data-i="' + i + '" data-j="' + j + '" style="color:var(--warn)">🗑️ Retirer</button></div></div>';
   }
-  return '<button type="button" class="plan-drop" data-act="plan-photo-upload" data-i="' + i + '" data-j="' + j + '">📥 Télécharger la photo du plan</button>' +
+  if (p.photoStatus === "busy") return '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(p.photoMsg || "Agnes dessine…") + '</div>';
+  if (p.photoStatus === "err") return '<div class="warnbox"><h3>Échec</h3><p class="small">' + esc(p.photoError || "") + '</p></div><button type="button" class="btn big" data-act="plan-photo-gen" data-i="' + i + '" data-j="' + j + '">🔁 Réessayer</button>';
+  var canGen = !!getAgnesKey();
+  return '<button type="button" class="btn big" data-act="plan-photo-gen" data-i="' + i + '" data-j="' + j + '"' + (canGen ? "" : " disabled") + '>🎨 Générer la photo avec Agnes</button>' +
+    '<p class="small muted" style="text-align:center;margin:8px 0">— ou —</p>' +
+    '<button type="button" class="plan-drop" data-act="plan-photo-upload" data-i="' + i + '" data-j="' + j + '">📥 Télécharger une photo (ChatGPT, Gemini…)</button>' +
     '<input type="file" class="plan-file-input" id="pf-' + i + '-' + j + '" accept="image/*" data-i="' + i + '" data-j="' + j + '" style="display:none">' +
-    '<p class="small muted">Colle ici la photo générée à partir du prompt image.</p>';
+    '<p class="small muted">' + (canGen ? "Agnes utilise le prompt image ci-dessus." : "Ajoute ta clé Agnes dans l'onglet Univers pour générer ici.") + '</p>';
 }
 function planVideoHtml(i, j, p) {
   if (!p.photoUri) return '<p class="small muted">Dépose d\'abord une photo.</p>';
@@ -1805,6 +1868,7 @@ document.addEventListener("click", function (e) {
     var cpl = P.eps[ci] && P.eps[ci].plans[cj];
     if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + note cohérence copiés. Joins les images de référence.");
   }
+   else if (a === "plan-photo-gen") { planGeneratePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "genseason") { genSeason(); }
   else if (a === "genall") {
