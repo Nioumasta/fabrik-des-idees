@@ -249,10 +249,25 @@ function fixEps() {
   if (!P.concepts) P.concepts = [];
   if (!P.effets) P.effets = [];
   if (!P.sous) P.sous = ["U1"];
-  P.persos.forEach(function (p) { if (p.refUri === undefined) p.refUri = null; });
-  P.lieux.forEach(function (l) { if (l.refUri === undefined) l.refUri = null; });
+    P.persos.forEach(function (p) {
+    if (p.refUri === undefined) p.refUri = null;
+    if (p.refStatus === undefined) p.refStatus = null;
+    if (p.refMsg === undefined) p.refMsg = "";
+    if (p.refError === undefined) p.refError = "";
+  });
+  P.lieux.forEach(function (l) {
+    if (l.refUri === undefined) l.refUri = null;
+    if (l.refStatus === undefined) l.refStatus = null;
+    if (l.refMsg === undefined) l.refMsg = "";
+    if (l.refError === undefined) l.refError = "";
+  });
   P.eps.forEach(function (e) {
-    (e.cast || []).forEach(function (c) { if (c.refUri === undefined) c.refUri = null; });
+    (e.cast || []).forEach(function (c) {
+      if (c.refUri === undefined) c.refUri = null;
+      if (c.refStatus === undefined) c.refStatus = null;
+      if (c.refMsg === undefined) c.refMsg = "";
+      if (c.refError === undefined) c.refError = "";
+    });
   });
 }
 
@@ -698,6 +713,33 @@ function findRefObj(kind, id) {
     return P.lieux.filter(function (x) { return x.id === id; })[0];
   }
   return null;
+}
+async function refGenerate(kind, id) {
+  var obj = findRefObj(kind, id);
+  if (!obj) { toast("Référence introuvable."); return; }
+  if (!getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); return; }
+
+  var prompt = refPrompt(kind, obj.visuel);
+  obj.refStatus = "busy";
+  obj.refMsg = "Agnes dessine…";
+  obj.refError = "";
+  save(); render();
+
+  try {
+    var url = await agnesCreateImage(prompt);
+    obj.refUri = url;
+    obj.refStatus = "done";
+    obj.refMsg = "";
+    await refStore(kind, id, url);
+    save(); render();
+    toast("Image de référence prête : " + (obj.nom || "sans nom"));
+  } catch (e) {
+    obj.refStatus = "err";
+    obj.refError = (e.message || "Erreur").slice(0, 140);
+    obj.refMsg = "";
+    save(); render();
+    toast("Échec : " + obj.refError);
+  }
 }
 async function refUpload(kind, id, file) {
   if (!file || !file.type.startsWith("image/")) { toast("Ce fichier n'est pas une image."); return; }
@@ -1561,19 +1603,43 @@ function refsHtml() {
   if (!all.length) return '<section class="glass empty"><h2>Pas encore de références</h2><p class="muted">Génère ton univers pour obtenir les prompts.</p><button type="button" class="btn" data-act="tab" data-v="univers">Aller à Univers</button></section>';
   var d = all.filter(function (x) { return x.o.ok; }).length;
   var h = '<header class="hero"><span class="kicker">Étape 3</span><h1>Références</h1><p class="muted">' + d + ' sur ' + all.length + ' faites.</p></header>';
-  all.forEach(function (x, i) {
-    h += '<section class="glass card"><div class="row" style="justify-content:space-between"><h2>' + esc(x.o.nom || "Sans nom") + '</h2><span class="badge' + (x.o.ok ? " done" : "") + '">' + (x.k === "lieu" ? "Lieu" : "Personnage") + '</span></div>' +
-      '<div class="stack"><b class="small">Image de référence (à joindre dans ChatGPT/Gemini)</b>' +
-      (x.o.refUri
-        ? '<div class="plan-thumb" style="max-width:200px"><img src="' + esc(x.o.refUri) + '" alt=""><div class="bar"><button type="button" class="btn ghost" data-act="ref-change" data-v="' + i + '">🔄 Changer</button><button type="button" class="btn ghost" data-act="ref-clear" data-v="' + i + '" style="color:var(--warn)">🗑️</button></div></div>'
-        : '<button type="button" class="plan-drop" data-act="ref-upload" data-v="' + i + '">📥 Télécharger l\'image de référence</button>'
-      ) +
-      '<input type="file" class="ref-file-input" id="rf-in-' + i + '" accept="image/*" data-v="' + i + '" style="display:none">' +
-      '<p class="small muted">Cette image garantit la cohérence du ' + (x.k === "lieu" ? "décor" : "visage") + ' dans tous les plans.</p>' +
-      '</div>' +
-      '<div class="stack"><b class="small">Prompt (anglais)</b><pre class="fin" id="rf' + i + '">' + esc(refPrompt(x.k, x.o.visuel)) + '</pre><button type="button" class="btn ghost" data-act="copypre" data-v="rf' + i + '">📋 Copier le prompt</button></div>' +
-      '<button type="button" class="chip" data-act="refok" data-v="' + i + '" aria-pressed="' + !!x.o.ok + '">' + (x.o.ok ? "✓ Référence faite" : "Marquer comme faite") + '</button>' +
-      '<details class="glass acc"><summary><div><b>Modifier</b></div></summary><div class="in">' +
+    all.forEach(function (x, i) {
+    var canGen = !!getAgnesKey();
+    var alreadyHas = !!x.o.refUri;
+    h += '<section class="glass card"><div class="row" style="justify-content:space-between"><h2>' + esc(x.o.nom || "Sans nom") + '</h2><span class="badge' + (x.o.ok ? " done" : "") + '">' + (x.k === "lieu" ? "Lieu" : "Personnage") + '</span></div>';
+
+    // Zone image de référence
+    h += '<div class="stack"><b class="small">Image de référence</b>';
+
+    if (alreadyHas) {
+      h += '<div class="plan-thumb" style="max-width:200px"><img src="' + esc(x.o.refUri) + '" alt="">' +
+        '<div class="bar">' +
+        '<button type="button" class="btn ghost" data-act="ref-regen-agnes" data-v="' + i + '">🎨 Régénérer avec Agnes</button>' +
+        '<button type="button" class="btn ghost" data-act="ref-change" data-v="' + i + '">🔄 Remplacer</button>' +
+        '<button type="button" class="btn ghost" data-act="ref-clear" data-v="' + i + '" style="color:var(--warn)">🗑️</button></div></div>';
+    } else if (x.o.refStatus === "busy") {
+      h += '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(x.o.refMsg || "Agnes dessine…") + '</div>';
+    } else if (x.o.refStatus === "err") {
+      h += '<div class="warnbox"><h3>Échec</h3><p class="small">' + esc(x.o.refError || "") + '</p></div>' +
+        '<button type="button" class="btn big" data-act="ref-regen-agnes" data-v="' + i + '">🔁 Réessayer avec Agnes</button>';
+    } else {
+      h += '<button type="button" class="btn big" data-act="ref-regen-agnes" data-v="' + i + '"' + (canGen ? "" : " disabled") + '>🎨 Générer avec Agnes</button>' +
+        '<p class="small muted" style="text-align:center;margin:8px 0">— ou —</p>' +
+        '<button type="button" class="plan-drop" data-act="ref-upload" data-v="' + i + '">📥 Télécharger une image (ChatGPT, Gemini…)</button>' +
+        '<p class="small muted">' + (canGen ? "Agnes utilise le prompt ci-dessous." : "Ajoute ta clé Agnes dans l'onglet Univers pour générer ici.") + '</p>';
+    }
+
+    h += '<input type="file" class="ref-file-input" id="rf-in-' + i + '" accept="image/*" data-v="' + i + '" style="display:none">';
+    h += '<p class="small muted">Cette image garantit la cohérence du ' + (x.k === "lieu" ? "décor" : "visage") + ' dans tous les plans.</p></div>';
+
+    // Prompt
+    h += '<div class="stack"><b class="small">Prompt (anglais)</b><pre class="fin" id="rf' + i + '">' + esc(refPrompt(x.k, x.o.visuel)) + '</pre><button type="button" class="btn ghost" data-act="copypre" data-v="rf' + i + '">📋 Copier le prompt</button></div>';
+
+    // Bouton "faite"
+    h += '<button type="button" class="chip" data-act="refok" data-v="' + i + '" aria-pressed="' + !!x.o.ok + '">' + (x.o.ok ? "✓ Référence faite" : "Marquer comme faite") + '</button>';
+
+    // Modifier
+    h += '<details class="glass acc"><summary><div><b>Modifier</b></div></summary><div class="in">' +
       bind(x.path + ".nom", x.o.nom, 0, "Nom") +
       bind(x.path + ".visuel", x.o.visuel, 6, "Description visuelle (anglais)") +
       '</div></details></section>';
@@ -1858,6 +1924,10 @@ document.addEventListener("click", function (e) {
     if (inp) inp.click();
   }
   else if (a === "plan-photo-clear") { planClearPhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
+   else if (a === "ref-regen-agnes") {
+    var rr = R.refs[+v];
+    if (rr) refGenerate(rr.k, rr.o.id);
+  }
   else if (a === "ref-upload" || a === "ref-change") {
     var rIn = document.getElementById("rf-in-" + v);
     if (rIn) rIn.click();
