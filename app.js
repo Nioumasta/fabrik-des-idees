@@ -1119,13 +1119,14 @@ function scriptBody(ep) {
     (has(ep.note) ? "Starting note (in French): " + ep.note.trim() + "\n" : "") +
     (ep.n > 1 && rec === "oui" ? "Previous recap (in French): " + (recapFor(ep.n) || "non fourni") + "\n" : "") +
     (rec !== "oui" ? "Invent characters (4 max), visual description IN ENGLISH 40-60 words ending with: " + phrase() + "\n" : "") +
-    "\nTarget duration: " + P.duree + " s. Structure: " + structure + " Max 2 characters per scene, only one person speaks at a time. " + DIALOGUE_RULES + "\n" +
+        "\nTarget duration: " + P.duree + " s. Structure: " + structure + " Max 2 characters per scene, only one person speaks at a time. " + DIALOGUE_RULES + "\n" +
+    "⚠️ HARD CONSTRAINT: The story must fit in " + P.duree + " seconds. Count your lines BEFORE answering. If you write " + Math.floor(P.duree / 3) + " lines at 3s each, you get " + (Math.floor(P.duree / 3) * 3) + "s. Do not write more. A line of 5 words takes 3s, not 1s.\n" +
     "MANDATORY TIKTOK RULES (for maximum virality):\n" +
     "1. 3-SECOND HOOK: The very first line or action must create surprise, tension or an immediate question. Tag this line with [HOOK] at the start.\n" +
     "2. VISUAL CHANGE EVERY 2 TO 3 SECONDS: Each line must have a shot type DIFFERENT from the previous one. Use ENGLISH shot names: CLOSE-UP, MEDIUM SHOT, WIDE SHOT, OVER-THE-SHOULDER, HANDHELD, ORBIT, TIGHT SHOT, HIGH ANGLE, LOW ANGLE, etc.\n" +
     rehook +
     "4. ENDING: " + (last ? "Clean, memorable ending that closes the story." : "End on a cliffhanger or an unanswered question.") + "\n" +
-    "5. RHYTHM: " + Math.round(P.duree / 2.5) + " minimum lines total (one every 2 to 3 seconds). SHORT lines: 5 to 10 words maximum.\n" +
+        "5. RHYTHM — ABSOLUTE MAXIMUM: " + Math.floor(P.duree / 3) + " lines of dialogue TOTAL (that is one line every ~3 seconds). Do NOT exceed this count. The last timestamp MUST be BEFORE " + Math.floor(P.duree - 5) + "s. SHORT lines: 5 to 12 words maximum. Each line = ~3 seconds of screen time.\n" +
     "6. TONE: Each line starts with a tone tag in parentheses, IN ENGLISH: (angry), (whispers), (nervous laugh), (cold), (panicked), (sarcastic), etc. Alternate tones to create rhythm.\n" +
     "\nSCRIPT FORMAT (one line per dialogue, follow EXACTLY this format):\n" +
     "[00:00] [HOOK] CLOSE-UP - Mango (sarcastic): C'est ca, ton grand secret ?\n" +
@@ -1194,7 +1195,7 @@ function plansBody(ep, scriptText) {
     "You will need between " + minPlans + " and " + maxPlans + " shots + 2 spare shots. " +
     "For each shot: place IN FRENCH, 2 characters max, action IN ENGLISH (short, no accents, e.g. 'fast nervous hand gesture'), shot type IN ENGLISH (wide shot / medium shot / close-up), line IN FRENCH (12 words max), who speaks (name or 'personne'), emotion IN ENGLISH (panicked / cold / angry / scared / happy / surprised), pace IN ENGLISH (calm / fast / tense / shock). " +
     "prompt_image IN ENGLISH describes ONLY the scene (shot type, positions, action, light). Do NOT add appearance or style. prompt_video IN ENGLISH: movement only. " +
-    "Sum of durations for shots 1 to N (without spare shots) = " + P.duree + " seconds (tolerance +/-3 s). " + JSONNOTE +
+        "⚠️ HARD CONSTRAINT: sum of durations for shots 1 to N (without spare shots) MUST equal " + P.duree + " seconds exactly (tolerance +/-3 s). If you exceed, remove shots. " + JSONNOTE +
     '\nFormat: {"plans":[{"n":1,"duree_s":6,"lieu":"in French","personnages":["name"],"action":"in English","cadrage":"medium shot","replique":"in French","qui_parle":"name","emotion":"panicked","rythme":"tense","prompt_image":"in English","prompt_video":"in English","reserve":false}]}';
 }
 function applyPlans(ep, r) {
