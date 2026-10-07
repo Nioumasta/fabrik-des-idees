@@ -815,6 +815,31 @@ async function planGeneratePhoto(i, j) {
       var l = findLieu(p.lieu);
       if (l && l.refUri) refImages.push(l.refUri);
     }
+     async function planGenerateAllPhotos(epNum) {
+  var ep = epBy(epNum);
+  if (!ep) return;
+  if (!getAgnesKey()) { toast("Ajoute ta clé Agnes."); return; }
+
+  var epIdx = P.eps.indexOf(ep);
+  var todo = [];
+  ep.plans.forEach(function (p, j) {
+    if (!p.reserve && !p.photoUri) todo.push({ idx: j, n: p.n });
+  });
+
+  if (!todo.length) { toast("Toutes les photos sont déjà faites."); return; }
+  if (!confirm("Générer " + todo.length + " photos avec Agnes ?\n\nÀ ~20 secondes par photo, compte environ " + Math.ceil(todo.length * 20 / 60) + " minutes. Garde l'écran ouvert.")) return;
+
+  var done = 0, failed = 0;
+  for (var k = 0; k < todo.length; k++) {
+    try {
+      toast("Photo " + (k+1) + "/" + todo.length + " en cours…", 1500);
+      await planGeneratePhoto(epIdx, todo[k].idx);
+      var p2 = P.eps[epIdx].plans[todo[k].idx];
+      if (p2.photoUri) done++; else failed++;
+    } catch (e) { failed++; }
+  }
+  toast("Terminé : " + done + " photo(s) OK, " + failed + " échec(s).", 4000);
+}
 
     p.photoMsg = "Génération (" + refImages.length + " réf.)…"; save(); render();
     var url = await agnesCreateImage(prompt, refImages);
@@ -1201,8 +1226,8 @@ function genScript(ep) { return ask("le script de " + unit(ep.n), scriptBody(ep)
    PLANS — champs techniques en anglais
    ============================================================ */
 function plansBody(ep, scriptText) {
-  var minPlans = Math.ceil(P.duree / 10);
-  var maxPlans = Math.ceil(P.duree / 3);
+    var minPlans = Math.floor(P.duree / 8);
+     var maxPlans = Math.floor(P.duree / 5);
   var durationsList = DUREES_PLAN.map(function (x) { return x.v + " s (" + x.frames + " frames)"; }).join(", ");
   return "Visual style: " + phrase() + "\n" + bible(ep) + "\n\nScript:\n" + scriptText + "\n\n" +
     "Break this script into shots. Total video must be " + P.duree + " seconds. " +
@@ -1850,7 +1875,8 @@ function epHtml(e) {
     var totalDur = main.reduce(function (t, p) { return t + (p.duree || 0); }, 0);
     h += '<div class="glass card"><b>' + cl + ' clips prêts · ' + ph + ' photos · ' + main.length + ' plans · ' + totalDur + ' s au total</b>' +
       '<div class="bar"><i style="width:' + Math.round(cl / main.length * 100) + '%"></i></div>' +
-      '<div class="rowbtns" style="margin-top:10px">' +
+            '<div class="rowbtns" style="margin-top:10px">' +
+      '<button type="button" class="btn" data-act="genallphotos" data-v="' + e.n + '"' + (getAgnesKey() ? "" : " disabled") + '>🎨 Générer toutes les photos</button>' +
       '<button type="button" class="btn ghost" data-act="copyimgs" data-v="' + e.n + '">📋 Copier tous les prompts image</button>' +
       '<button type="button" class="btn ghost" data-act="copyvids" data-v="' + e.n + '">📋 Copier tous les prompts vidéo</button>' +
       '</div></div>';
@@ -2026,6 +2052,7 @@ document.addEventListener("click", function (e) {
     var cpl = P.eps[ci] && P.eps[ci].plans[cj];
     if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + note cohérence copiés. Joins les images de référence.");
   }
+   else if (a === "genallphotos") { planGenerateAllPhotos(+v); }
    else if (a === "plan-photo-gen") { planGeneratePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "genseason") { genSeason(); }
