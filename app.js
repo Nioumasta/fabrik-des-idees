@@ -446,20 +446,29 @@ async function callAgnesText(system, user) {
   if (!content) throw new Error("Pas de contenu.");
   return content;
 }
-async function agnesCreateImage(prompt) {
+async function agnesCreateImage(prompt, refImages) {
+  var body = {
+    model: "agnes-image-2.1-flash",
+    prompt: prompt,
+    n: 1,
+    size: "1024x1792",
+    response_format: "url"
+  };
+
+  // Si on a des images de référence, on les envoie pour la composition multi-images
+  if (refImages && refImages.length) {
+    body.image = refImages.length === 1 ? refImages[0] : refImages;
+    console.log("[IMAGE] Composition avec " + refImages.length + " image(s) de référence");
+  }
+
   var res = await agnesFetch(AGNES_API + "/images/generations", {
     method: "POST",
     headers: { "Authorization": "Bearer " + getAgnesKey(), "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "agnes-image-2.1-flash",
-      prompt: prompt,
-      n: 1,
-      size: "1024x1792",
-      response_format: "url"
-    })
+    body: JSON.stringify(body)
   }, "Image");
   if (!res.ok) {
     var t = await res.text();
+    console.error("[IMAGE ERROR]", t.slice(0, 300));
     throw new Error("Image HTTP " + res.status + " : " + t.slice(0, 200));
   }
   var d = await res.json();
@@ -794,8 +803,21 @@ async function planGeneratePhoto(i, j) {
 
   try {
     var prompt = imagePrompt(p);
-    p.photoMsg = "Génération (10 à 30 s)…"; save(); render();
-    var url = await agnesCreateImage(prompt);
+
+    // Rassemble les images de référence : personnages + lieu
+    var refImages = [];
+    var noms = String(p.persos || "").split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
+    noms.forEach(function (nom) {
+      var c = persoBy(nom);
+      if (c && c.refUri) refImages.push(c.refUri);
+    });
+    if (p.lieu) {
+      var l = findLieu(p.lieu);
+      if (l && l.refUri) refImages.push(l.refUri);
+    }
+
+    p.photoMsg = "Génération (" + refImages.length + " réf.)…"; save(); render();
+    var url = await agnesCreateImage(prompt, refImages);
     p.photoUri = url;
     p.photoStatus = "done";
     p.photoMsg = "";
@@ -803,7 +825,7 @@ async function planGeneratePhoto(i, j) {
     p.videoStatus = null;
     await planPhotoStore(i, j, url);
     save(); render();
-    toast("Photo du plan " + p.n + " prête.");
+    toast("Photo du plan " + p.n + " prête (" + refImages.length + " réf.)");
   } catch (e) {
     p.photoStatus = "err";
     p.photoError = (e.message || "Erreur").slice(0, 140);
