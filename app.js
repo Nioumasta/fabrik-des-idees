@@ -425,8 +425,8 @@ async function agnesFetch(url, options, label) {
 }
 
 async function callAgnesText(system, user) {
+  console.log("[AGNES] Appel texte, prompt de " + (user || "").length + " caractères");
   var res = await agnesFetch(AGNES_API + "/chat/completions", {
-   console.log("[AGNES] Appel texte, prompt de " + (user || "").length + " caractères");
     method: "POST",
     headers: { "Authorization": "Bearer " + getAgnesKey(), "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -963,21 +963,23 @@ function ask(label, prompt, apply) {
   var p = new Promise(function (resolve, reject) {
     if (!getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); reject(new Error("no key")); return; }
     R.busy = { label: label, sub: R.chain ? R.chain.sub : "" }; overlay();
-   console.log("[ASK] " + label + " · prompt " + prompt.length + " car.");
+    console.log("[ASK] " + label + " · prompt " + prompt.length + " car.");
     callAgnesText("", prompt).then(function (txt) {
       R.busy = null; overlay();
       try {
         var data = extractJson(txt);
         apply(data); save(); render(); toast(label + " : terminé.");
+        console.log("[ASK] " + label + " · succès");
         resolve(data);
-            } catch (e) { console.error("[ASK] " + label + " · parse raté :", e, txt.slice(0, 500)); toast("Réponse illisible. Réessaie."); reject(e); }
-           }).then(function (r) {
-      console.log("[ASK] " + label + " · succès");
-      return r;
-        }).catch(function (e) {
+      } catch (e) {
+        console.error("[ASK] " + label + " · parse raté :", e, txt.slice(0, 500));
+        toast("Réponse illisible. Réessaie."); reject(e);
+      }
+    }).catch(function (e) {
       R.busy = null; overlay();
       console.error("[ASK] " + label + " · échec :", e);
       toast("Échec : " + (e.message || "").slice(0, 80));
+      reject(e);
     });
   });
   p.catch(function () {});
