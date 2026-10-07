@@ -1,15 +1,9 @@
 "use strict";
 /* ============================================================
    FABRIQUE DE SÉRIES · app.js
-   Text + Video -> Agnes (cloud)
-   Images -> copy-paste + manual upload
-   Videos -> Agnes v2.5 / WanGP (local) / LTX (cloud)
-   Editing -> FFmpeg.wasm
-   All Agnes instructions in ENGLISH. French output only for
-   end-user content (script, dialogues, titles, summaries).
+   Instructions à Agnes en ANGLAIS · Interface et contenu en FRANÇAIS
    ============================================================ */
 
-/* ---------- Agnes API ---------- */
 var AGNES_API = "https://apihub.agnes-ai.com/v1";
 var AGNES_POLL = "https://apihub.agnes-ai.com/agnesapi";
 var AGNES_TEXT_MODEL = "agnes-2.5-flash";
@@ -17,7 +11,6 @@ var AGNES_VIDEO_MODEL = "agnes-video-2.5";
 var AGNES_VIDEO_MODEL_FALLBACK = "agnes-video-v2.0";
 var AGNES_FPS = 24;
 
-/* ---------- Styles catalog ---------- */
 var STYLES = [];
 var GROUPS = [];
 var GMAP = {};
@@ -26,89 +19,82 @@ if (typeof STYLES_LIBRARY !== "undefined" && STYLES_LIBRARY) {
   Object.keys(STYLES_LIBRARY).forEach(function (cat) {
     GROUPS.push(cat);
     STYLES_LIBRARY[cat].forEach(function (s) {
-      STYLES.push({
-        id: s.id, nom: s.nom, emoji: s.emoji, phrase: s.phrase,
-        voit: "Style " + s.nom + ".",
-        ideal: "up to you.",
-        diff: "Medium",
-        g: _catIdx
-      });
+      STYLES.push({ id: s.id, nom: s.nom, emoji: s.emoji, phrase: s.phrase, voit: "Style " + s.nom + ".", ideal: "À toi de voir.", diff: "Moyenne", g: _catIdx });
       GMAP[s.id] = _catIdx;
     });
     _catIdx++;
   });
-  console.log("styles.js loaded: " + STYLES.length + " styles in " + GROUPS.length + " categories");
+  console.log("styles.js chargé : " + STYLES.length + " styles dans " + GROUPS.length + " catégories");
 } else {
-  console.warn("styles.js not loaded.");
+  console.warn("styles.js non chargé.");
 }
 
-/* ---------- Skin rendering ---------- */
 var SKINS = [
-  { id:"K1", nom:"Smooth stylized", d:"Soft animated film skin.", p:"smooth stylized skin with soft subsurface glow, no visible pores" },
-  { id:"K2", nom:"Realistic with pores", d:"Pores, fine fuzz.", p:"realistic skin with visible pores, fine natural texture, peach fuzz" },
-  { id:"K4", nom:"Glowing", d:"Highlights on cheekbones.", p:"dewy glossy skin with soft specular highlights on cheekbones, healthy glow" },
-  { id:"K6", nom:"Plastic doll", d:"Molded glossy skin.", p:"glossy molded plastic doll skin, flawless surface, strong soft highlights" },
-  { id:"K10", nom:"Fruit or vegetable", d:"Strawberry seeds, kiwi fuzz, lemon pores.", p:"skin with fruit texture (visible seeds, fuzz or dimples matching the fruit), natural fruit colors" },
-  { id:"K17", nom:"Glossy lacquered", d:"Varnish effect.", p:"lacquered high-gloss skin with circular specular highlights, clearcoat finish" },
-  { id:"K18", nom:"Latex or rubber", d:"Soft glossy surface.", p:"glossy latex rubber skin, soft squishy surface" },
-  { id:"K21", nom:"Plush", d:"Soft fur, stitches.", p:"plush fabric skin, soft faux fur, visible stitching" },
-  { id:"K22", nom:"Glazed ceramic", d:"Dishware shine.", p:"glazed ceramic skin, glossy enamel finish" },
-  { id:"K23", nom:"Anthropomorphic fruit", d:"Character SHAPED like a fruit, with face, arms and legs.", p:"anthropomorphic fruit or vegetable character in 3D cartoon Pixar style, the entire body IS the fruit (round shape, matching silhouette of the fruit or vegetable), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs with small hands and feet, stem and leaf on top of the head, glossy realistic fruit skin texture with natural colors and highlights, seeds or surface details matching the fruit type, no human body parts visible" },
-  { id:"K24", nom:"Anthropomorphic animal", d:"Cat, dog, rabbit standing like a human.", p:"anthropomorphic animal character in 3D cartoon Pixar style, standing upright like a human, human-like expressive face with big cartoon eyes on the animal head, thin cartoon arms and legs, wearing simple clothes, soft fur texture with natural animal colors and highlights, no human features on the body" },
-  { id:"K25", nom:"Anthropomorphic object", d:"Everyday object brought to life.", p:"anthropomorphic everyday object character in 3D cartoon Pixar style, the entire body IS the object (matching silhouette and shape), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs with small hands and feet, glossy realistic surface texture matching the object material, no human body parts visible" },
-  { id:"K26", nom:"Anthropomorphic food", d:"Living burger, pizza, donut.", p:"anthropomorphic food character in 3D cartoon Pixar style, the entire body IS the food item (matching silhouette), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs, glossy appetizing food texture with natural colors, steam or small details for realism, no human body parts visible" }
+  { id:"K1", nom:"Lisse stylisée", d:"Peau douce de film d'animation.", p:"smooth stylized skin with soft subsurface glow, no visible pores" },
+  { id:"K2", nom:"Réaliste avec pores", d:"Pores, petit duvet.", p:"realistic skin with visible pores, fine natural texture, peach fuzz" },
+  { id:"K4", nom:"Brillante, glow", d:"Reflets sur les pommettes.", p:"dewy glossy skin with soft specular highlights on cheekbones, healthy glow" },
+  { id:"K6", nom:"Poupée plastique", d:"Peau moulée, brillante.", p:"glossy molded plastic doll skin, flawless surface, strong soft highlights" },
+  { id:"K10", nom:"Fruit ou légume", d:"Graines de fraise, duvet de kiwi, pores de citron.", p:"skin with fruit texture (visible seeds, fuzz or dimples matching the fruit), natural fruit colors" },
+  { id:"K17", nom:"Laquée très brillante", d:"Effet vernis.", p:"lacquered high-gloss skin with circular specular highlights, clearcoat finish" },
+  { id:"K18", nom:"Latex ou caoutchouc", d:"Surface souple brillante.", p:"glossy latex rubber skin, soft squishy surface" },
+  { id:"K21", nom:"Peluche", d:"Fourrure douce, coutures.", p:"plush fabric skin, soft faux fur, visible stitching" },
+  { id:"K22", nom:"Céramique émaillée", d:"Brillant de vaisselle.", p:"glazed ceramic skin, glossy enamel finish" },
+  { id:"K23", nom:"Fruit anthropomorphe", d:"Personnage EN FORME de fruit, avec visage, bras et jambes.", p:"anthropomorphic fruit or vegetable character in 3D cartoon Pixar style, the entire body IS the fruit (round shape, matching silhouette of the fruit or vegetable), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs with small hands and feet, stem and leaf on top of the head, glossy realistic fruit skin texture with natural colors and highlights, seeds or surface details matching the fruit type, no human body parts visible" },
+  { id:"K24", nom:"Animal anthropomorphe", d:"Chat, chien, lapin debout comme un humain.", p:"anthropomorphic animal character in 3D cartoon Pixar style, standing upright like a human, human-like expressive face with big cartoon eyes on the animal head, thin cartoon arms and legs, wearing simple clothes, soft fur texture with natural animal colors and highlights, no human features on the body" },
+  { id:"K25", nom:"Objet anthropomorphe", d:"Un objet du quotidien qui prend vie.", p:"anthropomorphic everyday object character in 3D cartoon Pixar style, the entire body IS the object (matching silhouette and shape), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs with small hands and feet, glossy realistic surface texture matching the object material, no human body parts visible" },
+  { id:"K26", nom:"Nourriture anthropomorphe", d:"Burger, pizza, donut vivant.", p:"anthropomorphic food character in 3D cartoon Pixar style, the entire body IS the food item (matching silhouette), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs, glossy appetizing food texture with natural colors, steam or small details for realism, no human body parts visible" }
 ];
 
 var TEINTS = [
-  { id:"T1", nom:"Very fair", p:"very fair skin with a pink undertone" },
-  { id:"T2", nom:"Light beige", p:"light beige skin with a neutral undertone" },
-  { id:"T4", nom:"Golden tan", p:"golden tan skin" },
-  { id:"T6", nom:"Medium brown", p:"medium brown skin with a warm undertone" },
-  { id:"T7", nom:"Deep brown", p:"deep brown skin with a warm undertone" },
-  { id:"T8", nom:"Ebony", p:"deep ebony skin with a cool blue undertone" }
+  { id:"T1", nom:"Très clair", p:"very fair skin with a pink undertone" },
+  { id:"T2", nom:"Clair beige", p:"light beige skin with a neutral undertone" },
+  { id:"T4", nom:"Hâlé doré", p:"golden tan skin" },
+  { id:"T6", nom:"Brun moyen", p:"medium brown skin with a warm undertone" },
+  { id:"T7", nom:"Brun profond", p:"deep brown skin with a warm undertone" },
+  { id:"T8", nom:"Ébène", p:"deep ebony skin with a cool blue undertone" }
 ];
 
 var YEUX = [
-  { id:"Y1", nom:"Big round glossy eyes", p:"big round glossy expressive eyes" },
-  { id:"Y2", nom:"Half-lidded, bored", p:"half-lidded bored eyes, unimpressed look" },
-  { id:"Y4", nom:"Wide eyes (shock)", p:"cartoonishly wide white oval eyes when shocked" },
-  { id:"Y5", nom:"Almond-shaped with makeup", p:"almond-shaped eyes with bold winged eyeliner and long lashes" },
-  { id:"Y6", nom:"Sparkling smiling eyes", p:"sparkling crinkled smiling eyes" },
-  { id:"Y8", nom:"Very expressive eyebrows", p:"very expressive eyebrows, one eyebrow often raised" }
+  { id:"Y1", nom:"Grands yeux ronds brillants", p:"big round glossy expressive eyes" },
+  { id:"Y2", nom:"Paupières mi-closes, blasé", p:"half-lidded bored eyes, unimpressed look" },
+  { id:"Y4", nom:"Yeux écarquillés (choc)", p:"cartoonishly wide white oval eyes when shocked" },
+  { id:"Y5", nom:"Yeux en amande maquillés", p:"almond-shaped eyes with bold winged eyeliner and long lashes" },
+  { id:"Y6", nom:"Yeux pétillants et rieurs", p:"sparkling crinkled smiling eyes" },
+  { id:"Y8", nom:"Sourcils très expressifs", p:"very expressive eyebrows, one eyebrow often raised" }
 ];
 
 var EFFETS = [
-  { id:"E1", g:"Light", nom:"Golden hour", p:"warm golden hour light" },
-  { id:"E2", g:"Light", nom:"Soft window", p:"soft natural window light" },
-  { id:"E5", g:"Light", nom:"Purple and pink neons", p:"purple and pink neon lighting" },
-  { id:"E6", g:"Light", nom:"Magenta and orange", p:"dramatic magenta and orange split lighting" },
-  { id:"E8", g:"Light", nom:"Luxury evening", p:"luxury party lighting, chandeliers, golden bokeh" },
-  { id:"E11", g:"Image", nom:"Blurred background", p:"shallow depth of field, blurred background" },
-  { id:"E12", g:"Image", nom:"Film grain", p:"fine film grain" },
-  { id:"E16", g:"Image", nom:"Rain", p:"rain drops and wet reflections" },
-  { id:"E17", g:"Image", nom:"VHS effect", p:"retro VHS look, slight scan lines" },
-  { id:"E20", g:"Color", nom:"Soft pastel", p:"soft pastel color grade" },
-  { id:"E34", g:"Color", nom:"Teal and orange", p:"teal and orange color grade" },
-  { id:"E42", g:"Color", nom:"Deep black and white", p:"rich black and white" }
+  { id:"E1", g:"Lumière", nom:"Heure dorée", p:"warm golden hour light" },
+  { id:"E2", g:"Lumière", nom:"Fenêtre douce", p:"soft natural window light" },
+  { id:"E5", g:"Lumière", nom:"Néons violet et rose", p:"purple and pink neon lighting" },
+  { id:"E6", g:"Lumière", nom:"Deux couleurs magenta et orange", p:"dramatic magenta and orange split lighting" },
+  { id:"E8", g:"Lumière", nom:"Soirée luxe", p:"luxury party lighting, chandeliers, golden bokeh" },
+  { id:"E11", g:"Image", nom:"Arrière-plan flou", p:"shallow depth of field, blurred background" },
+  { id:"E12", g:"Image", nom:"Grain de pellicule", p:"fine film grain" },
+  { id:"E16", g:"Image", nom:"Pluie", p:"rain drops and wet reflections" },
+  { id:"E17", g:"Image", nom:"Effet VHS", p:"retro VHS look, slight scan lines" },
+  { id:"E20", g:"Couleur", nom:"Pastel doux", p:"soft pastel color grade" },
+  { id:"E34", g:"Couleur", nom:"Orange et bleu canard", p:"teal and orange color grade" },
+  { id:"E42", g:"Couleur", nom:"Noir et blanc profond", p:"rich black and white" }
 ];
 
 var CAMS = [
-  { id:"C1", nom:"Static camera", p:"Static locked camera." },
-  { id:"C2", nom:"Slow push in", p:"Slow push in toward the subject." },
-  { id:"C3", nom:"Handheld", p:"Subtle handheld camera movement." },
-  { id:"C6", nom:"Orbit around character", p:"Slow orbit around the character." },
-  { id:"C8", nom:"Extreme close-up face", p:"Extreme close-up on the face, eyes and mouth fill the frame." },
-  { id:"C11", nom:"Selfie at arm's length", p:"Handheld selfie shot, arm visible, slight shake." },
-  { id:"C13", nom:"Pull-out reveal", p:"Slow pull-out revealing the whole scene." },
-  { id:"C15", nom:"Crash zoom", p:"Sudden crash zoom on the face." },
-  { id:"C16", nom:"Dolly zoom", p:"Dolly zoom, the background stretches while the subject stays the same size." }
+  { id:"C1", nom:"Caméra fixe", p:"Static locked camera." },
+  { id:"C2", nom:"Travelling avant lent", p:"Slow push in toward the subject." },
+  { id:"C3", nom:"Caméra à l'épaule", p:"Subtle handheld camera movement." },
+  { id:"C6", nom:"Orbite autour du personnage", p:"Slow orbit around the character." },
+  { id:"C8", nom:"Très gros plan visage", p:"Extreme close-up on the face, eyes and mouth fill the frame." },
+  { id:"C11", nom:"Selfie à bout de bras", p:"Handheld selfie shot, arm visible, slight shake." },
+  { id:"C13", nom:"Recul qui révèle", p:"Slow pull-out revealing the whole scene." },
+  { id:"C15", nom:"Zoom coup de poing", p:"Sudden crash zoom on the face." },
+  { id:"C16", nom:"Effet vertige", p:"Dolly zoom, the background stretches while the subject stays the same size." }
 ];
 
 var SOUS = [
-  { id:"U1", g:"Captions", nom:"Word by word, big, white with black outline", p:"dialogue captions word by word, large bold white text with a thick black outline, centered in the lower third" },
-  { id:"U2", g:"Captions", nom:"Rounded grey box", p:"dialogue captions as full sentences in a rounded translucent grey box, white text, lower third" },
-  { id:"U4", g:"Decoration", nom:"POV sticker on top", p:"sticker style caption at the top of the screen starting with POV, kept for the first seconds" },
-  { id:"U5", g:"None", nom:"No captions", p:"no subtitles" }
+  { id:"U1", g:"Répliques", nom:"Mot par mot, gros, blanc avec contour noir", p:"dialogue captions word by word, large bold white text with a thick black outline, centered in the lower third" },
+  { id:"U2", g:"Répliques", nom:"Boîte grise arrondie", p:"dialogue captions as full sentences in a rounded translucent grey box, white text, lower third" },
+  { id:"U4", g:"Habillage", nom:"Autocollant POV en haut", p:"sticker style caption at the top of the screen starting with POV, kept for the first seconds" },
+  { id:"U5", g:"Aucun", nom:"Sans sous-titres", p:"no subtitles" }
 ];
 
 var DUREES_PLAN = [
@@ -131,21 +117,21 @@ var NBS = [1, 2, 3, 4, 5, 6, 8, 10];
 var MAX_STYLES = 3;
 
 var RECS = [
-  { id:"oui", t:"Yes, same characters every episode", d:"Fixed cast series." },
-  { id:"univers", t:"Same universe and style, characters change", d:"Different stories in the same place." },
-  { id:"non", t:"No, each video is independent", d:"One video, or several with no link." }
+  { id:"oui", t:"Oui, les mêmes personnages à chaque épisode", d:"Série avec casting fixe." },
+  { id:"univers", t:"Même univers et même style, personnages qui changent", d:"Histoires différentes dans un même lieu." },
+  { id:"non", t:"Non, chaque vidéo est indépendante", d:"Une vidéo, ou plusieurs sans lien." }
 ];
 
 var SPEECH = [
-  { id:"A", t:"A. Voice-over and captions", d:"Easiest, recommended for the first 3 episodes." },
-  { id:"B", t:"B. Video generator voice", d:"The generator (Agnes) makes the character speak." },
-  { id:"C", t:"C. Separate voice", d:"Silent clips, voice added later during editing." }
+  { id:"A", t:"A. Voix off et sous-titres", d:"Le plus simple, conseillé pour les 3 premiers épisodes." },
+  { id:"B", t:"B. Voix du générateur vidéo", d:"Le générateur (Agnes) fait parler le personnage." },
+  { id:"C", t:"C. Voix séparée", d:"Clips muets, voix ajoutée après en montage." }
 ];
 
 var AMBS = [
-  { id: "drole", nom: "Funny" }, { id: "triste", nom: "Sad" }, { id: "peur", nom: "Scary" },
-  { id: "tendre", nom: "Tender" }, { id: "absurde", nom: "Absurd" }, { id: "suspense", nom: "Suspense" },
-  { id: "touchant", nom: "Touching" }, { id: "potins", nom: "Gossip and drama" }, { id: "mystere", nom: "Mysterious" }, { id: "romance", nom: "Romantic" }
+  { id: "drole", nom: "Drôle" }, { id: "triste", nom: "Triste" }, { id: "peur", nom: "Qui fait peur" },
+  { id: "tendre", nom: "Tendre" }, { id: "absurde", nom: "Absurde" }, { id: "suspense", nom: "Suspense" },
+  { id: "touchant", nom: "Touchant" }, { id: "potins", nom: "Trash et potins" }, { id: "mystere", nom: "Mystérieux" }, { id: "romance", nom: "Romantique" }
 ];
 
 var NONE = ["", "personne", "aucun", "aucune", "-", "nobody", "none", "sans voix", "n/a", "x"];
@@ -157,31 +143,18 @@ function fresh() {
   return {
     genre:"", castNote:"", ambs:[], vus:[], cible:"",
     veille:[], tendances:"", concepts:[], lecons:"", exSkip:false,
-    titre:"", idee:"",
-    style:[],
-    speech:"A",
-    nb:3,
-    rec:"oui",
-    duree:60,
-    dureePlan:6,
-    skin:"", teints:[], yeux:[],
-    effets:[], cam:"",
-    sous:["U1"], custom:"",
+    titre:"", idee:"", style:[], speech:"A", nb:3, rec:"oui",
+    duree:60, dureePlan:6, skin:"", teints:[], yeux:[],
+    effets:[], cam:"", sous:["U1"], custom:"",
     concept:"", regle:"", ton:"", arc:"",
     persos:[], lieux:[], eps:[],
-    videoEngine:"agnes",
-    wangpUrl:"http://192.168.1.100:7860",
-    ltxApiKey:"",
-    uid:1
+    videoEngine:"agnes", wangpUrl:"http://192.168.1.100:7860", ltxApiKey:"", uid:1
   };
 }
 var P = fresh();
 var R = { tab:"univers", ep:0, fb:null, busy:null, arm:"", refs:[], chain:null, mont:false, angle:{} };
 var memOnly = false;
 
-/* ============================================================
-   LOCAL SAVE
-   ============================================================ */
 function load() {
   try {
     var raw = localStorage.getItem(STORE);
@@ -198,14 +171,10 @@ function save() {
   catch (e) { memOnly = true; }
 }
 
-/* ============================================================
-   MIGRATION
-   ============================================================ */
 function fixEps() {
   if (typeof P.style === "string") P.style = P.style ? [P.style] : [];
   if (!Array.isArray(P.style)) P.style = [];
   if (P.style.length > MAX_STYLES) P.style = P.style.slice(0, MAX_STYLES);
-
   if (typeof P.duree !== "number") P.duree = 60;
   if (typeof P.dureePlan !== "number") P.dureePlan = 6;
   if (typeof P.videoEngine !== "string") P.videoEngine = "agnes";
@@ -218,7 +187,6 @@ function fixEps() {
     if (e.finalVideoUrl === undefined) e.finalVideoUrl = null;
     if (e.finalVideoStatus === undefined) e.finalVideoStatus = null;
     if (e.finalVideoError === undefined) e.finalVideoError = "";
-
     (e.plans || []).forEach(function (p) {
       if (p.photoUri === undefined) p.photoUri = null;
       if (p.videoUrl === undefined) p.videoUrl = null;
@@ -241,12 +209,10 @@ function fixEps() {
       }
     });
   });
-
   if (!P.veille) P.veille = [];
   if (!P.concepts) P.concepts = [];
   if (!P.effets) P.effets = [];
   if (!P.sous) P.sous = ["U1"];
-
   P.persos.forEach(function (p) { if (p.refUri === undefined) p.refUri = null; });
   P.lieux.forEach(function (l) { if (l.refUri === undefined) l.refUri = null; });
   P.eps.forEach(function (e) {
@@ -254,9 +220,6 @@ function fixEps() {
   });
 }
 
-/* ============================================================
-   BASIC HELPERS
-   ============================================================ */
 function has(v) { return String(v || "").trim().length > 0; }
 function esc(s) { return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function uid() { return P.uid++; }
@@ -267,19 +230,11 @@ function sentence(t) { t = String(t || "").trim(); return t && !/[.!?]$/.test(t)
 function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function setPath(o, path, v) { var a = path.split("."), i; for (i = 0; i < a.length - 1; i++) o = o[a[i]]; o[a[a.length - 1]] = v; }
 
-/* Clean any string before sending to Agnes: no newlines, no curly quotes */
+/* Nettoie tout texte envoyé à Agnes : pas de retour ligne, pas de guillemets courbes */
 function cleanForAgnes(s) {
-  return String(s || "")
-    .replace(/\n/g, " ")
-    .replace(/\r/g, "")
-    .replace(/[«»„""]/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
+  return String(s || "").replace(/\n/g, " ").replace(/\r/g, "").replace(/[«»„""]/g, "'").replace(/\s+/g, " ").trim();
 }
 
-/* ============================================================
-   STYLE HELPERS
-   ============================================================ */
 function styList() {
   var list = Array.isArray(P.style) ? P.style : (P.style ? [P.style] : []);
   return list.map(function (id) { return byId(STYLES, id); }).filter(Boolean);
@@ -313,7 +268,7 @@ function camPhrase() { var c = byId(CAMS, P.cam); return c ? c.p : ""; }
 function perEp() { return DUREES_TOTALES.filter(function (x) { return x.v === P.duree; })[0] || DUREES_TOTALES[2]; }
 function perPlan() { return DUREES_PLAN.filter(function (x) { return x.v === P.dureePlan; })[0] || DUREES_PLAN[1]; }
 
-function unit(n) { return P.nb === 1 ? "the video" : "episode " + n; }
+function unit(n) { return P.nb === 1 ? "la vidéo" : "l'épisode " + n; }
 function canScript() { return P.rec === "oui" ? P.persos.length > 0 : (has(P.idee) && P.style.length > 0); }
 function epBy(n) { return P.eps.filter(function (e) { return e.n === n; })[0]; }
 function statsFresh() { return { vues:"", r3:"", moy:"", part:"", comm:"" }; }
@@ -337,11 +292,8 @@ function findLieu(t) {
   })[0];
 }
 
-/* ============================================================
-   COPY HELPERS
-   ============================================================ */
 function copyText(text, el, msg) {
-  function ok() { toast(msg || "Copied."); }
+  function ok() { toast(msg || "Copié."); }
   function fb() {
     var done = false;
     try {
@@ -352,7 +304,7 @@ function copyText(text, el, msg) {
       }
       done = document.execCommand("copy");
     } catch (e) {}
-    toast(done ? (msg || "Copied.") : "Select the text then Copy.");
+    toast(done ? (msg || "Copié.") : "Sélectionne le texte puis Copier.");
   }
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, fb);
   else fb();
@@ -367,7 +319,7 @@ function copyAll(text, msg) {
   setTimeout(function () { if (ta.parentNode) ta.parentNode.removeChild(ta); }, 2000);
 }
 /* ============================================================
-   AGNES KEY
+   CLÉ AGNES
    ============================================================ */
 function getAgnesKey() {
   try { return (localStorage.getItem("agnes_key") || "").trim(); } catch (e) { return ""; }
@@ -378,36 +330,33 @@ function saveAgnesKey() {
   var k = inp.value.trim();
   if (!k) {
     try { localStorage.removeItem("agnes_key"); } catch (e) {}
-    toast("Agnes key removed.");
+    toast("Clé Agnes effacée.");
     agnesPanelRefresh();
     return;
   }
   try {
     localStorage.setItem("agnes_key", k);
-    toast("Agnes key saved.");
+    toast("Clé Agnes enregistrée.");
     agnesPanelRefresh();
-  } catch (e) { toast("Save failed."); }
+  } catch (e) { toast("Sauvegarde impossible."); }
 }
 function agnesPanelRefresh() {
   var s = document.getElementById("agnes-status");
   if (!s) return;
   var k = getAgnesKey();
-  if (k) { s.textContent = "Key active · " + k.slice(0, 8) + "…" + k.slice(-4); s.className = "badge done"; }
-  else { s.textContent = "No key"; s.className = "badge"; }
+  if (k) { s.textContent = "Clé active · " + k.slice(0, 8) + "…" + k.slice(-4); s.className = "badge done"; }
+  else { s.textContent = "Aucune clé"; s.className = "badge"; }
 }
 function agnesPanelHtml() {
   var k = getAgnesKey();
-  return '<details class="glass acc" data-keep="1"><summary><div><b>Agnes Key</b><br><span>Used to write the script and generate videos</span></div><span class="badge' + (k ? ' done' : '') + '" id="agnes-status">' + (k ? "Key active · " + k.slice(0, 8) + "…" + k.slice(-4) : "No key") + '</span></summary><div class="in">' +
-    '<p class="small muted">The Agnes key is used to write the script and generate videos. Without a key, you can still write the text yourself and import images.</p>' +
+  return '<details class="glass acc" data-keep="1"><summary><div><b>Clé Agnes</b><br><span>Sert à écrire le script et à générer les vidéos</span></div><span class="badge' + (k ? ' done' : '') + '" id="agnes-status">' + (k ? "Clé active · " + k.slice(0, 8) + "…" + k.slice(-4) : "Aucune clé") + '</span></summary><div class="in">' +
+    '<p class="small muted">La clé Agnes sert à écrire le script et à générer les vidéos. Sans clé, tu peux toujours écrire le texte toi-même et importer les images.</p>' +
     '<input type="password" id="agnes-key-input" placeholder="sk-..." autocomplete="off" style="width:100%;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--glass-strong);font-family:ui-monospace,monospace;font-size:14px" value="' + esc(k) + '">' +
-    '<button type="button" class="btn big" data-act="agnes-save" style="margin-top:8px">Save key</button>' +
-    '<p class="small muted" style="margin-top:8px">Free key at <a href="https://platform.agnes-ai.com" target="_blank" rel="noopener">platform.agnes-ai.com</a>.</p>' +
+    '<button type="button" class="btn big" data-act="agnes-save" style="margin-top:8px">Enregistrer la clé</button>' +
+    '<p class="small muted" style="margin-top:8px">Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank" rel="noopener">platform.agnes-ai.com</a>.</p>' +
     '</div></details>';
 }
 
-/* ============================================================
-   AGNES FETCH WITH RETRY
-   ============================================================ */
 async function agnesFetch(url, options, label) {
   options = options || {};
   label = label || "Agnes";
@@ -424,9 +373,6 @@ async function agnesFetch(url, options, label) {
   return fetch(url, options);
 }
 
-/* ============================================================
-   AGNES TEXT CALL
-   ============================================================ */
 async function callAgnesText(system, user) {
   var res = await agnesFetch(AGNES_API + "/chat/completions", {
     method: "POST",
@@ -441,35 +387,29 @@ async function callAgnesText(system, user) {
       max_tokens: 8000,
       response_format: { type: "json_object" }
     })
-  }, "Text");
-  if (!res.ok) { var t = await res.text(); throw new Error("Text HTTP " + res.status + " : " + t.slice(0, 200)); }
+  }, "Texte");
+  if (!res.ok) { var t = await res.text(); throw new Error("Texte HTTP " + res.status + " : " + t.slice(0, 200)); }
   var d = await res.json();
   var content = d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
-  if (!content) throw new Error("No content.");
+  if (!content) throw new Error("Pas de contenu.");
   return content;
 }
 
-/* ============================================================
-   AGNES VIDEO CREATION (with v2.5 -> v2.0 fallback)
-   ============================================================ */
 async function agnesCreateVideoModel(prompt, imageDataUri, numFrames, model) {
   var res = await agnesFetch(AGNES_API + "/videos", {
     method: "POST",
     headers: { "Authorization": "Bearer " + getAgnesKey(), "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: model,
-      prompt: prompt,
-      image: imageDataUri,
-      num_frames: numFrames,
-      frame_rate: AGNES_FPS
+      model: model, prompt: prompt, image: imageDataUri,
+      num_frames: numFrames, frame_rate: AGNES_FPS
     })
-  }, "Video");
+  }, "Vidéo");
   return res;
 }
 async function agnesCreateVideo(prompt, imageDataUri, numFrames) {
   var res = await agnesCreateVideoModel(prompt, imageDataUri, numFrames, AGNES_VIDEO_MODEL);
   if (res.status >= 400 && res.status < 500) {
-    console.warn("Agnes " + AGNES_VIDEO_MODEL + " failed (HTTP " + res.status + "), fallback to " + AGNES_VIDEO_MODEL_FALLBACK);
+    console.warn("Agnes " + AGNES_VIDEO_MODEL + " a échoué (HTTP " + res.status + "), fallback sur " + AGNES_VIDEO_MODEL_FALLBACK);
     try {
       res = await agnesCreateVideoModel(prompt, imageDataUri, numFrames, AGNES_VIDEO_MODEL_FALLBACK);
     } catch (e) {}
@@ -481,54 +421,45 @@ async function agnesCreateVideo(prompt, imageDataUri, numFrames) {
   }
   var d = await res.json();
   var id = d.video_id || d.id || d.task_id;
-  if (!id) throw new Error("No video_id.");
+  if (!id) throw new Error("Pas de video_id.");
   return id;
 }
 async function agnesPollVideo(videoId, onProgress) {
   var wait = 80;
-  while (wait > 0) { if (onProgress) onProgress("Preparing (" + wait + " s)…"); await new Promise(function (ok) { setTimeout(ok, 1000); }); wait--; }
+  while (wait > 0) { if (onProgress) onProgress("Préparation (" + wait + " s)…"); await new Promise(function (ok) { setTimeout(ok, 1000); }); wait--; }
   var intervals = [8, 8, 12, 12, 20, 20, 25];
   for (var attempt = 0; attempt < 100; attempt++) {
     if (attempt > 0) {
       var iv = intervals[Math.min(attempt - 1, intervals.length - 1)];
-      while (iv > 0) { if (onProgress) onProgress("Image coming to life (" + iv + " s)…"); await new Promise(function (ok) { setTimeout(ok, 1000); }); iv--; }
+      while (iv > 0) { if (onProgress) onProgress("L'image prend vie (" + iv + " s)…"); await new Promise(function (ok) { setTimeout(ok, 1000); }); iv--; }
     }
     var url = AGNES_POLL + "?video_id=" + encodeURIComponent(videoId) + "&model_name=" + encodeURIComponent(AGNES_VIDEO_MODEL);
     var res = await agnesFetch(url, { method: "GET", headers: { "Authorization": "Bearer " + getAgnesKey() } }, "Polling");
     var d = await res.json();
     var st = d.status || "unknown", pr = d.progress || 0;
-    if (onProgress) onProgress("Creating " + pr + " %…");
+    if (onProgress) onProgress("Création " + pr + " %…");
     if (st === "completed" || st === "succeeded" || st === "done") {
       var vurl = (d.metadata && d.metadata.url) || d.url || (d.output && d.output.url);
-      if (!vurl) throw new Error("Done without URL.");
+      if (!vurl) throw new Error("Terminé sans URL.");
       return vurl;
     }
-    if (st === "failed" || st === "error" || st === "cancelled") throw new Error("Failed (" + st + ").");
+    if (st === "failed" || st === "error" || st === "cancelled") throw new Error("Échec (" + st + ").");
   }
-  throw new Error("Timeout.");
+  throw new Error("Délai dépassé.");
 }
 
-/* ============================================================
-   WANGP VIDEO (local)
-   ============================================================ */
 async function wangpCreateVideo(prompt, imageDataUri, numFrames) {
   var url = String(P.wangpUrl || "").replace(/\/$/, "");
-  if (!url) throw new Error("WanGP URL not configured.");
+  if (!url) throw new Error("URL WanGP non configurée.");
   var res;
   try {
     res = await fetch(url + "/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: prompt,
-        image: imageDataUri,
-        num_frames: numFrames,
-        frame_rate: AGNES_FPS,
-        model: "wan2.2"
-      })
+      body: JSON.stringify({ prompt: prompt, image: imageDataUri, num_frames: numFrames, frame_rate: AGNES_FPS, model: "wan2.2" })
     });
   } catch (e) {
-    throw new Error("WanGP unreachable. Check that your server is running and the URL is correct.");
+    throw new Error("WanGP inaccessible. Vérifie que ton serveur tourne et que l'URL est correcte.");
   }
   if (!res.ok) throw new Error("WanGP HTTP " + res.status);
   var d = await res.json();
@@ -541,20 +472,17 @@ async function wangpCreateVideo(prompt, imageDataUri, numFrames) {
         var r2 = await fetch(url + "/status/" + d.id);
         var s = await r2.json();
         if (s.status === "done" && (s.video_url || s.url)) return s.video_url || s.url;
-        if (s.status === "failed") throw new Error("WanGP failed.");
+        if (s.status === "failed") throw new Error("WanGP échec.");
       } catch (e) { /* continue */ }
     }
     throw new Error("WanGP timeout.");
   }
-  throw new Error("Unknown WanGP response.");
+  throw new Error("Réponse WanGP inconnue.");
 }
 
-/* ============================================================
-   LTX VIDEO (paid, placeholder)
-   ============================================================ */
 async function ltxCreateVideo(prompt, imageDataUri, numFrames) {
-  if (!P.ltxApiKey) throw new Error("LTX API key not configured.");
-  throw new Error("LTX integration pending (endpoint not defined). Use Agnes for now.");
+  if (!P.ltxApiKey) throw new Error("Clé API LTX non configurée.");
+  throw new Error("Intégration LTX à finaliser (endpoint non défini). Utilise Agnes en attendant.");
 }
 
 /* ============================================================
@@ -569,55 +497,52 @@ async function ffmpegLoad() {
     var FFCls = (typeof FFmpeg !== "undefined" && FFmpeg.FFmpeg) ? FFmpeg.FFmpeg
               : (typeof FFmpegWASM !== "undefined" && FFmpegWASM.FFmpeg) ? FFmpegWASM.FFmpeg
               : null;
-    if (!FFCls) throw new Error("FFmpeg not loaded (CDN unreachable?)");
+    if (!FFCls) throw new Error("FFmpeg non chargé (CDN inaccessible ?)");
     var ffmpeg = new FFCls();
     var baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
-    await ffmpeg.load({
-      coreURL: baseURL + "/ffmpeg-core.js",
-      wasmURL: baseURL + "/ffmpeg-core.wasm"
-    });
+    await ffmpeg.load({ coreURL: baseURL + "/ffmpeg-core.js", wasmURL: baseURL + "/ffmpeg-core.wasm" });
     FF.instance = ffmpeg;
     FF.loaded = true;
-    console.log("✅ FFmpeg loaded");
+    console.log("✅ FFmpeg chargé");
     return ffmpeg;
   } finally { FF.loading = false; }
 }
 async function ffmpegConcatenate(ep, onProgress) {
   var main = ep.plans.filter(function (p) { return !p.reserve && p.videoUrl; });
-  if (!main.length) throw new Error("No clip to assemble.");
-  if (onProgress) onProgress("Loading FFmpeg (30 MB first time)…");
+  if (!main.length) throw new Error("Aucun clip à assembler.");
+  if (onProgress) onProgress("Chargement de FFmpeg (30 Mo la 1ère fois)…");
   var ffmpeg = await ffmpegLoad();
   var names = [];
   for (var i = 0; i < main.length; i++) {
     var p = main[i];
-    if (onProgress) onProgress("Downloading clip " + (i + 1) + "/" + main.length + "…");
+    if (onProgress) onProgress("Téléchargement du clip " + (i + 1) + "/" + main.length + "…");
     var res;
     try { res = await fetch(p.videoUrl, { mode: "cors" }); }
-    catch (e) { throw new Error("Clip " + (i + 1) + " unreachable (CORS). Use « Copy clips list »."); }
+    catch (e) { throw new Error("Clip " + (i + 1) + " inaccessible (CORS). Utilise « Copier la liste des clips »."); }
     if (!res.ok) throw new Error("Clip " + (i + 1) + " : HTTP " + res.status);
     var buf = new Uint8Array(await res.arrayBuffer());
-    if (buf.length < 1000) throw new Error("Clip " + (i + 1) + " empty or corrupted.");
+    if (buf.length < 1000) throw new Error("Clip " + (i + 1) + " vide ou corrompu.");
     var name = "plan" + String(i).padStart(3, "0") + ".mp4";
     await ffmpeg.writeFile(name, buf);
     names.push(name);
   }
   var listTxt = names.map(function (n) { return "file '" + n + "'"; }).join("\n");
   await ffmpeg.writeFile("list.txt", new TextEncoder().encode(listTxt));
-  if (onProgress) onProgress("Final assembly (1-3 min)…");
+  if (onProgress) onProgress("Assemblage final (1-3 min)…");
   try {
-    await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", "output.mp4"]);
+    await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", "sortie.mp4"]);
   } catch (e) {
-    if (onProgress) onProgress("Fallback re-encode (longer)…");
-    await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c:v", "libx264", "-c:a", "aac", "output.mp4"]);
+    if (onProgress) onProgress("Réencodage de secours (plus long)…");
+    await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c:v", "libx264", "-c:a", "aac", "sortie.mp4"]);
   }
-  var data = await ffmpeg.readFile("output.mp4");
-  if (!data || data.length < 1000) throw new Error("Final file empty.");
+  var data = await ffmpeg.readFile("sortie.mp4");
+  if (!data || data.length < 1000) throw new Error("Fichier final vide.");
   var blob = new Blob([data.buffer], { type: "video/mp4" });
   return URL.createObjectURL(blob);
 }
 
 /* ============================================================
-   PLAN PHOTO (IndexedDB)
+   PHOTO DES PLANS (IndexedDB)
    ============================================================ */
 async function planPhotoStore(i, j, dataUri) {
   if (typeof idbKeyval === "undefined") return;
@@ -645,7 +570,7 @@ function planFileToDataUri(file) {
   return new Promise(function (res, rej) {
     var r = new FileReader();
     r.onload = function (e) { res(e.target.result); };
-    r.onerror = function () { rej(new Error("Read failed.")); };
+    r.onerror = function () { rej(new Error("Lecture impossible.")); };
     r.readAsDataURL(file);
   });
 }
@@ -667,20 +592,19 @@ function compressImage(dataUri, maxSize, quality) {
   });
 }
 async function planUploadPhoto(i, j, file) {
-  if (!file || !file.type.startsWith("image/")) { toast("This file is not an image."); return; }
+  if (!file || !file.type.startsWith("image/")) { toast("Ce fichier n'est pas une image."); return; }
   try {
     var uri = await planFileToDataUri(file);
-    /* Aggressive compression: max 768px, quality 0.75 (Agnes refuses big payloads) */
     if (uri.length > 500000) uri = await compressImage(uri, 768, 0.75);
     P.eps[i].plans[j].photoUri = uri;
     P.eps[i].plans[j].videoUrl = null;
     P.eps[i].plans[j].videoStatus = null;
     await planPhotoStore(i, j, uri);
-    save(); render(); toast("Photo added.");
-  } catch (e) { toast("Could not read this image."); }
+    save(); render(); toast("Photo ajoutée.");
+  } catch (e) { toast("Impossible de lire cette image."); }
 }
 async function planClearPhoto(i, j) {
-  if (!confirm("Remove this photo? The generated video will be lost.")) return;
+  if (!confirm("Retirer cette photo ? La vidéo déjà générée sera perdue.")) return;
   P.eps[i].plans[j].photoUri = null;
   P.eps[i].plans[j].videoUrl = null;
   P.eps[i].plans[j].videoStatus = null;
@@ -689,7 +613,7 @@ async function planClearPhoto(i, j) {
 }
 
 /* ============================================================
-   REFERENCES (IndexedDB)
+   RÉFÉRENCES (IndexedDB)
    ============================================================ */
 async function refStore(kind, id, dataUri) {
   if (typeof idbKeyval === "undefined") return;
@@ -717,17 +641,17 @@ function findRefObj(kind, id) {
   return null;
 }
 async function refUpload(kind, id, file) {
-  if (!file || !file.type.startsWith("image/")) { toast("This file is not an image."); return; }
+  if (!file || !file.type.startsWith("image/")) { toast("Ce fichier n'est pas une image."); return; }
   try {
     var uri = await planFileToDataUri(file);
     if (uri.length > 500000) uri = await compressImage(uri, 768, 0.75);
     await refStore(kind, id, uri);
     var obj = findRefObj(kind, id);
-    if (obj) { obj.refUri = uri; save(); render(); toast("Reference added."); }
-  } catch (e) { toast("Could not read this image."); }
+    if (obj) { obj.refUri = uri; save(); render(); toast("Référence ajoutée."); }
+  } catch (e) { toast("Impossible de lire cette image."); }
 }
 async function refClear(kind, id) {
-  if (!confirm("Remove this reference image?")) return;
+  if (!confirm("Retirer cette image de référence ?")) return;
   await refDelete(kind, id);
   var obj = findRefObj(kind, id);
   if (obj) { obj.refUri = null; save(); render(); }
@@ -753,16 +677,16 @@ async function refsRestoreAll() {
 }
 
 /* ============================================================
-   PLAN — VIDEO GENERATION (multi-engine)
+   GÉNÉRATION VIDÉO PAR PLAN
    ============================================================ */
 async function planGenerateVideo(i, j) {
   var ep = P.eps[i], p = ep && ep.plans[j];
   if (!p || !p.photoUri) return;
-  if (P.videoEngine === "agnes" && !getAgnesKey()) { toast("Add your Agnes key in the Universe tab."); return; }
-  if (P.videoEngine === "wangp" && !has(P.wangpUrl)) { toast("Set your WanGP server URL."); return; }
-  if (P.videoEngine === "ltx" && !has(P.ltxApiKey)) { toast("Add your LTX API key."); return; }
+  if (P.videoEngine === "agnes" && !getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); return; }
+  if (P.videoEngine === "wangp" && !has(P.wangpUrl)) { toast("Renseigne l'URL de ton serveur WanGP."); return; }
+  if (P.videoEngine === "ltx" && !has(P.ltxApiKey)) { toast("Ajoute ta clé API LTX."); return; }
 
-  p.videoStatus = "busy"; p.videoMsg = "Creating task…"; p.videoError = "";
+  p.videoStatus = "busy"; p.videoMsg = "Création de la tâche…"; p.videoError = "";
   save(); render();
 
   try {
@@ -771,15 +695,15 @@ async function planGenerateVideo(i, j) {
     var url;
 
     if (P.videoEngine === "wangp") {
-      p.videoMsg = "Sending to WanGP…"; save(); render();
+      p.videoMsg = "Envoi à WanGP…"; save(); render();
       url = await wangpCreateVideo(prompt, p.photoUri, frames);
     } else if (P.videoEngine === "ltx") {
-      p.videoMsg = "Sending to LTX…"; save(); render();
+      p.videoMsg = "Envoi à LTX…"; save(); render();
       url = await ltxCreateVideo(prompt, p.photoUri, frames);
     } else {
-      p.videoMsg = "Sending to Agnes…"; save(); render();
+      p.videoMsg = "Envoi à Agnes…"; save(); render();
       var id = await agnesCreateVideo(prompt, p.photoUri, frames);
-      p.videoMsg = "Preparing…"; save(); render();
+      p.videoMsg = "Préparation…"; save(); render();
       url = await agnesPollVideo(id, function (msg) {
         var el = document.querySelector('#vv-' + i + '-' + j + ' .badge');
         if (el) el.textContent = "⏳ " + msg;
@@ -789,17 +713,17 @@ async function planGenerateVideo(i, j) {
     p.videoStatus = "done";
     p.videoMsg = "";
     save(); render();
-    toast("Video of plan " + p.n + " ready.");
+    toast("Vidéo du plan " + p.n + " prête.");
   } catch (e) {
     p.videoStatus = "err";
-    p.videoError = (e.message || "Error").slice(0, 120);
+    p.videoError = (e.message || "Erreur").slice(0, 120);
     p.videoMsg = "";
     save(); render();
-    toast("Failed: " + p.videoError);
+    toast("Échec : " + p.videoError);
   }
 }
 /* ============================================================
-   FINAL PROMPTS (for image generation via ChatGPT/Gemini)
+   PROMPTS FINAUX (pour ChatGPT/Gemini)
    ============================================================ */
 function imagePrompt(pl) {
   var parts = [sentence(pl.pi)];
@@ -823,7 +747,7 @@ function imagePrompt(pl) {
 function imagePromptWithCoherence(pl) {
   var base = imagePrompt(pl);
   var noms = String(pl.persos || "").split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
-  var note = "\n\n⚠️ MANDATORY COHERENCE: " +
+  var note = "\n\n⚠️ COHÉRENCE OBLIGATOIRE : " +
     "The characters must match EXACTLY the reference images provided (same face, same hair, same skin tone, same clothes). " +
     "Do NOT invent new characters. " +
     (noms.length ? "Only these characters may appear: " + noms.join(", ") + ". " : "") +
@@ -832,27 +756,19 @@ function imagePromptWithCoherence(pl) {
   return base + note;
 }
 
-/* ============================================================
-   FINAL VIDEO PROMPT (for Agnes / WanGP / LTX)
-   All instructions in ENGLISH, no accents, no newlines
-   ============================================================ */
 function videoPrompt(pl) {
   var who = String(pl.qui || "").trim();
   var spoke = NONE.indexOf(who.toLowerCase()) < 0;
   var rule;
-
-  /* Clean dialogue: keep French words but strip problematic characters */
   var replique = String(pl.replique || "").trim()
     .replace(/"/g, "'")
     .replace(/[«»„""]/g, "'")
     .replace(/\n/g, " ");
 
-  /* Clean every field that goes into the prompt */
   var cleanEmotion = cleanForAgnes(pl.emotion);
   var cleanAction = cleanForAgnes(pl.action);
   var cleanPv = cleanForAgnes(pl.pv);
 
-  /* Identify the speaker visually so Agnes knows exactly who talks */
   var speakerId = "";
   if (spoke) {
     var c = persoBy(who);
@@ -888,7 +804,7 @@ function videoPrompt(pl) {
 }
 
 /* ============================================================
-   PROMPT CONTEXT HELPERS
+   CONTEXTE POUR LES PROMPTS
    ============================================================ */
 function bible(ep) {
   var ps = P.persos.concat(ep && ep.cast ? ep.cast : []);
@@ -899,30 +815,30 @@ function voicesText(ep) {
   var ps = P.persos.concat(ep && ep.cast ? ep.cast : []).filter(function (p) { return has(p.caractere) || has(p.secret) || has(p.voix); });
   return ps.length ? "PERSONALITY AND VOICE:\n" + ps.map(function (p) { return "- " + p.nom + " : " + [p.caractere, p.secret, p.voix].filter(has).join(" ; "); }).join("\n") + "\n" : "";
 }
-var DIALOGUE_RULES = "DIALOGUE QUALITY: write the way real people talk, in living spoken French (broken sentences, everyday expressions, interruptions). Each line must reveal, provoke, dodge, flip the situation, or make people laugh. Forbidden: formulaic lines, dialogue that explains what the image already shows. ";
-function recapFor(n) { var p = epBy(n - 1); return p && has(p.resume) ? p.resume + (has(p.fin) ? " Ending question: " + p.fin : "") : ""; }
+var DIALOGUE_RULES = "QUALITÉ DES DIALOGUES : écris comme des gens parlent vraiment, en français oral et vivant (phrases coupées, expressions du quotidien, interruptions). Chaque réplique révèle, provoque, esquive, retourne la situation ou fait rire. Interdits : formules toutes faites, répliques qui expliquent ce que l'image montre. ";
+function recapFor(n) { var p = epBy(n - 1); return p && has(p.resume) ? p.resume + (has(p.fin) ? " Question de fin : " + p.fin : "") : ""; }
 function isLast(ep) { return ep.n >= P.nb; }
 function arcLine(n) { var l = P.arc.split("\n")[n - 1]; return l ? l.replace(/^\d+[.)]\s*/, "") : ""; }
-function briefText() { return (has(P.genre) ? "Genre: " + P.genre + ".\n" : "") + (has(P.cible) ? "Audience: " + P.cible + ".\n" : ""); }
-function leconsText() { return has(P.lecons) ? "LESSONS FROM PAST STATS:\n" + P.lecons.trim() + "\n" : ""; }
+function briefText() { return (has(P.genre) ? "Genre : " + P.genre + ".\n" : "") + (has(P.cible) ? "Public : " + P.cible + ".\n" : ""); }
+function leconsText() { return has(P.lecons) ? "LEÇONS DES STATS PRÉCÉDENTES :\n" + P.lecons.trim() + "\n" : ""; }
 
 /* ============================================================
-   AGNES CALL WITH JSON EXTRACTION
+   APPEL AGNES + EXTRACTION JSON
    ============================================================ */
 function ask(label, prompt, apply) {
   var p = new Promise(function (resolve, reject) {
-    if (!getAgnesKey()) { toast("Add your Agnes key in the Universe tab."); reject(new Error("no key")); return; }
+    if (!getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); reject(new Error("no key")); return; }
     R.busy = { label: label, sub: R.chain ? R.chain.sub : "" }; overlay();
     callAgnesText("", prompt).then(function (txt) {
       R.busy = null; overlay();
       try {
         var data = extractJson(txt);
-        apply(data); save(); render(); toast(label + " : done.");
+        apply(data); save(); render(); toast(label + " : terminé.");
         resolve(data);
-      } catch (e) { toast("Unreadable response. Try again."); reject(e); }
+      } catch (e) { toast("Réponse illisible. Réessaie."); reject(e); }
     }).catch(function (e) {
       R.busy = null; overlay();
-      toast("Failed: " + (e.message || "").slice(0, 80));
+      toast("Échec : " + (e.message || "").slice(0, 80));
       reject(e);
     });
   });
@@ -951,41 +867,41 @@ function extractJson(t) {
       return JSON.parse(newRaw);
     }
   } catch (e4) {}
-  throw new Error("invalid json");
+  throw new Error("JSON invalide");
 }
 function overlay() {
   var o = document.getElementById("overlay");
   if (!R.busy) { o.innerHTML = ""; return; }
-  o.innerHTML = '<div class="busy"><div class="glass"><div class="spin"></div><b>Agnes is preparing: ' + esc(R.busy.label) + '</b>' + (R.busy.sub ? '<p class="small"><b>' + esc(R.busy.sub) + '</b></p>' : '') + '<p class="small muted">20 to 90 seconds.</p><button type="button" class="btn ghost big" data-act="stop">Stop</button></div></div>';
+  o.innerHTML = '<div class="busy"><div class="glass"><div class="spin"></div><b>Agnes prépare : ' + esc(R.busy.label) + '</b>' + (R.busy.sub ? '<p class="small"><b>' + esc(R.busy.sub) + '</b></p>' : '') + '<p class="small muted">Compte 20 à 90 secondes.</p><button type="button" class="btn ghost big" data-act="stop">Arrêter</button></div></div>';
 }
 var JSONNOTE = "\n\nAnswer ONLY with a valid JSON object, no text before or after, no code fences.";
 
 /* ============================================================
-   CONTENT GENERATORS (all instructions in ENGLISH)
+   GÉNÉRATEURS — Instructions en anglais, contenu en français
    ============================================================ */
 
-/* ---- GEN SURPRISE (title + story idea) ---- */
+/* ---- GEN SURPRISE ---- */
 function genSurprise() {
   var amb = P.ambs.map(function (id) { var a = byId(AMBS, id); return a ? a.nom : ""; }).filter(has);
-  var genres = ["Family drama", "Domestic thriller", "Couple comedy", "Neighborhood mystery", "Forbidden romance", "Betrayed friendship", "Family secret", "Absurd humor"];
+  var genres = ["Drame familial", "Thriller domestique", "Comédie de couple", "Mystère de quartier", "Romance contrariée", "Amitié trahie", "Secret de famille", "Humour absurde"];
   var contexts = [
-    "a building where all neighbors know each other",
-    "a wedding that goes wrong",
-    "an unexpected inheritance",
-    "a neighborhood laundromat",
-    "a summer campsite",
-    "a family reunion after 10 years",
-    "a Christmas dinner",
-    "a night out with friends that goes wrong",
-    "a first day at a new job",
-    "a chaotic flat share",
-    "a medical exam that reveals everything",
-    "a letter that was never opened",
-    "a return to the home village",
-    "a football match that changes a life"
+    "un immeuble où tous les voisins se connaissent",
+    "un mariage qui tourne mal",
+    "un héritage inattendu",
+    "une laverie de quartier",
+    "un camping en été",
+    "une réunion de famille après 10 ans",
+    "un repas de Noël",
+    "une soirée entre amis qui dérape",
+    "un premier jour dans un nouveau travail",
+    "une colocation chaotique",
+    "un examen médical qui révèle tout",
+    "une lettre jamais ouverte",
+    "un retour au village natal",
+    "un match de foot qui change une vie"
   ];
   var seed = Math.random().toString(36).slice(2, 8);
-  var prompt = "You are a professional screenwriter for short vertical series (TikTok/Shorts/Reels) in French.\n" +
+  var prompt = "You are a professional screenwriter for short vertical series (TikTok/Shorts/Reels). The output must be in FRENCH, but all instructions are for you in English.\n" +
     "Your mission: invent ONE COMPLETE, ORIGINAL and COHERENT story that will hold the viewer from start to finish.\n\n" +
     "CONSTRAINTS:\n" +
     "- Genre: " + randomItem(genres) + "\n" +
@@ -999,11 +915,11 @@ function genSurprise() {
     "2. The story must have: a main character with a clear goal, a concrete obstacle, a secret that changes everything, a twist nobody sees coming.\n" +
     "3. FORBIDDEN: amnesia, hidden twin, 'it was a dream', cliché hidden inheritance, basic revenge, boring love triangle.\n" +
     "4. DRAW INSPIRATION from TikTok codes (3s hook, cliffhanger, A/B choice) but NEVER copy an existing story.\n" +
-    "5. The end of the first episode must leave an unanswered question that forces the viewer to watch the next one.\n\n" +
-    "Answer in JSON. Fields in French for user-facing content." + JSONNOTE +
-    '\nFormat: {"titre":"","idee":"3 to 5 sentences telling the whole story, characters included","ton":"1 word","genre":"1 word","cible":"audience in 5 words"}';
-  return ask("a surprise story", prompt, function (r) {
-    if (!r || !r.titre) throw new Error("empty");
+    "5. The end of the first episode must leave an unanswered question.\n\n" +
+    JSONNOTE +
+    '\nFormat: {"titre":"3-6 mots en français","idee":"3 à 5 phrases en français racontant toute l\'histoire avec les personnages","ton":"1 mot en français","genre":"1 mot en français","cible":"public en 5 mots en français"}';
+  return ask("une histoire surprise", prompt, function (r) {
+    if (!r || !r.titre) throw new Error("vide");
     P.titre = r.titre;
     P.idee = Array.isArray(r.idee) ? r.idee.join(" ") : String(r.idee || "");
     if (has(r.ton)) P.ton = r.ton;
@@ -1012,26 +928,26 @@ function genSurprise() {
   });
 }
 
-/* ---- GEN UNIVERSE (concept + cast + places) ---- */
+/* ---- GEN UNIVERS ---- */
 function genUnivers() {
   var st = sty(), ph = phrase(), sk = skinPhrase();
   var fmt = P.nb === 1 ? "A single video of " + P.duree + " seconds." : P.nb + " videos of " + P.duree + " seconds each.";
   var persoRule = P.rec === "oui" ? "Create the season's cast: 4 to 6 characters maximum. " : "Characters change between videos: characters = empty list. ";
-  var prompt = "You are a screenwriter for short vertical animated videos in French (TikTok, YouTube Shorts, Instagram, Facebook).\n" +
+  var prompt = "You are a screenwriter for short vertical animated videos (TikTok, YouTube Shorts, Instagram, Facebook). Output user-facing content in FRENCH, but every instruction here is for you in English. Technical fields (visual descriptions) must be IN ENGLISH.\n" +
     "Starting idea (in French): " + P.idee.trim() + "\n" +
-    (has(P.titre) ? "Desired title: " + P.titre.trim() + "\n" : "") +
+    (has(P.titre) ? "Desired title (in French): " + P.titre.trim() + "\n" : "") +
     "Format: " + fmt + "\n" +
     (has(P.genre) ? "Genre: " + P.genre + ".\n" : "") +
     (has(P.cible) ? "Audience: " + P.cible + ".\n" : "") +
     "Visual style: " + (st ? st.nom + ". Style phrase: " + ph : "not specified") + "\n" +
     (sk ? "Skin/eyes rendering: " + sk + "\n" : "") + "\n" + persoRule +
     "No brand, no logo, no real person. No violence, no suggestive scene. Do not mock any body, religion, or origin. " +
-    "Each visual description (visual field) is IN ENGLISH, 40 to 60 words: character type, colors, skin, complexion, face, eyes, hair, clothes without logo, accessory. Do NOT copy the style phrase. " +
+    "Each visual description field must be IN ENGLISH, 40 to 60 words: character type, colors, skin, complexion, face, eyes, hair, clothes without logo, accessory. Do NOT copy the style phrase. " +
     "Places: visual description IN ENGLISH with no character, describe the physical decor only (2 to 4 places). " +
     "Arc: exactly " + P.nb + " line" + (P.nb > 1 ? "s" : "") + " (one per video, in French)." + JSONNOTE +
-    '\nFormat: {"titre":"","phrase_concept":"in French","regle_speciale":"in French","ton":"in French","personnages":[{"nom":"in French","role":"in French","caractere":"3 words in French","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}],"lieux":[{"nom":"in French","visuel":"in English"}],"arc":["in French","in French"]}';
-  return ask(P.rec === "oui" ? "the cast and universe" : "the concept and universe", prompt, function (d2) {
-    if (!d2 || (!d2.phrase_concept && !(d2.personnages && d2.personnages.length))) throw new Error("empty");
+    '\nFormat: {"titre":"in French","phrase_concept":"in French","regle_speciale":"in French","ton":"in French","personnages":[{"nom":"in French","role":"in French","caractere":"3 mots en français","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}],"lieux":[{"nom":"in French","visuel":"in English"}],"arc":["in French","in French"]}';
+  return ask(P.rec === "oui" ? "le casting et l'univers" : "le concept et l'univers", prompt, function (d2) {
+    if (!d2 || (!d2.phrase_concept && !(d2.personnages && d2.personnages.length))) throw new Error("vide");
     if (has(d2.titre) && !has(P.titre)) P.titre = d2.titre;
     P.concept = d2.phrase_concept || "";
     P.regle = d2.regle_speciale || "";
@@ -1044,19 +960,19 @@ function genUnivers() {
   });
 }
 
-/* ---- GEN CAST (standalone, if user already has concept) ---- */
+/* ---- GEN CAST ---- */
 function genCast() {
   var st = sty(), ph = phrase(), sk = skinPhrase();
-  var prompt = "You are a screenwriter for short vertical animated videos in French.\nIdea: " + P.idee.trim() + "\n" +
-    (has(P.titre) ? "Title: " + P.titre.trim() + "\n" : "") +
-    (has(P.concept) ? "Concept: " + P.concept.trim() + "\n" : "") +
+  var prompt = "You are a screenwriter for short vertical animated videos. Output user-facing content in FRENCH, technical visual fields IN ENGLISH.\nIdea (in French): " + P.idee.trim() + "\n" +
+    (has(P.titre) ? "Title (in French): " + P.titre.trim() + "\n" : "") +
+    (has(P.concept) ? "Concept (in French): " + P.concept.trim() + "\n" : "") +
     "Existing places: " + (P.lieux.map(function (l) { return l.nom; }).join(", ") || "none") + "\n" +
     (st ? "Visual style: " + st.nom + ". Style phrase: " + ph + "\n" : "") +
     (sk ? "Skin/eyes rendering: " + sk + "\n" : "") +
-    "\nCreate the fixed cast: all already-named characters, plus the missing ones, 6 maximum. Each visual field is IN ENGLISH, 40 to 60 words, without the style phrase." + JSONNOTE +
-    '\nFormat: {"personnages":[{"nom":"in French","role":"in French","caractere":"3 words in French","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}]}';
-  return ask("the cast", prompt, function (d2) {
-    if (!d2 || !d2.personnages || !d2.personnages.length) throw new Error("empty");
+    "\nCreate the fixed cast: all already-named characters, plus the missing ones, 6 maximum. Each visual field IN ENGLISH, 40 to 60 words, without the style phrase." + JSONNOTE +
+    '\nFormat: {"personnages":[{"nom":"in French","role":"in French","caractere":"3 mots","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}]}';
+  return ask("le casting", prompt, function (d2) {
+    if (!d2 || !d2.personnages || !d2.personnages.length) throw new Error("vide");
     P.rec = "oui";
     P.persos = d2.personnages.slice(0, 8).map(function (p) {
       return { id: uid(), nom: p.nom || "", role: p.role || "", caractere: p.caractere || "", secret: p.secret || "", voix: p.voix || "", voix_en: p.voix_en || "", visuel: p.visuel || "", ok: false };
@@ -1065,20 +981,20 @@ function genCast() {
 }
 
 /* ============================================================
-   SCRIPT — instructions in ENGLISH, output in FRENCH
+   SCRIPT — instructions EN, dialogue FR
    ============================================================ */
 function scriptBody(ep) {
   var rec = P.rec, last = isLast(ep);
   var structure = "3-second hook, " + (ep.n > 1 && rec === "oui" && P.nb > 1 ? "5-second recap of the previous episode, " : "") + "setup, conflict, twist, " + (last ? "clean ending." : "ending on a question.");
-  var rehook = P.duree >= 45 ? "3. MID-VIDEO RE-HOOK: Around the middle of the script (close to " + Math.round(P.duree/2) + "s), place a second strong hook (revelation, twist, shock question) tagged [RE-HOOK].\n" : "";
-  var rehookEx = P.duree >= 45 ? "[00:" + String(Math.round(P.duree/2)).padStart(2,"0") + "] [RE-HOOK] CLOSE-UP - Aicha (panicked): Wait... you knew?\n" : "";
-  return "Write episode " + unit(ep.n) + " of a short vertical animated production. Dialogue must be in FRENCH, all instructions are ENGLISH.\n" +
-    "Title: " + (P.titre || "untitled") + ". Idea (French): " + P.idee.trim() + "\nConcept (French): " + P.concept + "\nRule (French): " + P.regle + "\nTone (French): " + P.ton + "\n" + briefText() +
+  var rehook = P.duree >= 45 ? "3. MID-VIDEO RE-HOOK: Around the middle (close to " + Math.round(P.duree/2) + "s), place a second strong hook (revelation, twist, shock question) tagged [RE-HOOK].\n" : "";
+  var rehookEx = P.duree >= 45 ? "[00:" + String(Math.round(P.duree/2)).padStart(2,"0") + "] [RE-HOOK] CLOSE-UP - Aicha (paniquée) : Attends... tu savais ?\n" : "";
+  return "Write episode " + unit(ep.n) + " of a short vertical animated production. ALL lines of dialogue must be in FRENCH. Every instruction here is for you in English. Shot types MUST be written IN ENGLISH.\n" +
+    "Title (in French): " + (P.titre || "sans titre") + ". Idea (in French): " + P.idee.trim() + "\nConcept (in French): " + P.concept + "\nRule (in French): " + P.regle + "\nTone (in French): " + P.ton + "\n" + briefText() +
     (P.nb > 1 ? "Format: " + P.nb + " videos, this is n° " + ep.n + ".\n" : "Format: single video.\n") +
     bible(ep) + "\n" + voicesText(ep) + "\n" + leconsText() +
-    (P.nb > 1 ? "\nArc event (French): " + (arcLine(ep.n) || "to imagine") + "\n" : "") +
-    (has(ep.note) ? "Starting note (French): " + ep.note.trim() + "\n" : "") +
-    (ep.n > 1 && rec === "oui" ? "Previous recap (French): " + (recapFor(ep.n) || "not provided") + "\n" : "") +
+    (P.nb > 1 ? "\nArc event (in French): " + (arcLine(ep.n) || "à imaginer") + "\n" : "") +
+    (has(ep.note) ? "Starting note (in French): " + ep.note.trim() + "\n" : "") +
+    (ep.n > 1 && rec === "oui" ? "Previous recap (in French): " + (recapFor(ep.n) || "non fourni") + "\n" : "") +
     (rec !== "oui" ? "Invent characters (4 max), visual description IN ENGLISH 40-60 words ending with: " + phrase() + "\n" : "") +
     "\nTarget duration: " + P.duree + " s. Structure: " + structure + " Max 2 characters per scene, only one person speaks at a time. " + DIALOGUE_RULES + "\n" +
     "MANDATORY TIKTOK RULES (for maximum virality):\n" +
@@ -1087,7 +1003,7 @@ function scriptBody(ep) {
     rehook +
     "4. ENDING: " + (last ? "Clean, memorable ending that closes the story." : "End on a cliffhanger or an unanswered question.") + "\n" +
     "5. RHYTHM: " + Math.round(P.duree / 2.5) + " minimum lines total (one every 2 to 3 seconds). SHORT lines: 5 to 10 words maximum.\n" +
-    "6. TONE: Each line starts with a tone tag in parentheses, in ENGLISH: (angry), (whispers), (nervous laugh), (cold), (panicked), (sarcastic), etc. Alternate tones to create rhythm.\n" +
+    "6. TONE: Each line starts with a tone tag in parentheses, IN ENGLISH: (angry), (whispers), (nervous laugh), (cold), (panicked), (sarcastic), etc. Alternate tones to create rhythm.\n" +
     "\nSCRIPT FORMAT (one line per dialogue, follow EXACTLY this format):\n" +
     "[00:00] [HOOK] CLOSE-UP - Mango (sarcastic): C'est ca, ton grand secret ?\n" +
     "[00:03] OVER-THE-SHOULDER - Aicha (cold): Tais-toi. Elle arrive.\n" +
@@ -1096,20 +1012,16 @@ function scriptBody(ep) {
     rehookEx +
     "\nShot types are MANDATORY on EVERY line, in ENGLISH. If a line is the HOOK or RE-HOOK, add [HOOK] or [RE-HOOK] right after the timestamp.\n" +
     JSONNOTE +
-    '\nIMPORTANT: the "script" field must be an ARRAY of lines (not a single string). Each line is a separate element, which avoids quote-escaping issues. Dialogue text is in FRENCH.' +
-    '\nFormat: {"titre":"in French","resume":"3 sentences in French","question_fin":"in French' + (isLast(ep) ? " (punchline)" : "") + '","script":["[00:00] [HOOK] CLOSE-UP - Mango (sarcastic): C\'est ca, ton grand secret ?","[00:03] OVER-THE-SHOULDER - Aicha (cold): Tais-toi."]' + (P.rec !== "oui" ? ',"personnages":[{"nom":"","role":"","visuel":""}]' : '') + '}';
+    '\nIMPORTANT: the "script" field must be an ARRAY of lines. Dialogue text is in FRENCH.' +
+    '\nFormat: {"titre":"in French","resume":"3 phrases en français","question_fin":"in French' + (isLast(ep) ? " (chute)" : "") + '","script":["[00:00] [HOOK] CLOSE-UP - Mango (sarcastic): C\'est ca, ton grand secret ?","[00:03] OVER-THE-SHOULDER - Aicha (cold): Tais-toi."]' + (P.rec !== "oui" ? ',"personnages":[{"nom":"","role":"","visuel":""}]' : '') + '}';
 }
 
-/* ============================================================
-   APPLY SCRIPT
-   ============================================================ */
 function applyScript(ep, r) {
-  if (!r || !r.script) throw new Error("empty");
+  if (!r || !r.script) throw new Error("vide");
   ep = epBy(ep.n) || ep;
   ep.titre = r.titre || ep.titre;
   ep.resume = Array.isArray(r.resume) ? r.resume.join(" ") : String(r.resume || "");
   ep.fin = Array.isArray(r.question_fin) ? r.question_fin.join(" ") : String(r.question_fin || "");
-
   if (Array.isArray(r.script)) {
     ep.script = r.script.map(function (line) {
       if (typeof line === "string") return line;
@@ -1133,38 +1045,37 @@ function applyScript(ep, r) {
   } else {
     ep.script = String(r.script || "");
   }
-
   if (P.rec !== "oui") ep.cast = (r.personnages || []).map(function (p) {
     return { id: uid(), nom: p.nom || "", role: p.role || "", visuel: p.visuel || "", ok: false };
   });
 }
-function genScript(ep) { return ask("the script of " + unit(ep.n), scriptBody(ep), function (r) { applyScript(ep, r); }); }
+function genScript(ep) { return ask("le script de " + unit(ep.n), scriptBody(ep), function (r) { applyScript(ep, r); }); }
 
 /* ============================================================
-   PLANS — all technical fields in ENGLISH
+   PLANS — champs techniques en anglais
    ============================================================ */
 function plansBody(ep, scriptText) {
   var minPlans = Math.ceil(P.duree / 10);
   var maxPlans = Math.ceil(P.duree / 3);
   var durationsList = DUREES_PLAN.map(function (x) { return x.v + " s (" + x.frames + " frames)"; }).join(", ");
   return "Visual style: " + phrase() + "\n" + bible(ep) + "\n\nScript:\n" + scriptText + "\n\n" +
-    "Break this script into shots. The total video must be " + P.duree + " seconds. " +
+    "Break this script into shots. Total video must be " + P.duree + " seconds. " +
     "IMPORTANT: YOU decide the duration of EACH shot based on EMOTION and PACE of the scene, NOT on a fixed average.\n" +
     "DURATION RULES BY EMOTION:\n" +
     "- [HOOK] / [RE-HOOK] / shock / twist / punchline -> SHORT shot (5 to 6 s)\n" +
     "- Tense dialogue / argument / confrontation -> 5 to 7 s (fast pace)\n" +
     "- Silence / contemplation / strong emotion / camera stare -> LONG shot (8 to 10 s)\n" +
     "- Physical action / movement -> 6 to 8 s\n" +
-    "- Cliffhanger ending -> 6 to 8 s, end on a close-up or a striking wide shot.\n" +
-    "Each shot must use ONE of the exact durations required by Agnes: " + durationsList + ". " +
+    "- Cliffhanger ending -> 6 to 8 s, end on a close-up or striking wide shot.\n" +
+    "Each shot must use ONE of these exact durations: " + durationsList + ". " +
     "You will need between " + minPlans + " and " + maxPlans + " shots + 2 spare shots. " +
     "For each shot: place IN FRENCH, 2 characters max, action IN ENGLISH (short, no accents, e.g. 'fast nervous hand gesture'), shot type IN ENGLISH (wide shot / medium shot / close-up), line IN FRENCH (12 words max), who speaks (name or 'personne'), emotion IN ENGLISH (panicked / cold / angry / scared / happy / surprised), pace IN ENGLISH (calm / fast / tense / shock). " +
-    "prompt_image IN ENGLISH describes ONLY the scene (shot type, positions, action, light). Do NOT add appearance or style. prompt_video IN ENGLISH: movement only, IN ENGLISH. " +
+    "prompt_image IN ENGLISH describes ONLY the scene (shot type, positions, action, light). Do NOT add appearance or style. prompt_video IN ENGLISH: movement only. " +
     "Sum of durations for shots 1 to N (without spare shots) = " + P.duree + " seconds (tolerance +/-3 s). " + JSONNOTE +
     '\nFormat: {"plans":[{"n":1,"duree_s":6,"lieu":"in French","personnages":["name"],"action":"in English","cadrage":"medium shot","replique":"in French","qui_parle":"name","emotion":"panicked","rythme":"tense","prompt_image":"in English","prompt_video":"in English","reserve":false}]}';
 }
 function applyPlans(ep, r) {
-  if (!r || !r.plans || !r.plans.length) throw new Error("empty");
+  if (!r || !r.plans || !r.plans.length) throw new Error("vide");
   ep = epBy(ep.n) || ep;
   ep.plans = r.plans.map(function (x, i) {
     var dv = parseFloat(String(x.duree_s).replace(",", ".")) || P.dureePlan;
@@ -1183,52 +1094,52 @@ function applyPlans(ep, r) {
     };
   });
 }
-function genPlans(ep) { return ask("the storyboard of " + unit(ep.n), plansBody(ep, ep.script), function (r) { applyPlans(ep, r); }); }
+function genPlans(ep) { return ask("le storyboard de " + unit(ep.n), plansBody(ep, ep.script), function (r) { applyPlans(ep, r); }); }
 
 /* ============================================================
-   EDITING — instructions in ENGLISH, output in FRENCH
+   MONTAGE — instructions EN, rendu FR
    ============================================================ */
 function montBody(ep, list, titre, fin) {
-  return "Series: " + (P.titre || "untitled") + ". Episode " + ep.n + " : " + titre + "\nShots:\n" + list + "\nEnding question: " + fin + "\nSpeech method: " + SPEECH.filter(function (s) { return s.id === P.speech; })[0].t + "\n\n" +
-    "Write IN FRENCH, with these 4 headings:\n" +
-    "1. CAPCUT EDIT PLAN (order, kept durations, precise cuts).\n" +
-    "2. SUBTITLES AND ON-SCREEN TEXT (chosen styles: " + sousPhrase() + ").\n" +
-    "3. SOUNDS - YOU must yourself pick the music and sound effects, do not let me search. For each sound, give EXACTLY:\n" +
-    "   - Precise moment in the video (e.g. 00:00 to 00:03, or shot 4)\n" +
-    "   - Type (background music / ambient sound / one-shot effect)\n" +
-    "   - Name of the track or sound as it appears in the library\n" +
-    "   - Author / channel\n" +
-    "   - Free platform where to find it: Pixabay Music, Freesound.org, YouTube Audio Library, Free Music Archive, Mixkit\n" +
-    "   - Why this sound fits this scene (1 sentence)\n" +
-    "   Use ONLY royalty-free sounds available on these platforms. Pick a background music coherent with the tone (" + P.ton + ") and adjust its volume at key moments (HOOK, RE-HOOK, ending).\n" +
-    "4. PUBLISHING (description, hashtags, cover text, first comment).\n" +
-    "Final duration: " + (P.duree - 5) + " to " + (P.duree + 5) + " s.";
+  return "Series: " + (P.titre || "sans titre") + ". Episode " + ep.n + " : " + titre + "\nShots:\n" + list + "\nEnding question: " + fin + "\nSpeech method: " + SPEECH.filter(function (s) { return s.id === P.speech; })[0].t + "\n\n" +
+    "Write the output IN FRENCH, with these 4 headings:\n" +
+    "1. PLAN DE MONTAGE CAPCUT (ordre, durées gardées, coupes précises).\n" +
+    "2. SOUS-TITRES ET TEXTES À L'ÉCRAN (styles choisis : " + sousPhrase() + ").\n" +
+    "3. SONS — Tu dois TOI-MÊME choisir la musique et les bruitages, pas me laisser chercher. Pour chaque son, donne EXACTEMENT :\n" +
+    "   • Moment précis dans la vidéo (ex: 00:00 à 00:03, ou plan 4)\n" +
+    "   • Type (musique de fond / bruitage d'ambiance / effet ponctuel)\n" +
+    "   • Nom de la piste ou du son tel qu'il apparaît dans la banque\n" +
+    "   • Auteur / chaîne\n" +
+    "   • Plateforme gratuite où le trouver : Pixabay Music, Freesound.org, YouTube Audio Library, Free Music Archive, Mixkit\n" +
+    "   • Pourquoi ce son colle à cette scène (1 phrase)\n" +
+    "   N'utilise QUE des sons libres de droits disponibles sur ces plateformes. Choisis une musique de fond cohérente avec le ton (" + P.ton + ") et adapte son volume aux moments clés (HOOK, RE-HOOK, fin).\n" +
+    "4. PUBLICATION (description, hashtags, texte de couverture, premier commentaire).\n" +
+    "Durée finale : " + (P.duree - 5) + " à " + (P.duree + 5) + " s.";
 }
 function montList(ep) {
   return ep.plans.filter(function (p) { return !p.reserve; }).map(function (p) {
-    return "Shot " + p.n + " (" + p.duree + " s, " + p.lieu + ") : " + p.action + (has(p.replique) ? " | " + p.qui + " says: " + p.replique : "");
+    return "Plan " + p.n + " (" + p.duree + " s, " + p.lieu + ") : " + p.action + (has(p.replique) ? " | " + p.qui + " dit : " + p.replique : "");
   }).join("\n");
 }
 function genMontage(ep) {
   return new Promise(function (resolve, reject) {
-    if (!getAgnesKey()) { toast("Add your Agnes key."); reject(new Error("no key")); return; }
-    R.busy = { label: "editing and publishing" }; overlay();
+    if (!getAgnesKey()) { toast("Ajoute ta clé Agnes."); reject(new Error("no key")); return; }
+    R.busy = { label: "le montage et la publication" }; overlay();
     callAgnesText("You write in French, no JSON, readable text.", montBody(ep, montList(ep), ep.titre, ep.fin)).then(function (txt) {
       R.busy = null; overlay();
       var e2 = epBy(ep.n) || ep;
       e2.montage = txt;
-      save(); render(); toast("Editing ready.");
+      save(); render(); toast("Montage prêt.");
       resolve(txt);
     }).catch(function (e) {
       R.busy = null; overlay();
-      toast("Failed: " + (e.message || "").slice(0, 80));
+      toast("Échec : " + (e.message || "").slice(0, 80));
       reject(e);
     });
   });
 }
 
 /* ============================================================
-   CHAIN / SEASON
+   CHAÎNE / SAISON
    ============================================================ */
 function todoEps() {
   var t = [], n, e;
@@ -1244,14 +1155,14 @@ async function chainEpisode(n, label) {
   var ep = epBy(n);
   if (!has(ep.script)) { stopCheck(); setSub(label + " · 1/3 script"); await genScript(ep); }
   ep = epBy(n);
-  if (!ep.plans.length) { stopCheck(); setSub(label + " · 2/3 shots"); await genPlans(ep); }
+  if (!ep.plans.length) { stopCheck(); setSub(label + " · 2/3 plans"); await genPlans(ep); }
   ep = epBy(n);
-  if (!has(ep.montage)) { stopCheck(); setSub(label + " · 3/3 editing"); await genMontage(ep); }
+  if (!has(ep.montage)) { stopCheck(); setSub(label + " · 3/3 montage"); await genMontage(ep); }
 }
 async function runChain(job) {
   R.chain = { sub: "", stop: false };
-  try { await job(); toast("Done. Everything is ready."); }
-  catch (e) { if (e && e.code === "cancelled") toast("Stopped. What is finished is kept."); }
+  try { await job(); toast("Terminé. Tout est prêt."); }
+  catch (e) { if (e && e.code === "cancelled") toast("Arrêté. Ce qui est fini est gardé."); }
   R.chain = null; R.busy = null; overlay(); render();
 }
 async function seasonJob() {
@@ -1259,33 +1170,33 @@ async function seasonJob() {
   for (k = 0; k < todo.length; k++) {
     n = todo[k]; stopCheck();
     if (!epBy(n)) { P.eps.push(newEp(n)); save(); }
-    await chainEpisode(n, (P.nb === 1 ? "The video" : "Episode " + n + "/" + P.nb) + " (" + (k + 1) + "/" + todo.length + ")");
+    await chainEpisode(n, (P.nb === 1 ? "La vidéo" : "Épisode " + n + "/" + P.nb) + " (" + (k + 1) + "/" + todo.length + ")");
   }
 }
-function genSeason() { if (!todoEps().length) { toast("Everything is already prepared."); return; } runChain(seasonJob); }
+function genSeason() { if (!todoEps().length) { toast("Tout est déjà préparé."); return; } runChain(seasonJob); }
 
 /* ============================================================
-   REVIEW — instructions in ENGLISH, output in FRENCH
+   BILAN — instructions EN, rendu FR
    ============================================================ */
 function genBilan(ep) {
   var st = ep.stats || statsFresh();
-  var prompt = "Series: " + (P.titre || "untitled") + ". " + P.concept + "\nEpisode " + ep.n + " : " + ep.titre + ". Summary: " + ep.resume + "\nScript excerpt:\n" + String(ep.script || "").slice(0, 700) + "\n\n" +
+  var prompt = "Series: " + (P.titre || "sans titre") + ". " + P.concept + "\nEpisode " + ep.n + " : " + ep.titre + ". Summary: " + ep.resume + "\nScript excerpt:\n" + String(ep.script || "").slice(0, 700) + "\n\n" +
     "Stats: " + st.vues + " views, " + st.r3 + " % still watching at 3 s, " + st.moy + " s average, " + st.part + " shares." + (has(st.comm) ? " Comments: " + st.comm : "") +
     (has(P.lecons) ? "\nLessons already noted:\n" + P.lecons + "\n" : "") +
-    "\nDiagnosis in 3 sentences max (in French), 3 short rules (in French), 1 test for the next episode (in French)." + JSONNOTE +
+    "\nWrite the output IN FRENCH: diagnosis in 3 sentences max, 3 short rules, 1 test for the next episode." + JSONNOTE +
     '\nFormat: {"diagnostic":"in French","regles":["in French","in French","in French"],"test":"in French"}';
-  return ask("the review of episode " + ep.n, prompt, function (r) {
-    if (!r || !r.diagnostic) throw new Error("empty");
+  return ask("le bilan de l'épisode " + ep.n, prompt, function (r) {
+    if (!r || !r.diagnostic) throw new Error("vide");
     var e2 = epBy(ep.n) || ep;
-    e2.bilan = r.diagnostic + (has(r.test) ? "\nTo test: " + r.test : "");
-    var add = "Episode " + ep.n + " : " + (r.regles || []).join(" ; ") + (has(r.test) ? " | Test: " + r.test : "");
-    var l = (P.lecons || "").split("\n").filter(function (x) { return has(x) && x.indexOf("Episode " + ep.n + " :") !== 0; });
+    e2.bilan = r.diagnostic + (has(r.test) ? "\nÀ tester : " + r.test : "");
+    var add = "Épisode " + ep.n + " : " + (r.regles || []).join(" ; ") + (has(r.test) ? " | Test : " + r.test : "");
+    var l = (P.lecons || "").split("\n").filter(function (x) { return has(x) && x.indexOf("Épisode " + ep.n + " :") !== 0; });
     l.push(add);
     P.lecons = l.slice(-12).join("\n");
   });
 }
 /* ============================================================
-   STEPPER / PROGRESS BAR
+   BANDEAU D'ÉTAPES
    ============================================================ */
 function stageInfo() {
   var refs = P.persos.concat(P.lieux).concat(P.eps.reduce(function (a, x) { return a.concat(x.cast || []); }, []));
@@ -1294,44 +1205,38 @@ function stageInfo() {
   var pl = ep ? ep.plans.filter(function (p) { return !p.reserve; }) : [];
   var cl = pl.filter(function (p) { return p.st === 2; }).length;
   var s = [
-    { k: "Idea", v: has(P.idee) && P.style.length ? "ok" : "", tab: "univers" },
-    { k: P.rec === "oui" ? "Cast" : "Concept", v: P.persos.length ? P.persos.length + " chars" : (has(P.concept) ? "done" : ""), ok: P.persos.length > 0 || (P.rec !== "oui" && has(P.concept)), tab: "univers" },
-    { k: "Universe", v: P.lieux.length ? P.lieux.length + " places" : "", ok: P.lieux.length > 0 && has(P.concept), tab: "univers" },
-    { k: "References", v: refs.length ? rd + "/" + refs.length : "", ok: refs.length > 0 && rd === refs.length, tab: "refs" },
-    { k: "Shots", v: pl.length ? cl + "/" + pl.length + " clips" : "", ok: pl.length > 0 && cl === pl.length, tab: "eps" },
-    { k: "Episode", v: ep && has(ep.montage) ? "ready" : "", ok: !!(ep && has(ep.montage)), tab: "eps" }
+    { k: "Idée", v: has(P.idee) && P.style.length ? "ok" : "", tab: "univers" },
+    { k: P.rec === "oui" ? "Casting" : "Concept", v: P.persos.length ? P.persos.length + " perso" : (has(P.concept) ? "fait" : ""), ok: P.persos.length > 0 || (P.rec !== "oui" && has(P.concept)), tab: "univers" },
+    { k: "Univers", v: P.lieux.length ? P.lieux.length + " lieux" : "", ok: P.lieux.length > 0 && has(P.concept), tab: "univers" },
+    { k: "Références", v: refs.length ? rd + "/" + refs.length : "", ok: refs.length > 0 && rd === refs.length, tab: "refs" },
+    { k: "Plans", v: pl.length ? cl + "/" + pl.length + " clips" : "", ok: pl.length > 0 && cl === pl.length, tab: "eps" },
+    { k: "Épisode", v: ep && has(ep.montage) ? "prêt" : "", ok: !!(ep && has(ep.montage)), tab: "eps" }
   ];
-  s[0].ok = s[0].v === "ok"; s[0].v = s[0].ok ? "done" : "";
+  s[0].ok = s[0].v === "ok"; s[0].v = s[0].ok ? "fait" : "";
   var found = false;
   s.forEach(function (x) { x.cur = !found && !x.ok; if (x.cur) found = true; });
   return s;
 }
 function stripHtml() {
   return '<div class="strip" id="strip">' + stageInfo().map(function (x) {
-    return '<button type="button" class="stage' + (x.ok ? " ok" : "") + (x.cur ? " cur" : "") + '" data-act="tab" data-v="' + x.tab + '"><small>' + (x.ok ? "✓ done" : (x.v || "to do")) + '</small><b>' + x.k + '</b></button>';
+    return '<button type="button" class="stage' + (x.ok ? " ok" : "") + (x.cur ? " cur" : "") + '" data-act="tab" data-v="' + x.tab + '"><small>' + (x.ok ? "✓ fait" : (x.v || "à faire")) + '</small><b>' + x.k + '</b></button>';
   }).join("") + '</div>';
 }
 function refreshStrip() { var s = document.getElementById("strip"); if (s) s.outerHTML = stripHtml(); }
 
-/* ============================================================
-   NAVIGATION
-   ============================================================ */
 function goPrev() {
   var order = ["idees", "univers", "refs", "eps"];
   var idx = order.indexOf(R.tab);
   if (idx > 0) { go(order[idx - 1]); toast("← " + order[idx - 1]); }
-  else toast("Already at start.");
+  else toast("Déjà au début.");
 }
 function goNext() {
   var order = ["idees", "univers", "refs", "eps"];
   var idx = order.indexOf(R.tab);
   if (idx < order.length - 1) { go(order[idx + 1]); toast("→ " + order[idx + 1]); }
-  else toast("Already at end.");
+  else toast("Déjà à la fin.");
 }
 
-/* ============================================================
-   MAIN RENDER
-   ============================================================ */
 var $v = document.getElementById("view");
 function go(tab, ep) { R.tab = tab; R.ep = ep || 0; R.mont = false; R.arm = ""; render(); window.scrollTo(0, 0); }
 function render() {
@@ -1340,14 +1245,14 @@ function render() {
     if (b.getAttribute("data-tab") === R.tab) b.setAttribute("aria-current", "page");
     else b.removeAttribute("aria-current");
   });
-  var h = '<header class="proj"><div class="row" style="justify-content:space-between;align-items:center;gap:8px"><div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="kicker">Series factory</span><b>' + esc(P.titre || "My series") + '</b></div><div class="row" style="gap:6px;flex:none"><button type="button" class="chip small" data-act="nav-prev" title="Previous step">← Prev.</button><button type="button" class="chip small" data-act="nav-next" title="Next step">Next →</button></div></div></header>' + stripHtml();
+  var h = '<header class="proj"><div class="row" style="justify-content:space-between;align-items:center;gap:8px"><div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="kicker">Fabrique de séries</span><b>' + esc(P.titre || "Ma série") + '</b></div><div class="row" style="gap:6px;flex:none"><button type="button" class="chip small" data-act="nav-prev" title="Étape précédente">← Préc.</button><button type="button" class="chip small" data-act="nav-next" title="Étape suivante">Suiv. →</button></div></div></header>' + stripHtml();
 
   if (R.tab === "idees") h += ideesHtml();
   else if (R.tab === "univers") h += universHtml();
   else if (R.tab === "refs") h += refsHtml();
   else h += R.ep ? (R.mont && has((epBy(R.ep) || {}).montage || "") ? montView(epBy(R.ep)) : epHtml(epBy(R.ep))) : epsHtml();
 
-  h += '<div class="nav-bottom"><button type="button" class="btn ghost" data-act="nav-prev">← Previous</button><button type="button" class="btn" data-act="nav-next">Next →</button></div>';
+  h += '<div class="nav-bottom"><button type="button" class="btn ghost" data-act="nav-prev">← Précédent</button><button type="button" class="btn" data-act="nav-next">Suivant →</button></div>';
   $v.innerHTML = h;
   if (wasOpen) { var dk = document.querySelector("#view details.acc[data-keep]"); if (dk) dk.open = true; }
 }
@@ -1358,9 +1263,6 @@ function bind(path, val, rows, label, hint) {
       : '<input type="text" id="b-' + path + '" data-path="' + path + '" value="' + esc(val) + '">') + '</div>';
 }
 
-/* ============================================================
-   SCRIPT — COLORED BLOCKS
-   ============================================================ */
 function parseScriptLine(line) {
   var s = String(line || "").trim();
   if (!s) return null;
@@ -1412,51 +1314,43 @@ function scriptBlocksHtml(scriptText) {
   }).join("") + '</div>';
 }
 
-/* ============================================================
-   IDEAS TAB
-   ============================================================ */
 function ideesHtml() {
-  var h = '<header class="hero"><span class="kicker">Step 1</span><h1>Ideas</h1><p class="muted">Pick a mood. The concept is generated from the Universe tab.</p></header>';
-  h += '<section class="glass card"><h2>Mood</h2><div class="chips">' + AMBS.map(function (a) {
+  var h = '<header class="hero"><span class="kicker">Étape 1</span><h1>Idées</h1><p class="muted">Choisis une ambiance. Le concept se génère depuis l\'onglet Univers.</p></header>';
+  h += '<section class="glass card"><h2>Ambiance</h2><div class="chips">' + AMBS.map(function (a) {
     return '<button type="button" class="chip small" data-act="amb" data-v="' + a.id + '" aria-pressed="' + (P.ambs.indexOf(a.id) >= 0) + '">' + esc(a.nom) + '</button>';
   }).join("") + '</div>' +
-    '<p class="small muted" style="margin-top:10px">Go to the Universe tab to write your idea and generate the concept, cast and universe.</p>' +
+    '<p class="small muted" style="margin-top:10px">Rends-toi dans l\'onglet Univers pour écrire ton idée et générer le concept, le casting et l\'univers complet.</p>' +
     '<div class="rowbtns" style="margin-top:8px">' +
-    '<button type="button" class="btn big" data-act="surprise">🎲 Surprise me (title + story)</button>' +
-    '<button type="button" class="btn ghost big" data-act="tab" data-v="univers">Go to Universe ›</button>' +
+    '<button type="button" class="btn big" data-act="surprise">🎲 Surprends-moi (titre + histoire)</button>' +
+    '<button type="button" class="btn ghost big" data-act="tab" data-v="univers">Aller à l\'Univers ›</button>' +
     '</div></section>';
   return h;
 }
 
-/* ============================================================
-   UNIVERSE TAB
-   ============================================================ */
 function universHtml() {
   var ready = has(P.idee) && P.style.length > 0;
   var hasU = P.persos.length > 0 || has(P.concept);
-  var h = '<header class="hero"><span class="kicker">Step 2</span><h1>Universe</h1><p class="muted">Format, idea, visual style, Agnes key.</p></header>';
-
+  var h = '<header class="hero"><span class="kicker">Étape 2</span><h1>Univers</h1><p class="muted">Le format, l\'idée, le style visuel, la clé Agnes.</p></header>';
   h += agnesPanelHtml();
-
-  h += '<section class="glass card"><h2>1. My format</h2>' +
-    '<div class="fld"><span class="q">Number of videos</span><div class="chips">' +
-    NBS.map(function (n) { return '<button type="button" class="chip" data-act="nb" data-v="' + n + '" aria-pressed="' + (P.nb === n) + '">' + (n === 1 ? "1 video" : n + " episodes") + '</button>'; }).join("") +
+  h += '<section class="glass card"><h2>1. Mon format</h2>' +
+    '<div class="fld"><span class="q">Nombre de vidéos</span><div class="chips">' +
+    NBS.map(function (n) { return '<button type="button" class="chip" data-act="nb" data-v="' + n + '" aria-pressed="' + (P.nb === n) + '">' + (n === 1 ? "1 vidéo" : n + " épisodes") + '</button>'; }).join("") +
     '</div></div>' +
-    '<div class="fld"><span class="q">Total video duration<span class="q-hint">Number of shots is calculated automatically from the script.</span></span><div class="chips">' +
+    '<div class="fld"><span class="q">Durée totale de la vidéo<span class="q-hint">Nombre de plans calculé automatiquement selon le script.</span></span><div class="chips">' +
     DUREES_TOTALES.map(function (x) { return '<button type="button" class="chip" data-act="duree" data-v="' + x.v + '" aria-pressed="' + (P.duree === x.v) + '">' + x.t + '</button>'; }).join("") +
     '</div></div>' +
-    '<div class="fld"><span class="q">Recurring characters?</span><div class="opt">' +
+    '<div class="fld"><span class="q">Personnages récurrents ?</span><div class="opt">' +
     RECS.map(function (r) { return '<button type="button" class="optb" data-act="rec" data-v="' + r.id + '" aria-pressed="' + (P.rec === r.id) + '"><b>' + esc(r.t) + '</b><span>' + esc(r.d) + '</span></button>'; }).join("") +
     '</div></div></section>';
 
-  h += '<section class="glass card"><h2>2. My idea</h2>' +
-    bind("titre", P.titre, 0, "Title") +
-    bind("idee", P.idee, 5, "My idea or my script", "One sentence is enough. Example: a neighborhood laundromat where each machine reveals a secret.") +
+  h += '<section class="glass card"><h2>2. Mon idée</h2>' +
+    bind("titre", P.titre, 0, "Titre") +
+    bind("idee", P.idee, 5, "Mon idée ou mon script", "Une phrase suffit. Exemple : une laverie de quartier où chaque machine révèle un secret.") +
     '</section>';
 
-  h += '<section class="glass card"><h2>3. My look</h2><div class="fld"><span class="q">Visual styles (max ' + MAX_STYLES + ')<span class="q-hint">Style is applied to all images and videos of the series.</span></span>' +
-    '<input type="search" id="style-search" placeholder="🔍 Search a style…" style="margin-top:8px;margin-bottom:8px">' +
-    '<select id="style-add" data-act="styles-add" style="margin-bottom:8px"><option value="">+ Add a style…</option>' +
+  h += '<section class="glass card"><h2>3. Mon look</h2><div class="fld"><span class="q">Styles visuels (max ' + MAX_STYLES + ')<span class="q-hint">Le style est appliqué à toutes les images et vidéos de la série.</span></span>' +
+    '<input type="search" id="style-search" placeholder="🔍 Rechercher un style…" style="margin-top:8px;margin-bottom:8px">' +
+    '<select id="style-add" data-act="styles-add" style="margin-bottom:8px"><option value="">+ Ajouter un style…</option>' +
     GROUPS.map(function (g, gi) {
       return '<optgroup label="' + esc(g) + '">' + STYLES.filter(function (s) { return s.g === gi; }).map(function (s) {
         return '<option value="' + s.id + '">' + (s.emoji ? s.emoji + ' ' : '') + esc(s.nom) + '</option>';
@@ -1466,78 +1360,72 @@ function universHtml() {
     '<div class="chips" id="style-chips">' +
     (styList().length
       ? styList().map(function (s) { return '<button type="button" class="chip small" data-act="style-remove" data-v="' + s.id + '" aria-pressed="true">✓ ' + (s.emoji ? s.emoji + ' ' : '') + esc(s.nom) + ' ✕</button>'; }).join("")
-      : '<p class="small muted">No style — prompts will be generic.</p>') +
+      : '<p class="small muted">Aucun style — les prompts seront génériques.</p>') +
     '</div></div>' +
-    '<details class="glass acc" data-keep="1"><summary><div><b>Refine: skin, complexion, eyes, captions</b><br><span>' + (P.skin || P.teints.length || P.yeux.length || sousList().length > 1 ? "Settings chosen" : "Optional") + '</span></div></summary><div class="in">' +
-    '<div class="fld"><span class="q">Skin rendering</span><div class="chips">' + SKINS.map(function (k) { return '<button type="button" class="chip small" data-act="skin" data-v="' + k.id + '" aria-pressed="' + (P.skin === k.id) + '" title="' + esc(k.d) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
-    '<div class="fld"><span class="q">Complexions</span><div class="chips">' + TEINTS.map(function (k) { return '<button type="button" class="chip small" data-act="teint" data-v="' + k.id + '" aria-pressed="' + (P.teints.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
-    '<div class="fld"><span class="q">Eyes (multiple possible)</span><div class="chips">' + YEUX.map(function (k) { var arr = Array.isArray(P.yeux) ? P.yeux : []; return '<button type="button" class="chip small" data-act="yeux" data-v="' + k.id + '" aria-pressed="' + (arr.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
-    '<div class="fld"><span class="q">Captions</span><div class="chips">' + SOUS.map(function (k) { return '<button type="button" class="chip small" data-act="sous" data-v="' + k.id + '" aria-pressed="' + (sousList().indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
-    bind("custom", P.custom, 2, "My personal touch", "Added to the style phrase.") +
+    '<details class="glass acc" data-keep="1"><summary><div><b>Affiner : peau, teint, regard, sous-titres</b><br><span>' + (P.skin || P.teints.length || P.yeux.length || sousList().length > 1 ? "Réglages choisis" : "Facultatif") + '</span></div></summary><div class="in">' +
+    '<div class="fld"><span class="q">Rendu de peau</span><div class="chips">' + SKINS.map(function (k) { return '<button type="button" class="chip small" data-act="skin" data-v="' + k.id + '" aria-pressed="' + (P.skin === k.id) + '" title="' + esc(k.d) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
+    '<div class="fld"><span class="q">Teints</span><div class="chips">' + TEINTS.map(function (k) { return '<button type="button" class="chip small" data-act="teint" data-v="' + k.id + '" aria-pressed="' + (P.teints.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
+    '<div class="fld"><span class="q">Regard (plusieurs possibles)</span><div class="chips">' + YEUX.map(function (k) { var arr = Array.isArray(P.yeux) ? P.yeux : []; return '<button type="button" class="chip small" data-act="yeux" data-v="' + k.id + '" aria-pressed="' + (arr.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
+    '<div class="fld"><span class="q">Sous-titres</span><div class="chips">' + SOUS.map(function (k) { return '<button type="button" class="chip small" data-act="sous" data-v="' + k.id + '" aria-pressed="' + (sousList().indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
+    bind("custom", P.custom, 2, "Mon détail à moi", "Ajouté à la phrase de style.") +
     '</div></details>' +
-    '<div class="fld" style="margin-top:10px"><span class="q">Final style phrase</span><pre class="fin">' + esc(phrase() || "Pick a style to see it appear.") + '</pre>' + (skinPhrase() ? '<p class="small muted">Skin/complexion bonus: ' + esc(skinPhrase()) + '</p>' : '') + '</div></section>';
+    '<div class="fld" style="margin-top:10px"><span class="q">Phrase de style finale</span><pre class="fin">' + esc(phrase() || "Choisis un style pour la voir apparaître.") + '</pre>' + (skinPhrase() ? '<p class="small muted">Peau/teint en plus : ' + esc(skinPhrase()) + '</p>' : '') + '</div></section>';
 
-  h += '<section class="glass card"><h2>4. Voice</h2><div class="opt">' +
+  h += '<section class="glass card"><h2>4. Voix</h2><div class="opt">' +
     SPEECH.map(function (s) { return '<button type="button" class="optb" data-act="speech" data-v="' + s.id + '" aria-pressed="' + (P.speech === s.id) + '"><b>' + esc(s.t) + '</b><span>' + esc(s.d) + '</span></button>'; }).join("") +
     '</div></section>';
 
-  h += '<section class="glass card"><h2>5. Generate</h2>' +
-    '<div class="fld"><label class="q" for="video-engine">Video generation engine</label><select id="video-engine">' +
-    '<option value="agnes"' + (P.videoEngine === "agnes" ? " selected" : "") + '>🎬 Agnes (cloud, free)</option>' +
+  h += '<section class="glass card"><h2>5. Générer</h2>' +
+    '<div class="fld"><label class="q" for="video-engine">Moteur de génération vidéo</label><select id="video-engine">' +
+    '<option value="agnes"' + (P.videoEngine === "agnes" ? " selected" : "") + '>🎬 Agnes (cloud, gratuit)</option>' +
     '<option value="wangp"' + (P.videoEngine === "wangp" ? " selected" : "") + '>🖥️ WanGP (local, PC GPU)</option>' +
-    '<option value="ltx"' + (P.videoEngine === "ltx" ? " selected" : "") + '>⚡ LTX (cloud, paid)</option>' +
+    '<option value="ltx"' + (P.videoEngine === "ltx" ? " selected" : "") + '>⚡ LTX (cloud, payant)</option>' +
     '</select></div>' +
-    (P.videoEngine === "wangp" ? '<div class="fld"><label class="q">WanGP server URL</label><input type="text" id="wangp-url" data-path="wangpUrl" value="' + esc(P.wangpUrl || "") + '" placeholder="http://192.168.1.100:7860"><span class="q-hint">Local IP of your PC + WanGP port</span></div>' : '') +
-    (P.videoEngine === "ltx" ? '<div class="fld"><label class="q">LTX API key</label><input type="password" id="ltx-key" data-path="ltxApiKey" value="' + esc(P.ltxApiKey || "") + '" placeholder="ltx-..."></div>' : '') +
-    '<button type="button" class="btn big" data-act="genuni"' + (ready ? "" : " disabled") + '>' + (hasU ? "Regenerate" : "Generate") + (P.rec === "oui" ? " cast and universe" : " concept and universe") + '</button>' +
-    (!hasU && ready ? '<p class="small muted">Tap once to generate.</p>' : '') +
-    (hasU ? '<p class="small muted">Regenerating replaces everything after.</p>' : '') +
+    (P.videoEngine === "wangp" ? '<div class="fld"><label class="q">URL de ton serveur WanGP</label><input type="text" id="wangp-url" data-path="wangpUrl" value="' + esc(P.wangpUrl || "") + '" placeholder="http://192.168.1.100:7860"><span class="q-hint">IP locale de ton PC + port WanGP</span></div>' : '') +
+    (P.videoEngine === "ltx" ? '<div class="fld"><label class="q">Clé API LTX</label><input type="password" id="ltx-key" data-path="ltxApiKey" value="' + esc(P.ltxApiKey || "") + '" placeholder="ltx-..."></div>' : '') +
+    '<button type="button" class="btn big" data-act="genuni"' + (ready ? "" : " disabled") + '>' + (hasU ? "Régénérer" : "Générer") + (P.rec === "oui" ? " le casting et l'univers" : " le concept et l'univers") + '</button>' +
+    (!hasU && ready ? '<p class="small muted">Touche une fois pour générer.</p>' : '') +
+    (hasU ? '<p class="small muted">Régénérer remplace tout ce qui suit.</p>' : '') +
     '</section>';
 
   if (hasU) {
-    h += '<section class="glass card"><h2>My concept</h2>' +
-      bind("concept", P.concept, 3, "Concept phrase") +
-      bind("regle", P.regle, 2, "Special rule") +
-      bind("ton", P.ton, 2, "Tone") +
-      bind("arc", P.arc, Math.max(3, Math.min(P.nb, 10)), P.nb === 1 ? "Storyline" : "Series arc") +
+    h += '<section class="glass card"><h2>Mon concept</h2>' +
+      bind("concept", P.concept, 3, "Phrase concept") +
+      bind("regle", P.regle, 2, "Règle spéciale") +
+      bind("ton", P.ton, 2, "Ton") +
+      bind("arc", P.arc, Math.max(3, Math.min(P.nb, 10)), P.nb === 1 ? "Déroulé" : "Arc de la série") +
       '</section>';
-
     if (P.rec === "oui") {
-      h += '<section class="stack"><h2>Cast</h2>' + P.persos.map(function (p, i) {
-        return '<details class="glass acc"><summary><div><b>' + esc(p.nom || "Unnamed") + '</b><br><span>' + esc(p.role) + '</span></div></summary><div class="in">' +
-          bind("persos." + i + ".nom", p.nom, 0, "Name") +
-          bind("persos." + i + ".role", p.role, 0, "Role") +
-          bind("persos." + i + ".caractere", p.caractere, 0, "Personality") +
+      h += '<section class="stack"><h2>Casting</h2>' + P.persos.map(function (p, i) {
+        return '<details class="glass acc"><summary><div><b>' + esc(p.nom || "Sans nom") + '</b><br><span>' + esc(p.role) + '</span></div></summary><div class="in">' +
+          bind("persos." + i + ".nom", p.nom, 0, "Nom") +
+          bind("persos." + i + ".role", p.role, 0, "Rôle") +
+          bind("persos." + i + ".caractere", p.caractere, 0, "Caractère") +
           bind("persos." + i + ".secret", p.secret, 2, "Secret") +
-          bind("persos." + i + ".voix", p.voix, 2, "Voice (fr)") +
-          bind("persos." + i + ".voix_en", p.voix_en, 2, "Voice (en)") +
-          bind("persos." + i + ".visuel", p.visuel, 7, "Visual description (English)", "Without the style: added automatically.") +
-          '<button type="button" class="del" data-act="delperso" data-v="' + i + '">Delete</button></div></details>';
-      }).join("") + '<button type="button" class="btn ghost big" data-act="addperso">Add character</button></section>';
+          bind("persos." + i + ".voix", p.voix, 2, "Voix (fr)") +
+          bind("persos." + i + ".voix_en", p.voix_en, 2, "Voix (en)") +
+          bind("persos." + i + ".visuel", p.visuel, 7, "Description visuelle (anglais)", "Sans le style : ajouté automatiquement.") +
+          '<button type="button" class="del" data-act="delperso" data-v="' + i + '">Supprimer</button></div></details>';
+      }).join("") + '<button type="button" class="btn ghost big" data-act="addperso">Ajouter un personnage</button></section>';
     }
-
-    h += '<section class="stack"><h2>Places</h2>' + P.lieux.map(function (l, i) {
-      return '<details class="glass acc"><summary><div><b>' + esc(l.nom || "Unnamed") + '</b></div></summary><div class="in">' +
-        bind("lieux." + i + ".nom", l.nom, 0, "Name") +
-        bind("lieux." + i + ".visuel", l.visuel, 6, "Visual description (English)") +
-        '<button type="button" class="del" data-act="dellieu" data-v="' + i + '">Delete</button></div></details>';
-    }).join("") + '<button type="button" class="btn ghost big" data-act="addlieu">Add place</button></section>';
+    h += '<section class="stack"><h2>Lieux</h2>' + P.lieux.map(function (l, i) {
+      return '<details class="glass acc"><summary><div><b>' + esc(l.nom || "Sans nom") + '</b></div></summary><div class="in">' +
+        bind("lieux." + i + ".nom", l.nom, 0, "Nom") +
+        bind("lieux." + i + ".visuel", l.visuel, 6, "Description visuelle (anglais)") +
+        '<button type="button" class="del" data-act="dellieu" data-v="' + i + '">Supprimer</button></div></details>';
+    }).join("") + '<button type="button" class="btn ghost big" data-act="addlieu">Ajouter un lieu</button></section>';
   }
 
-  h += '<section class="glass card"><h2>Backup</h2>' +
-    '<button type="button" class="btn ghost big" data-act="hard-reload" style="color:var(--accent-text)">🔄 Reload app (clear cache)</button>' +
-    '<button type="button" class="btn ghost big" data-act="bkfile">Download my backup</button>' +
-    '<label class="btn ghost big" for="bk-file" style="display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer">Open a backup file</label><input type="file" id="bk-file" accept=".json" style="position:absolute;width:1px;height:1px;opacity:0">' +
-    '<textarea id="bk-in" placeholder="Paste a backup here to restore" style="min-height:80px"></textarea>' +
-    '<button type="button" class="btn ghost big" data-act="bkrestore">Restore</button>' +
-    '<button type="button" class="btn big" data-act="reset" style="background:linear-gradient(135deg,#E85A7D,#B5348F)">🗑️ Erase everything to start over</button></section>';
-
+  h += '<section class="glass card"><h2>Sauvegarde</h2>' +
+    '<button type="button" class="btn ghost big" data-act="hard-reload" style="color:var(--accent-text)">🔄 Recharger l\'app (vider le cache)</button>' +
+    '<button type="button" class="btn ghost big" data-act="bkfile">Télécharger ma sauvegarde</button>' +
+    '<label class="btn ghost big" for="bk-file" style="display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer">Ouvrir un fichier de sauvegarde</label><input type="file" id="bk-file" accept=".json" style="position:absolute;width:1px;height:1px;opacity:0">' +
+    '<textarea id="bk-in" placeholder="Colle ici une sauvegarde pour la restaurer" style="min-height:80px"></textarea>' +
+    '<button type="button" class="btn ghost big" data-act="bkrestore">Restaurer</button>' +
+    '<button type="button" class="btn big" data-act="reset" style="background:linear-gradient(135deg,#E85A7D,#B5348F)">🗑️ Tout effacer pour recommencer</button></section>';
   return h;
 }
 
-/* ============================================================
-   REFERENCES TAB
-   ============================================================ */
 function refPrompt(kind, visuel) {
   if (kind === "lieu") return "Empty background plate, no characters, no people. " + sentence(visuel) + " Wide establishing shot, eye level, no text, no logo, vertical 9:16. " + phrase() + ".";
   return "Character reference sheet. " + sentence(visuel) + " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
@@ -1548,93 +1436,82 @@ function refsHtml() {
   P.lieux.forEach(function (l, j) { all.push({ k: "lieu", o: l, path: "lieux." + j }); });
   P.eps.forEach(function (ep, ei) { (ep.cast || []).forEach(function (p, j) { all.push({ k: "perso", o: p, path: "eps." + ei + ".cast." + j }); }); });
   R.refs = all;
-
-  if (!all.length) return '<section class="glass empty"><h2>No references yet</h2><p class="muted">Generate your universe to get prompts.</p><button type="button" class="btn" data-act="tab" data-v="univers">Go to Universe</button></section>';
-
+  if (!all.length) return '<section class="glass empty"><h2>Pas encore de références</h2><p class="muted">Génère ton univers pour obtenir les prompts.</p><button type="button" class="btn" data-act="tab" data-v="univers">Aller à Univers</button></section>';
   var d = all.filter(function (x) { return x.o.ok; }).length;
-  var h = '<header class="hero"><span class="kicker">Step 3</span><h1>References</h1><p class="muted">' + d + ' of ' + all.length + ' done.</p></header>';
+  var h = '<header class="hero"><span class="kicker">Étape 3</span><h1>Références</h1><p class="muted">' + d + ' sur ' + all.length + ' faites.</p></header>';
   all.forEach(function (x, i) {
-    h += '<section class="glass card"><div class="row" style="justify-content:space-between"><h2>' + esc(x.o.nom || "Unnamed") + '</h2><span class="badge' + (x.o.ok ? " done" : "") + '">' + (x.k === "lieu" ? "Place" : "Character") + '</span></div>' +
-      '<div class="stack"><b class="small">Reference image (to attach in ChatGPT/Gemini)</b>' +
+    h += '<section class="glass card"><div class="row" style="justify-content:space-between"><h2>' + esc(x.o.nom || "Sans nom") + '</h2><span class="badge' + (x.o.ok ? " done" : "") + '">' + (x.k === "lieu" ? "Lieu" : "Personnage") + '</span></div>' +
+      '<div class="stack"><b class="small">Image de référence (à joindre dans ChatGPT/Gemini)</b>' +
       (x.o.refUri
-        ? '<div class="plan-thumb" style="max-width:200px"><img src="' + esc(x.o.refUri) + '" alt=""><div class="bar"><button type="button" class="btn ghost" data-act="ref-change" data-v="' + i + '">🔄 Change</button><button type="button" class="btn ghost" data-act="ref-clear" data-v="' + i + '" style="color:var(--warn)">🗑️</button></div></div>'
-        : '<button type="button" class="plan-drop" data-act="ref-upload" data-v="' + i + '">📥 Upload reference image</button>'
+        ? '<div class="plan-thumb" style="max-width:200px"><img src="' + esc(x.o.refUri) + '" alt=""><div class="bar"><button type="button" class="btn ghost" data-act="ref-change" data-v="' + i + '">🔄 Changer</button><button type="button" class="btn ghost" data-act="ref-clear" data-v="' + i + '" style="color:var(--warn)">🗑️</button></div></div>'
+        : '<button type="button" class="plan-drop" data-act="ref-upload" data-v="' + i + '">📥 Télécharger l\'image de référence</button>'
       ) +
       '<input type="file" class="ref-file-input" id="rf-in-' + i + '" accept="image/*" data-v="' + i + '" style="display:none">' +
-      '<p class="small muted">This image ensures the ' + (x.k === "lieu" ? "decor" : "face") + ' stays consistent across every shot.</p>' +
+      '<p class="small muted">Cette image garantit la cohérence du ' + (x.k === "lieu" ? "décor" : "visage") + ' dans tous les plans.</p>' +
       '</div>' +
-      '<div class="stack"><b class="small">Prompt (English)</b><pre class="fin" id="rf' + i + '">' + esc(refPrompt(x.k, x.o.visuel)) + '</pre><button type="button" class="btn ghost" data-act="copypre" data-v="rf' + i + '">📋 Copy prompt</button></div>' +
-      '<button type="button" class="chip" data-act="refok" data-v="' + i + '" aria-pressed="' + !!x.o.ok + '">' + (x.o.ok ? "✓ Reference done" : "Mark as done") + '</button>' +
-      '<details class="glass acc"><summary><div><b>Edit</b></div></summary><div class="in">' +
-      bind(x.path + ".nom", x.o.nom, 0, "Name") +
-      bind(x.path + ".visuel", x.o.visuel, 6, "Visual description (English)") +
+      '<div class="stack"><b class="small">Prompt (anglais)</b><pre class="fin" id="rf' + i + '">' + esc(refPrompt(x.k, x.o.visuel)) + '</pre><button type="button" class="btn ghost" data-act="copypre" data-v="rf' + i + '">📋 Copier le prompt</button></div>' +
+      '<button type="button" class="chip" data-act="refok" data-v="' + i + '" aria-pressed="' + !!x.o.ok + '">' + (x.o.ok ? "✓ Référence faite" : "Marquer comme faite") + '</button>' +
+      '<details class="glass acc"><summary><div><b>Modifier</b></div></summary><div class="in">' +
+      bind(x.path + ".nom", x.o.nom, 0, "Nom") +
+      bind(x.path + ".visuel", x.o.visuel, 6, "Description visuelle (anglais)") +
       '</div></details></section>';
   });
   return h;
 }
 
-/* ============================================================
-   EPISODES LIST
-   ============================================================ */
 function epsHtml() {
-  var h = '<header class="hero"><span class="kicker">Step 4</span><h1>' + (P.nb === 1 ? "My video" : "Episodes") + '</h1><p class="muted">' + (P.nb === 1 ? "A script, shots, editing." : P.eps.length + " of " + P.nb + " created.") + '</p></header>';
-  if (!canScript()) h += '<div class="warnbox"><h3>Start with Universe</h3><p class="small">Write your idea and generate your universe first.</p></div>';
+  var h = '<header class="hero"><span class="kicker">Étape 4</span><h1>' + (P.nb === 1 ? "Ma vidéo" : "Épisodes") + '</h1><p class="muted">' + (P.nb === 1 ? "Un script, des plans, un montage." : P.eps.length + " sur " + P.nb + " créés.") + '</p></header>';
+  if (!canScript()) h += '<div class="warnbox"><h3>Commence par l\'Univers</h3><p class="small">Écris ton idée et génère ton univers d\'abord.</p></div>';
   if (canScript() && todoEps().length) {
-    h += '<section class="glass card"><h2>Prepare everything</h2><p class="small muted">Script, shots, prompts and editing for every missing episode.</p><button type="button" class="btn big" data-act="genseason">Prepare ' + todoEps().length + (todoEps().length > 1 ? " episodes" : " episode") + '</button></section>';
+    h += '<section class="glass card"><h2>Tout préparer</h2><p class="small muted">Script, plans, prompts et montage pour chaque épisode manquant.</p><button type="button" class="btn big" data-act="genseason">Préparer ' + todoEps().length + (todoEps().length > 1 ? " épisodes" : " épisode") + '</button></section>';
   }
-  if (!P.eps.length) h += '<section class="glass empty"><h2>No episode</h2><p class="muted">Create the first episode.</p></section>';
+  if (!P.eps.length) h += '<section class="glass empty"><h2>Aucun épisode</h2><p class="muted">Crée le premier épisode.</p></section>';
   P.eps.forEach(function (e) {
     var pl = e.plans.filter(function (p) { return !p.reserve; });
     var cl = pl.filter(function (p) { return p.st === 2; }).length;
-    h += '<button type="button" class="glass chrow" data-act="openep" data-v="' + e.n + '"><span class="n">' + e.n + '</span><span class="t"><b>' + esc(e.titre || (P.nb === 1 ? "My video" : "Episode " + e.n)) + '</b><span>' + (has(e.script) ? "Script done" : "Script to write") + ' · ' + (pl.length ? cl + "/" + pl.length + " clips" : "shots to do") + (has(e.montage) ? " · editing ready" : "") + '</span></span></button>';
+    h += '<button type="button" class="glass chrow" data-act="openep" data-v="' + e.n + '"><span class="n">' + e.n + '</span><span class="t"><b>' + esc(e.titre || (P.nb === 1 ? "Ma vidéo" : "Épisode " + e.n)) + '</b><span>' + (has(e.script) ? "Script fait" : "Script à écrire") + ' · ' + (pl.length ? cl + "/" + pl.length + " clips" : "plans à faire") + (has(e.montage) ? " · montage prêt" : "") + '</span></span></button>';
   });
-  return h + (P.eps.length < P.nb ? '<button type="button" class="btn big" data-act="newep">' + (P.nb === 1 ? "Create video" : "New episode") + '</button>' : '');
+  return h + (P.eps.length < P.nb ? '<button type="button" class="btn big" data-act="newep">' + (P.nb === 1 ? "Créer la vidéo" : "Nouvel épisode") + '</button>' : '');
 }
 
-/* ============================================================
-   CINEMA PANEL (per episode)
-   ============================================================ */
 function cinemaPanelHtml(ep) {
   if (!ep) return "";
   var i = P.eps.indexOf(ep);
-  return '<details class="glass acc" data-keep="1" id="cinema-' + i + '"><summary><div><b>🎬 Cinema settings</b><br><span>' + (P.effets.length || P.cam ? "Custom" : "Default") + '</span></div></summary><div class="in">' +
-    '<p class="small muted">These settings apply to every shot of this episode.</p>' +
-    ["Light", "Image", "Color"].map(function (g) {
+  return '<details class="glass acc" data-keep="1" id="cinema-' + i + '"><summary><div><b>🎬 Réglages cinéma</b><br><span>' + (P.effets.length || P.cam ? "Personnalisés" : "Par défaut") + '</span></div></summary><div class="in">' +
+    '<p class="small muted">Ces réglages s\'appliquent à tous les plans de cet épisode.</p>' +
+    ["Lumière", "Image", "Couleur"].map(function (g) {
       return '<div class="fld"><span class="q">' + g + '</span><div class="chips">' + EFFETS.filter(function (x) { return x.g === g; }).map(function (k) {
         return '<button type="button" class="chip small" data-act="effet" data-v="' + k.id + '" aria-pressed="' + (P.effets.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>';
       }).join("") + '</div></div>';
     }).join("") +
-    '<div class="fld"><label class="q" for="cam">Camera: dominant move</label><select id="cam"><option value="">Free choice</option>' + CAMS.map(function (c) { return '<option value="' + c.id + '"' + (P.cam === c.id ? " selected" : "") + '>' + esc(c.nom) + '</option>'; }).join("") + '</select></div>' +
-    '<div class="fld"><span class="q">Final style phrase (preview)</span><pre class="fin">' + esc(phrase() || "No style chosen.") + '</pre></div>' +
+    '<div class="fld"><label class="q" for="cam">Caméra : mouvement dominant</label><select id="cam"><option value="">Au choix</option>' + CAMS.map(function (c) { return '<option value="' + c.id + '"' + (P.cam === c.id ? " selected" : "") + '>' + esc(c.nom) + '</option>'; }).join("") + '</select></div>' +
+    '<div class="fld"><span class="q">Phrase de style finale (aperçu)</span><pre class="fin">' + esc(phrase() || "Aucun style choisi.") + '</pre></div>' +
     '</div></details>';
 }
 
-/* ============================================================
-   EPISODE DETAIL
-   ============================================================ */
-var STAT = ["To do", "Photo ready", "Clip ready"];
+var STAT = ["À faire", "Photo prête", "Clip prêt"];
 function planPhotoHtml(i, j, p) {
   if (p.photoUri) {
     return '<div class="plan-thumb"><img src="' + esc(p.photoUri) + '" alt="">' +
-      '<div class="bar"><button type="button" class="btn ghost" data-act="plan-photo-change" data-i="' + i + '" data-j="' + j + '">🔄 Change</button>' +
-      '<button type="button" class="btn ghost" data-act="plan-photo-clear" data-i="' + i + '" data-j="' + j + '" style="color:var(--warn)">🗑️ Remove</button></div></div>';
+      '<div class="bar"><button type="button" class="btn ghost" data-act="plan-photo-change" data-i="' + i + '" data-j="' + j + '">🔄 Changer</button>' +
+      '<button type="button" class="btn ghost" data-act="plan-photo-clear" data-i="' + i + '" data-j="' + j + '" style="color:var(--warn)">🗑️ Retirer</button></div></div>';
   }
-  return '<button type="button" class="plan-drop" data-act="plan-photo-upload" data-i="' + i + '" data-j="' + j + '">📥 Upload shot photo</button>' +
+  return '<button type="button" class="plan-drop" data-act="plan-photo-upload" data-i="' + i + '" data-j="' + j + '">📥 Télécharger la photo du plan</button>' +
     '<input type="file" class="plan-file-input" id="pf-' + i + '-' + j + '" accept="image/*" data-i="' + i + '" data-j="' + j + '" style="display:none">' +
-    '<p class="small muted">Paste here the photo generated from the image prompt.</p>';
+    '<p class="small muted">Colle ici la photo générée à partir du prompt image.</p>';
 }
 function planVideoHtml(i, j, p) {
-  if (!p.photoUri) return '<p class="small muted">Upload a photo first.</p>';
-  if (p.videoStatus === "busy") return '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(p.videoMsg || "Working…") + '</div>';
-  if (p.videoStatus === "err") return '<div class="warnbox"><h3>Failed</h3><p class="small">' + esc(p.videoError || "") + '</p></div><button type="button" class="btn big" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '">🔁 Retry</button>';
+  if (!p.photoUri) return '<p class="small muted">Dépose d\'abord une photo.</p>';
+  if (p.videoStatus === "busy") return '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(p.videoMsg || "En cours…") + '</div>';
+  if (p.videoStatus === "err") return '<div class="warnbox"><h3>Échec</h3><p class="small">' + esc(p.videoError || "") + '</p></div><button type="button" class="btn big" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '">🔁 Réessayer</button>';
   if (p.videoUrl) {
     return '<div class="plan-thumb"><video src="' + esc(p.videoUrl) + '" controls playsinline preload="metadata"></video>' +
-      '<div class="bar"><button type="button" class="btn ghost" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '">🔁 Regenerate</button>' +
-      '<a class="btn ghost" href="' + esc(p.videoUrl) + '" download="shot-' + p.n + '.mp4" target="_blank" rel="noopener">⬇ Download</a></div></div>';
+      '<div class="bar"><button type="button" class="btn ghost" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '">🔁 Régénérer</button>' +
+      '<a class="btn ghost" href="' + esc(p.videoUrl) + '" download="plan-' + p.n + '.mp4" target="_blank" rel="noopener">⬇ Télécharger</a></div></div>';
   }
   var canGen = (P.videoEngine === "agnes" && getAgnesKey()) || P.videoEngine === "wangp" || (P.videoEngine === "ltx" && P.ltxApiKey);
-  return '<button type="button" class="btn big" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '"' + (canGen ? "" : " disabled") + '>🎬 Generate video (' + P.videoEngine + ')</button>' +
-    '<p class="small muted">' + (canGen ? "Uses the photo + the video prompt." : "Configure the engine in the Universe tab.") + '</p>';
+  return '<button type="button" class="btn big" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '"' + (canGen ? "" : " disabled") + '>🎬 Générer la vidéo (' + P.videoEngine + ')</button>' +
+    '<p class="small muted">' + (canGen ? "Utilise la photo + le prompt vidéo." : "Configure le moteur dans l'onglet Univers.") + '</p>';
 }
 function planRefsHtml(p) {
   var noms = String(p.persos || "").split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
@@ -1655,105 +1532,93 @@ function planRefsHtml(p) {
     }
   }
   if (!thumbs.length) return "";
-  return '<div class="stack"><b class="small">📎 Images to attach to the image prompt</b><div class="row" style="gap:10px;flex-wrap:wrap">' + thumbs.join("") + '</div><p class="small muted">Copy the prompt, then attach these images in ChatGPT / Gemini.</p></div>';
+  return '<div class="stack"><b class="small">📎 Images à joindre au prompt image</b><div class="row" style="gap:10px;flex-wrap:wrap">' + thumbs.join("") + '</div><p class="small muted">Copie le prompt, puis joins ces images dans ChatGPT / Gemini.</p></div>';
 }
 function epHtml(e) {
-  if (!e) return '<section class="glass empty"><p>Episode not found.</p><button type="button" class="btn" data-act="epback">Back</button></section>';
+  if (!e) return '<section class="glass empty"><p>Épisode introuvable.</p><button type="button" class="btn" data-act="epback">Retour</button></section>';
   var pl = e.plans, i = P.eps.indexOf(e);
-  var h = '<button type="button" class="back" data-act="epback">‹ All episodes</button>' +
-    '<header class="hero"><span class="kicker">' + (P.nb === 1 ? "Video" : "Episode " + e.n + " / " + P.nb) + '</span><h1>' + esc(e.titre || (P.nb === 1 ? "My video" : "Episode " + e.n)) + '</h1></header>';
-
+  var h = '<button type="button" class="back" data-act="epback">‹ Tous les épisodes</button>' +
+    '<header class="hero"><span class="kicker">' + (P.nb === 1 ? "Vidéo" : "Épisode " + e.n + " / " + P.nb) + '</span><h1>' + esc(e.titre || (P.nb === 1 ? "Ma vidéo" : "Épisode " + e.n)) + '</h1></header>';
   h += cinemaPanelHtml(e);
-
-  h += '<section class="glass card"><h2>All in one click</h2><button type="button" class="btn big" data-act="genall" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>Prepare everything (script + shots + editing)</button></section>';
-
+  h += '<section class="glass card"><h2>Tout en un clic</h2><button type="button" class="btn big" data-act="genall" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>Tout préparer (script + plans + montage)</button></section>';
   h += '<section class="glass card"><h2>1. Script</h2>' +
-    bind("eps." + i + ".titre", e.titre, 0, "Title") +
-    bind("eps." + i + ".note", e.note, 2, "Note for this video") +
-    '<button type="button" class="btn big" data-act="genscript" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>' + (has(e.script) ? "Rewrite script" : "Write script") + '</button>' +
+    bind("eps." + i + ".titre", e.titre, 0, "Titre") +
+    bind("eps." + i + ".note", e.note, 2, "Note pour cette vidéo") +
+    '<button type="button" class="btn big" data-act="genscript" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>' + (has(e.script) ? "Réécrire le script" : "Écrire le script") + '</button>' +
     (has(e.script)
-      ? '<div class="stack"><b class="small">📜 Block preview</b>' + scriptBlocksHtml(e.script) + '</div>' +
-        '<details class="stack"><summary class="small" style="cursor:pointer;padding:6px 0"><b>✏️ Edit script manually</b></summary>' +
+      ? '<div class="stack"><b class="small">📜 Aperçu en blocs</b>' + scriptBlocksHtml(e.script) + '</div>' +
+        '<details class="stack"><summary class="small" style="cursor:pointer;padding:6px 0"><b>✏️ Modifier le script à la main</b></summary>' +
         bind("eps." + i + ".script", e.script, 12, "") +
         '</details>' +
-        bind("eps." + i + ".resume", e.resume, 3, "Summary") +
-        bind("eps." + i + ".fin", e.fin, 2, "Ending question")
+        bind("eps." + i + ".resume", e.resume, 3, "Résumé") +
+        bind("eps." + i + ".fin", e.fin, 2, "Question de fin")
       : '') +
     '</section>';
-
   if (e.cast && e.cast.length) {
-    h += '<section class="glass card"><h2>Characters in this video</h2>' +
+    h += '<section class="glass card"><h2>Personnages de cette vidéo</h2>' +
       e.cast.map(function (p) { return '<p class="small"><b>' + esc(p.nom) + '</b> ' + (p.role ? '(' + esc(p.role) + ')' : '') + '</p>'; }).join("") +
       '</section>';
   }
-
-  h += '<section class="stack"><h2>2. Shots</h2>';
+  h += '<section class="stack"><h2>2. Plans</h2>';
   if (!pl.length) {
-    h += '<div class="glass card"><p class="muted small">Break the script into shots.</p><button type="button" class="btn big" data-act="genplans" data-v="' + e.n + '"' + (has(e.script) ? "" : " disabled") + '>Break into shots</button></div>';
+    h += '<div class="glass card"><p class="muted small">Découpe le script en plans.</p><button type="button" class="btn big" data-act="genplans" data-v="' + e.n + '"' + (has(e.script) ? "" : " disabled") + '>Découper en plans</button></div>';
   } else {
     var main = pl.filter(function (p) { return !p.reserve; });
     var cl = main.filter(function (p) { return p.st === 2; }).length;
     var ph = main.filter(function (p) { return p.photoUri; }).length;
     var totalDur = main.reduce(function (t, p) { return t + (p.duree || 0); }, 0);
-    h += '<div class="glass card"><b>' + cl + ' clips ready · ' + ph + ' photos · ' + main.length + ' shots · ' + totalDur + ' s total</b>' +
+    h += '<div class="glass card"><b>' + cl + ' clips prêts · ' + ph + ' photos · ' + main.length + ' plans · ' + totalDur + ' s au total</b>' +
       '<div class="bar"><i style="width:' + Math.round(cl / main.length * 100) + '%"></i></div>' +
       '<div class="rowbtns" style="margin-top:10px">' +
-      '<button type="button" class="btn ghost" data-act="copyimgs" data-v="' + e.n + '">📋 Copy all image prompts</button>' +
-      '<button type="button" class="btn ghost" data-act="copyvids" data-v="' + e.n + '">📋 Copy all video prompts</button>' +
+      '<button type="button" class="btn ghost" data-act="copyimgs" data-v="' + e.n + '">📋 Copier tous les prompts image</button>' +
+      '<button type="button" class="btn ghost" data-act="copyvids" data-v="' + e.n + '">📋 Copier tous les prompts vidéo</button>' +
       '</div></div>';
-
     pl.forEach(function (p, j) {
       var pre = "eps." + i + ".plans." + j + ".";
-      h += '<details class="glass acc"><summary><div class="shot-h"><b>Shot ' + esc(p.n) + (p.reserve ? " (spare)" : "") + ' · ' + esc(p.duree) + ' s · ' + esc(p.lieu) + (p.cadrage ? " · " + esc(p.cadrage) : "") + '</b><span>' + esc(p.action) + '</span></div><span class="badge' + (p.st === 2 ? " done" : "") + '">' + STAT[p.st] + '</span></summary><div class="in">' +
+      h += '<details class="glass acc"><summary><div class="shot-h"><b>Plan ' + esc(p.n) + (p.reserve ? " (réserve)" : "") + ' · ' + esc(p.duree) + ' s · ' + esc(p.lieu) + (p.cadrage ? " · " + esc(p.cadrage) : "") + '</b><span>' + esc(p.action) + '</span></div><span class="badge' + (p.st === 2 ? " done" : "") + '">' + STAT[p.st] + '</span></summary><div class="in">' +
         '<div class="chips">' + STAT.map(function (s, k) { return '<button type="button" class="chip small" data-act="shotst" data-i="' + i + '" data-j="' + j + '" data-v="' + k + '" aria-pressed="' + (p.st === k) + '">' + s + '</button>'; }).join("") + '</div>' +
         planRefsHtml(p) +
-        '<div class="stack"><b class="small">Image prompt</b><pre class="fin" id="pi-' + i + '-' + j + '">' + esc(imagePrompt(p)) + '</pre>' +
+        '<div class="stack"><b class="small">Prompt image</b><pre class="fin" id="pi-' + i + '-' + j + '">' + esc(imagePrompt(p)) + '</pre>' +
           '<div class="rowbtns">' +
-            '<button type="button" class="btn ghost" data-act="copypre" data-v="pi-' + i + '-' + j + '">📋 Copy simple</button>' +
-            '<button type="button" class="btn" data-act="copypre-coherent" data-i="' + i + '" data-j="' + j + '">📋 Copy + coherence note</button>' +
+            '<button type="button" class="btn ghost" data-act="copypre" data-v="pi-' + i + '-' + j + '">📋 Copier simple</button>' +
+            '<button type="button" class="btn" data-act="copypre-coherent" data-i="' + i + '" data-j="' + j + '">📋 Copier + note cohérence</button>' +
           '</div>' +
         '</div>' +
-        '<div class="stack"><b class="small">Shot photo</b><div id="ph-' + i + '-' + j + '">' + planPhotoHtml(i, j, p) + '</div></div>' +
-        '<div class="stack"><b class="small">Video prompt</b><pre class="fin" id="pv-' + i + '-' + j + '">' + esc(videoPrompt(p)) + '</pre><button type="button" class="btn big" data-act="copypre" data-v="pv-' + i + '-' + j + '">📋 Copy video prompt</button></div>' +
-        '<div class="stack"><b class="small">Video (' + P.videoEngine + ')</b><div id="vv-' + i + '-' + j + '">' + planVideoHtml(i, j, p) + '</div></div>' +
-        '<details><summary class="small"><b>Edit this shot</b></summary><div class="stack" style="margin-top:10px">' +
-        bind(pre + "action", p.action, 2, "Action (English)") +
-        bind(pre + "lieu", p.lieu, 0, "Place") +
-        bind(pre + "cadrage", p.cadrage, 0, "Shot type (English)") +
-        bind(pre + "replique", p.replique, 2, "Line (French)") +
-        bind(pre + "qui", p.qui, 0, "Who speaks") +
-        bind(pre + "emotion", p.emotion, 0, "Emotion (English)") +
-        bind(pre + "pi", p.pi, 4, "Image prompt (English)") +
-        bind(pre + "pv", p.pv, 3, "Video prompt (English)") +
+        '<div class="stack"><b class="small">Photo du plan</b><div id="ph-' + i + '-' + j + '">' + planPhotoHtml(i, j, p) + '</div></div>' +
+        '<div class="stack"><b class="small">Prompt vidéo</b><pre class="fin" id="pv-' + i + '-' + j + '">' + esc(videoPrompt(p)) + '</pre><button type="button" class="btn big" data-act="copypre" data-v="pv-' + i + '-' + j + '">📋 Copier le prompt vidéo</button></div>' +
+        '<div class="stack"><b class="small">Vidéo (' + P.videoEngine + ')</b><div id="vv-' + i + '-' + j + '">' + planVideoHtml(i, j, p) + '</div></div>' +
+        '<details><summary class="small"><b>Modifier ce plan</b></summary><div class="stack" style="margin-top:10px">' +
+        bind(pre + "action", p.action, 2, "Action (anglais)") +
+        bind(pre + "lieu", p.lieu, 0, "Lieu") +
+        bind(pre + "cadrage", p.cadrage, 0, "Cadrage (anglais)") +
+        bind(pre + "replique", p.replique, 2, "Réplique (français)") +
+        bind(pre + "qui", p.qui, 0, "Qui parle") +
+        bind(pre + "emotion", p.emotion, 0, "Émotion (anglais)") +
+        bind(pre + "pi", p.pi, 4, "Prompt image (anglais)") +
+        bind(pre + "pv", p.pv, 3, "Prompt vidéo (anglais)") +
         '</div></details></div></details>';
     });
-    h += '<button type="button" class="btn ghost big" data-act="genplans" data-v="' + e.n + '">Redo shot breakdown</button>';
+    h += '<button type="button" class="btn ghost big" data-act="genplans" data-v="' + e.n + '">Refaire le découpage</button>';
   }
   h += '</section>';
-
-  h += '<section class="glass card"><h2>3. Editing and publishing</h2>' +
-    '<button type="button" class="btn big" data-act="genmont" data-v="' + e.n + '"' + (pl.length ? "" : " disabled") + '>' + (has(e.montage) ? "Redo editing" : "Prepare editing") + '</button>' +
-    (has(e.montage) ? '<button type="button" class="btn ghost big" data-act="montopen" data-v="' + e.n + '">Open editing</button>' : '') +
-    '<button type="button" class="btn ghost big" data-act="ffmpeg-ep" data-v="' + e.n + '"' + (pl.filter(function (p) { return p.videoUrl; }).length >= 2 ? "" : " disabled") + '>🎬 Assemble final video (FFmpeg)</button>' +
-    '<button type="button" class="btn ghost big" data-act="copylist" data-v="' + e.n + '"' + (pl.filter(function (p) { return p.videoUrl; }).length >= 1 ? "" : " disabled") + '>📋 Copy clips list (manual editing)</button>' +
-    (e.finalVideoUrl ? '<div class="plan-thumb" style="margin-top:10px"><video src="' + esc(e.finalVideoUrl) + '" controls playsinline></video><div class="bar"><a class="btn ghost" href="' + esc(e.finalVideoUrl) + '" download="' + esc(e.titre || ("episode-" + e.n)) + '.mp4" target="_blank" rel="noopener">⬇ Download final video</a></div></div>' : '') +
-    (e.finalVideoStatus === "busy" ? '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(e.finalVideoError || "Assembling…") + '</div>' : '') +
+  h += '<section class="glass card"><h2>3. Montage et publication</h2>' +
+    '<button type="button" class="btn big" data-act="genmont" data-v="' + e.n + '"' + (pl.length ? "" : " disabled") + '>' + (has(e.montage) ? "Refaire le montage" : "Préparer le montage") + '</button>' +
+    (has(e.montage) ? '<button type="button" class="btn ghost big" data-act="montopen" data-v="' + e.n + '">Ouvrir le montage</button>' : '') +
+    '<button type="button" class="btn ghost big" data-act="ffmpeg-ep" data-v="' + e.n + '"' + (pl.filter(function (p) { return p.videoUrl; }).length >= 2 ? "" : " disabled") + '>🎬 Assembler la vidéo finale (FFmpeg)</button>' +
+    '<button type="button" class="btn ghost big" data-act="copylist" data-v="' + e.n + '"' + (pl.filter(function (p) { return p.videoUrl; }).length >= 1 ? "" : " disabled") + '>📋 Copier la liste des clips (montage manuel)</button>' +
+    (e.finalVideoUrl ? '<div class="plan-thumb" style="margin-top:10px"><video src="' + esc(e.finalVideoUrl) + '" controls playsinline></video><div class="bar"><a class="btn ghost" href="' + esc(e.finalVideoUrl) + '" download="' + esc(e.titre || ("episode-" + e.n)) + '.mp4" target="_blank" rel="noopener">⬇ Télécharger la vidéo finale</a></div></div>' : '') +
+    (e.finalVideoStatus === "busy" ? '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(e.finalVideoError || "Assemblage en cours…") + '</div>' : '') +
     '</section>';
-
-  h += '<section class="glass card"><h2>4. Review</h2>' +
-    '<div class="two">' + bind("eps." + i + ".stats.vues", e.stats.vues, 0, "Views") + bind("eps." + i + ".stats.r3", e.stats.r3, 0, "Still watching at 3s (%)") + '</div>' +
-    '<div class="two">' + bind("eps." + i + ".stats.moy", e.stats.moy, 0, "Average duration (s)") + bind("eps." + i + ".stats.part", e.stats.part, 0, "Shares") + '</div>' +
-    bind("eps." + i + ".stats.comm", e.stats.comm, 3, "Comments (optional)") +
-    '<button type="button" class="btn big" data-act="bilan" data-v="' + e.n + '"' + (has(e.stats.vues) || has(e.stats.r3) ? "" : " disabled") + '>' + (has(e.bilan) ? "Redo review" : "Analyze") + '</button>' +
-    (has(e.bilan) ? bind("eps." + i + ".bilan", e.bilan, 6, "Diagnosis") : '') +
+  h += '<section class="glass card"><h2>4. Bilan</h2>' +
+    '<div class="two">' + bind("eps." + i + ".stats.vues", e.stats.vues, 0, "Vues") + bind("eps." + i + ".stats.r3", e.stats.r3, 0, "Encore là à 3s (%)") + '</div>' +
+    '<div class="two">' + bind("eps." + i + ".stats.moy", e.stats.moy, 0, "Durée moyenne (s)") + bind("eps." + i + ".stats.part", e.stats.part, 0, "Partages") + '</div>' +
+    bind("eps." + i + ".stats.comm", e.stats.comm, 3, "Commentaires (facultatif)") +
+    '<button type="button" class="btn big" data-act="bilan" data-v="' + e.n + '"' + (has(e.stats.vues) || has(e.stats.r3) ? "" : " disabled") + '>' + (has(e.bilan) ? "Refaire le bilan" : "Analyser") + '</button>' +
+    (has(e.bilan) ? bind("eps." + i + ".bilan", e.bilan, 6, "Diagnostic") : '') +
     '</section>';
-
   return h;
 }
 
-/* ============================================================
-   EDITING — READER
-   ============================================================ */
 function mdInline(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(?!\s)([^*]+?)\*/g, "<i>$1</i>"); }
 function mdRender(text) {
   var L = String(text || "").replace(/\r/g, "").split("\n"), out = [], i = 0, m, buf;
@@ -1768,20 +1633,20 @@ function mdRender(text) {
   return out.join("");
 }
 function montView(ep) {
-  var h = '<button type="button" class="back" data-act="montclose">‹ Back to episode</button>' +
-    '<header class="hero"><h1>Editing and publishing</h1><p class="muted">' + esc(ep.titre || "") + '</p></header>';
-  if (!has(ep.montage)) return h + '<div class="glass card"><p class="muted small">Not prepared yet.</p><button type="button" class="btn big" data-act="genmont" data-v="' + ep.n + '">Prepare editing</button></div>';
-  h += '<section class="glass card stack"><div class="md">' + mdRender(ep.montage) + '</div><button type="button" class="btn ghost big" data-act="copymall" data-v="' + ep.n + '">📋 Copy all</button></section>';
+  var h = '<button type="button" class="back" data-act="montclose">‹ Retour à l\'épisode</button>' +
+    '<header class="hero"><h1>Montage et publication</h1><p class="muted">' + esc(ep.titre || "") + '</p></header>';
+  if (!has(ep.montage)) return h + '<div class="glass card"><p class="muted small">Pas encore préparé.</p><button type="button" class="btn big" data-act="genmont" data-v="' + ep.n + '">Préparer le montage</button></div>';
+  h += '<section class="glass card stack"><div class="md">' + mdRender(ep.montage) + '</div><button type="button" class="btn ghost big" data-act="copymall" data-v="' + ep.n + '">📋 Copier tout</button></section>';
   return h;
 }
 
 /* ============================================================
-   CLICK EVENTS
+   ÉVÉNEMENTS — CLIC
    ============================================================ */
 function arm(key, msg) {
   if (R.arm === key) { R.arm = ""; return true; }
   R.arm = key;
-  toast(msg || "Tap again to confirm.");
+  toast(msg || "Touche encore pour confirmer.");
   setTimeout(function () { if (R.arm === key) R.arm = ""; }, 4000);
   return false;
 }
@@ -1809,7 +1674,7 @@ document.addEventListener("click", function (e) {
     save(); render();
   }
   else if (a === "teint") { var ti = P.teints.indexOf(v); if (ti >= 0) P.teints.splice(ti, 1); else P.teints.push(v); save(); render(); }
-  else if (a === "effet") { var ei = P.effets.indexOf(v); if (ei >= 0) P.effets.splice(ei, 1); else if (P.effets.length >= 3) { toast("3 effects max."); return; } else P.effets.push(v); save(); render(); }
+  else if (a === "effet") { var ei = P.effets.indexOf(v); if (ei >= 0) P.effets.splice(ei, 1); else if (P.effets.length >= 3) { toast("3 effets max."); return; } else P.effets.push(v); save(); render(); }
   else if (a === "sous") {
     var sl = sousList();
     var si = sl.indexOf(v);
@@ -1826,12 +1691,12 @@ document.addEventListener("click", function (e) {
     if (sri >= 0) P.style.splice(sri, 1);
     save(); render();
   }
-  else if (a === "genuni") { if (P.persos.length && !arm("uni", "Tap again to replace everything.")) return; genUnivers(); }
+  else if (a === "genuni") { if (P.persos.length && !arm("uni", "Touche encore pour tout remplacer.")) return; genUnivers(); }
   else if (a === "addperso") { P.persos.push({ id: uid(), nom: "", role: "", caractere: "", secret: "", voix: "", voix_en: "", visuel: "", ok: false }); save(); render(); }
   else if (a === "addlieu") { P.lieux.push({ id: uid(), nom: "", visuel: "", ok: false }); save(); render(); }
   else if (a === "delperso") { if (arm("dp" + v)) { P.persos.splice(+v, 1); save(); render(); } }
   else if (a === "dellieu") { if (arm("dl" + v)) { P.lieux.splice(+v, 1); save(); render(); } }
-  else if (a === "copypre") { var pre = document.getElementById(v); if (pre) copyText(pre.textContent, pre, "Prompt copied."); }
+  else if (a === "copypre") { var pre = document.getElementById(v); if (pre) copyText(pre.textContent, pre, "Prompt copié."); }
   else if (a === "refok") { var o = R.refs[+v].o; o.ok = !o.ok; save(); render(); }
   else if (a === "newep") { var n = P.eps.length + 1; P.eps.push(newEp(n)); save(); go("eps", n); }
   else if (a === "openep") { go("eps", +v); }
@@ -1857,37 +1722,37 @@ document.addEventListener("click", function (e) {
   else if (a === "copypre-coherent") {
     var ci = +b.getAttribute("data-i"), cj = +b.getAttribute("data-j");
     var cpl = P.eps[ci] && P.eps[ci].plans[cj];
-    if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + coherence note copied. Attach the reference images.");
+    if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + note cohérence copiés. Joins les images de référence.");
   }
   else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "genseason") { genSeason(); }
   else if (a === "genall") {
     var eg = epBy(+v);
     if (!eg) return;
-    runChain(function () { return chainEpisode(eg.n, P.nb === 1 ? "The video" : "Episode " + eg.n); });
+    runChain(function () { return chainEpisode(eg.n, P.nb === 1 ? "La vidéo" : "Épisode " + eg.n); });
   }
   else if (a === "copyimgs") {
     var ei2 = epBy(+v);
-    if (ei2) copyAll(ei2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "SHOT " + p.n + " (" + p.duree + " s)\n" + imagePrompt(p); }).join("\n\n"), "Image prompts copied.");
+    if (ei2) copyAll(ei2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "PLAN " + p.n + " (" + p.duree + " s)\n" + imagePrompt(p); }).join("\n\n"), "Prompts image copiés.");
   }
   else if (a === "copyvids") {
     var ev2 = epBy(+v);
-    if (ev2) copyAll(ev2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "SHOT " + p.n + " (" + p.duree + " s)\n" + videoPrompt(p); }).join("\n\n"), "Video prompts copied.");
+    if (ev2) copyAll(ev2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "PLAN " + p.n + " (" + p.duree + " s)\n" + videoPrompt(p); }).join("\n\n"), "Prompts vidéo copiés.");
   }
   else if (a === "montopen") { R.mont = true; R.ep = +v; render(); window.scrollTo(0, 0); }
   else if (a === "montclose") { R.mont = false; render(); }
-  else if (a === "copymall") { var em = epBy(+v); if (em) copyAll(em.montage, "Text copied."); }
+  else if (a === "copymall") { var em = epBy(+v); if (em) copyAll(em.montage, "Texte copié."); }
   else if (a === "bilan") { var eb = epBy(+v); if (eb) genBilan(eb); }
   else if (a === "copylist") {
     var el = epBy(+v);
     if (!el) return;
     var clips = el.plans.filter(function (p) { return !p.reserve && p.videoUrl; }).map(function (p, k) {
-      return "Shot " + (k + 1) + " (" + p.n + ") : " + p.videoUrl;
+      return "Plan " + (k + 1) + " (" + p.n + ") : " + p.videoUrl;
     });
-    copyAll(clips.join("\n"), clips.length + " clip" + (clips.length > 1 ? "s" : "") + " copied. Paste this list somewhere, open each link and save.");
+    copyAll(clips.join("\n"), clips.length + " clip" + (clips.length > 1 ? "s" : "") + " copiés. Colle cette liste quelque part, ouvre chaque lien et enregistre.");
   }
   else if (a === "hard-reload") {
-    if (confirm("Reload the app? Code changes will take effect.")) {
+    if (confirm("Recharger l'app ? Les modifications du code seront prises en compte.")) {
       if ('caches' in window) {
         caches.keys().then(function (names) {
           Promise.all(names.map(function (n) { return caches.delete(n); })).then(function () {
@@ -1903,7 +1768,7 @@ document.addEventListener("click", function (e) {
     var ef = epBy(+v);
     if (!ef) return;
     ef.finalVideoStatus = "busy";
-    ef.finalVideoError = "Preparing…";
+    ef.finalVideoError = "Préparation…";
     save(); render();
     (async function () {
       try {
@@ -1915,12 +1780,12 @@ document.addEventListener("click", function (e) {
         ef.finalVideoUrl = url;
         ef.finalVideoStatus = "done";
         ef.finalVideoError = "";
-        save(); render(); toast("Final video assembled.");
+        save(); render(); toast("Vidéo finale assemblée.");
       } catch (err) {
         ef.finalVideoStatus = "err";
         ef.finalVideoError = (err.message || "").slice(0, 120);
         save(); render();
-        toast("FFmpeg failed: " + ef.finalVideoError);
+        toast("Échec FFmpeg : " + ef.finalVideoError);
       }
     })();
   }
@@ -1929,11 +1794,11 @@ document.addEventListener("click", function (e) {
     var blob = new Blob([data], { type: "application/json" });
     var a2 = document.createElement("a");
     a2.href = URL.createObjectURL(blob);
-    a2.download = "fabrique-backup.json";
+    a2.download = "fabrique-sauvegarde.json";
     document.body.appendChild(a2);
     a2.click();
     document.body.removeChild(a2);
-    toast("Backup downloaded.");
+    toast("Sauvegarde téléchargée.");
   }
   else if (a === "bkrestore") {
     try {
@@ -1942,11 +1807,11 @@ document.addEventListener("click", function (e) {
       P = f2;
       for (var k2 in f2) P[k2] = d2[k2] !== undefined ? d2[k2] : f2[k2];
       fixEps(); save(); render();
-      toast("Backup restored.");
-    } catch (err) { toast("Unreadable backup."); }
+      toast("Sauvegarde restaurée.");
+    } catch (err) { toast("Sauvegarde illisible."); }
   }
   else if (a === "reset") {
-    if (arm("reset", "Tap again: EVERYTHING will be erased (photos, references, scripts).")) {
+    if (arm("reset", "Touche encore : TOUT sera effacé (photos, références, scripts).")) {
       (async function () {
         try {
           if (typeof idbKeyval !== "undefined") {
@@ -1958,18 +1823,18 @@ document.addEventListener("click", function (e) {
               }
             }
           }
-        } catch (e) { console.warn("Reset IndexedDB:", e); }
+        } catch (e) { console.warn("Reset IndexedDB :", e); }
         P = fresh();
         save();
         go("univers");
-        toast("Everything erased. New story!");
+        toast("Tout est effacé. Nouvelle histoire !");
       })();
     }
   }
 });
 
 /* ============================================================
-   INPUT EVENTS
+   ÉVÉNEMENTS — SAISIE
    ============================================================ */
 document.addEventListener("input", function (e) {
   var el = e.target;
@@ -2004,7 +1869,7 @@ document.addEventListener("input", function (e) {
 });
 
 /* ============================================================
-   CHANGE EVENTS
+   ÉVÉNEMENTS — CHANGEMENT
    ============================================================ */
 document.addEventListener("change", function (e) {
   var id = e.target.id;
@@ -2012,7 +1877,7 @@ document.addEventListener("change", function (e) {
     var v = e.target.value;
     if (v) {
       if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
-      if (P.style.length >= MAX_STYLES) { toast("Max " + MAX_STYLES + " styles. Remove one first."); e.target.value = ""; return; }
+      if (P.style.length >= MAX_STYLES) { toast("Max " + MAX_STYLES + " styles. Retires-en un d'abord."); e.target.value = ""; return; }
       if (P.style.indexOf(v) < 0) P.style.push(v);
       save(); render();
     }
@@ -2031,8 +1896,8 @@ document.addEventListener("change", function (e) {
         P = f3;
         for (var k3 in f3) P[k3] = d3[k3] !== undefined ? d3[k3] : f3[k3];
         fixEps(); save(); render();
-        toast("Backup opened.");
-      } catch (err) { toast("Invalid file."); }
+        toast("Sauvegarde ouverte.");
+      } catch (err) { toast("Fichier invalide."); }
     };
     rd.readAsText(f);
     e.target.value = "";
@@ -2049,15 +1914,12 @@ document.addEventListener("change", function (e) {
   }
 });
 
-/* ============================================================
-   DOCK
-   ============================================================ */
 document.querySelectorAll(".dock button").forEach(function (b) {
   b.addEventListener("click", function () { go(b.getAttribute("data-tab")); });
 });
 
 /* ============================================================
-   INIT
+   INITIALISATION
    ============================================================ */
 load();
 render();
