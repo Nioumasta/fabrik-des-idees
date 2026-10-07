@@ -426,6 +426,7 @@ async function agnesFetch(url, options, label) {
 
 async function callAgnesText(system, user) {
   var res = await agnesFetch(AGNES_API + "/chat/completions", {
+   console.log("[AGNES] Appel texte, prompt de " + (user || "").length + " caractères");
     method: "POST",
     headers: { "Authorization": "Bearer " + getAgnesKey(), "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -962,17 +963,21 @@ function ask(label, prompt, apply) {
   var p = new Promise(function (resolve, reject) {
     if (!getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); reject(new Error("no key")); return; }
     R.busy = { label: label, sub: R.chain ? R.chain.sub : "" }; overlay();
+   console.log("[ASK] " + label + " · prompt " + prompt.length + " car.");
     callAgnesText("", prompt).then(function (txt) {
       R.busy = null; overlay();
       try {
         var data = extractJson(txt);
         apply(data); save(); render(); toast(label + " : terminé.");
         resolve(data);
-      } catch (e) { toast("Réponse illisible. Réessaie."); reject(e); }
-    }).catch(function (e) {
+            } catch (e) { console.error("[ASK] " + label + " · parse raté :", e, txt.slice(0, 500)); toast("Réponse illisible. Réessaie."); reject(e); }
+           }).then(function (r) {
+      console.log("[ASK] " + label + " · succès");
+      return r;
+        }).catch(function (e) {
       R.busy = null; overlay();
+      console.error("[ASK] " + label + " · échec :", e);
       toast("Échec : " + (e.message || "").slice(0, 80));
-      reject(e);
     });
   });
   p.catch(function () {});
@@ -1238,13 +1243,42 @@ function todoEps() {
 }
 function setSub(t) { if (R.chain) R.chain.sub = t; }
 function stopCheck() { if (R.chain && R.chain.stop) { var e = new Error("stop"); e.code = "cancelled"; throw e; } }
-async function chainEpisode(n, label) {
+async function chainEpisode(n, label, options) {
+  options = options || {};
   var ep = epBy(n);
-  if (!has(ep.script)) { stopCheck(); setSub(label + " · 1/3 script"); await genScript(ep); }
+  if (!has(ep.script)) { stopCheck(); setSub(label + " · 1/4 script"); await genScript(ep); }
   ep = epBy(n);
-  if (!ep.plans.length) { stopCheck(); setSub(label + " · 2/3 plans"); await genPlans(ep); }
+  if (!ep.plans.length) { stopCheck(); setSub(label + " · 2/4 plans"); await genPlans(ep); }
   ep = epBy(n);
-  if (!has(ep.montage)) { stopCheck(); setSub(label + " · 3/3 montage"); await genMontage(ep); }
+
+  if (options.videos) {
+    var epIdx = P.eps.indexOf(ep);
+    var main = [];
+    ep.plans.forEach(function (p, j) { if (!p.reserve) main.push({ idx: j, n: p.n }); });
+
+    for (var k = 0; k < main.length; k++) {
+      stopCheck();
+      ep = epBy(n);
+      var j = main[k].idx;
+      var p = ep.plans[j];
+
+      if (!p.photoUri) {
+        setSub(label + " · photo " + (k+1) + "/" + main.length);
+        await planGeneratePhoto(epIdx, j);
+      }
+
+      stopCheck();
+      ep = epBy(n);
+      p = ep.plans[j];
+      if (!p.videoUrl) {
+        setSub(label + " · vidéo " + (k+1) + "/" + main.length + " (peut prendre 2 min)");
+        await planGenerateVideo(epIdx, j);
+      }
+    }
+  }
+
+  ep = epBy(n);
+  if (!has(ep.montage)) { stopCheck(); setSub(label + " · 4/4 montage"); await genMontage(ep); }
 }
 async function runChain(job) {
   R.chain = { sub: "", stop: false };
@@ -1733,7 +1767,7 @@ function epHtml(e) {
   var h = '<button type="button" class="back" data-act="epback">‹ Tous les épisodes</button>' +
     '<header class="hero"><span class="kicker">' + (P.nb === 1 ? "Vidéo" : "Épisode " + e.n + " / " + P.nb) + '</span><h1>' + esc(e.titre || (P.nb === 1 ? "Ma vidéo" : "Épisode " + e.n)) + '</h1></header>';
   h += cinemaPanelHtml(e);
-  h += '<section class="glass card"><h2>Tout en un clic</h2><button type="button" class="btn big" data-act="genall" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>Tout préparer (script + plans + montage)</button></section>';
+    h += '<section class="glass card"><h2>Tout en un clic</h2><p class="small muted">Script → Plans → Photos → Vidéos → Montage. Cette opération peut prendre 20 à 40 minutes pour un épisode complet. Garde l\'écran ouvert.</p><button type="button" class="btn big" data-act="genall" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>🚀 Tout préparer pour cet épisode</button></section>';
   h += '<section class="glass card"><h2>1. Script</h2>' +
     bind("eps." + i + ".titre", e.titre, 0, "Titre") +
     bind("eps." + i + ".note", e.note, 2, "Note pour cette vidéo") +
@@ -1941,10 +1975,13 @@ document.addEventListener("click", function (e) {
    else if (a === "plan-photo-gen") { planGeneratePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "genseason") { genSeason(); }
-  else if (a === "genall") {
+    else if (a === "genall") {
     var eg = epBy(+v);
     if (!eg) return;
-    runChain(function () { return chainEpisode(eg.n, P.nb === 1 ? "La vidéo" : "Épisode " + eg.n); });
+    if (!confirm("Tout préparer va générer le script, les plans, PUIS toutes les photos et vidéos.\n\n⚠️ Les vidéos prennent environ 1 à 2 minutes chacune. Un épisode de 12 plans = 20 à 30 minutes.\n\nContinuer ?")) return;
+    runChain(function () {
+      return chainEpisode(eg.n, P.nb === 1 ? "La vidéo" : "Épisode " + eg.n, { videos: true });
+    });
   }
   else if (a === "copyimgs") {
     var ei2 = epBy(+v);
