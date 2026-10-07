@@ -249,7 +249,7 @@ function fixEps() {
   if (!P.concepts) P.concepts = [];
   if (!P.effets) P.effets = [];
   if (!P.sous) P.sous = ["U1"];
-    P.persos.forEach(function (p) {
+  P.persos.forEach(function (p) {
     if (p.refUri === undefined) p.refUri = null;
     if (p.refStatus === undefined) p.refStatus = null;
     if (p.refMsg === undefined) p.refMsg = "";
@@ -281,7 +281,6 @@ function sentence(t) { t = String(t || "").trim(); return t && !/[.!?]$/.test(t)
 function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function setPath(o, path, v) { var a = path.split("."), i; for (i = 0; i < a.length - 1; i++) o = o[a[i]]; o[a[a.length - 1]] = v; }
 
-/* Nettoie tout texte envoyé à Agnes : pas de retour ligne, pas de guillemets courbes */
 function cleanForAgnes(s) {
   return String(s || "").replace(/\n/g, " ").replace(/\r/g, "").replace(/[«»„""]/g, "'").replace(/\s+/g, " ").trim();
 }
@@ -369,6 +368,8 @@ function copyAll(text, msg) {
   copyText(text, ta, msg);
   setTimeout(function () { if (ta.parentNode) ta.parentNode.removeChild(ta); }, 2000);
 }
+/* ═══ PARTIE 2 ═══ */
+
 /* ============================================================
    CLÉ AGNES
    ============================================================ */
@@ -446,6 +447,7 @@ async function callAgnesText(system, user) {
   if (!content) throw new Error("Pas de contenu.");
   return content;
 }
+
 async function agnesCreateImage(prompt, refImages) {
   var body = {
     model: "agnes-image-2.1-flash",
@@ -454,13 +456,10 @@ async function agnesCreateImage(prompt, refImages) {
     size: "1024x1792",
     response_format: "url"
   };
-
-  // Si on a des images de référence, on les envoie pour la composition multi-images
   if (refImages && refImages.length) {
     body.image = refImages.length === 1 ? refImages[0] : refImages;
     console.log("[IMAGE] Composition avec " + refImages.length + " image(s) de référence");
   }
-
   var res = await agnesFetch(AGNES_API + "/images/generations", {
     method: "POST",
     headers: { "Authorization": "Bearer " + getAgnesKey(), "Content-Type": "application/json" },
@@ -786,125 +785,10 @@ async function refsRestoreAll() {
   }
   if (R.tab === "refs" || R.tab === "eps") render();
 }
+/* ═══ PARTIE 3 ═══ */
 
 /* ============================================================
-   GÉNÉRATION VIDÉO PAR PLAN
-   ============================================================ */
-
-async function planGeneratePhoto(i, j) {
-  var ep = P.eps[i], p = ep && ep.plans[j];
-  if (!p) return;
-  if (!getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); return; }
-
-  p.photoStatus = "busy";
-  p.photoMsg = "Agnes dessine…";
-  p.photoError = "";
-  save(); render();
-
-  try {
-    var prompt = imagePrompt(p);
-
-    // Rassemble les images de référence : personnages + lieu
-    var refImages = [];
-    var noms = String(p.persos || "").split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
-    noms.forEach(function (nom) {
-      var c = persoBy(nom);
-      if (c && c.refUri) refImages.push(c.refUri);
-    });
-    if (p.lieu) {
-      var l = findLieu(p.lieu);
-      if (l && l.refUri) refImages.push(l.refUri);
-    }
-     async function planGenerateAllPhotos(epNum) {
-  var ep = epBy(epNum);
-  if (!ep) return;
-  if (!getAgnesKey()) { toast("Ajoute ta clé Agnes."); return; }
-
-  var epIdx = P.eps.indexOf(ep);
-  var todo = [];
-  ep.plans.forEach(function (p, j) {
-    if (!p.reserve && !p.photoUri) todo.push({ idx: j, n: p.n });
-  });
-
-  if (!todo.length) { toast("Toutes les photos sont déjà faites."); return; }
-  if (!confirm("Générer " + todo.length + " photos avec Agnes ?\n\nÀ ~20 secondes par photo, compte environ " + Math.ceil(todo.length * 20 / 60) + " minutes. Garde l'écran ouvert.")) return;
-
-  var done = 0, failed = 0;
-  for (var k = 0; k < todo.length; k++) {
-    try {
-      toast("Photo " + (k+1) + "/" + todo.length + " en cours…", 1500);
-      await planGeneratePhoto(epIdx, todo[k].idx);
-      var p2 = P.eps[epIdx].plans[todo[k].idx];
-      if (p2.photoUri) done++; else failed++;
-    } catch (e) { failed++; }
-  }
-  toast("Terminé : " + done + " photo(s) OK, " + failed + " échec(s).", 4000);
-}
-
-    p.photoMsg = "Génération (" + refImages.length + " réf.)…"; save(); render();
-    var url = await agnesCreateImage(prompt, refImages);
-    p.photoUri = url;
-    p.photoStatus = "done";
-    p.photoMsg = "";
-    p.videoUrl = null;
-    p.videoStatus = null;
-    await planPhotoStore(i, j, url);
-    save(); render();
-    toast("Photo du plan " + p.n + " prête (" + refImages.length + " réf.)");
-  } catch (e) {
-    p.photoStatus = "err";
-    p.photoError = (e.message || "Erreur").slice(0, 140);
-    p.photoMsg = "";
-    save(); render();
-    toast("Échec : " + p.photoError);
-  }
-}
-
-async function planGenerateVideo(i, j) {
-  var ep = P.eps[i], p = ep && ep.plans[j];
-  if (!p || !p.photoUri) return;
-  if (P.videoEngine === "agnes" && !getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); return; }
-  if (P.videoEngine === "wangp" && !has(P.wangpUrl)) { toast("Renseigne l'URL de ton serveur WanGP."); return; }
-  if (P.videoEngine === "ltx" && !has(P.ltxApiKey)) { toast("Ajoute ta clé API LTX."); return; }
-
-  p.videoStatus = "busy"; p.videoMsg = "Création de la tâche…"; p.videoError = "";
-  save(); render();
-
-  try {
-    var frames = p.frames || perPlan().frames;
-    var prompt = videoPrompt(p);
-    var url;
-
-    if (P.videoEngine === "wangp") {
-      p.videoMsg = "Envoi à WanGP…"; save(); render();
-      url = await wangpCreateVideo(prompt, p.photoUri, frames);
-    } else if (P.videoEngine === "ltx") {
-      p.videoMsg = "Envoi à LTX…"; save(); render();
-      url = await ltxCreateVideo(prompt, p.photoUri, frames);
-    } else {
-      p.videoMsg = "Envoi à Agnes…"; save(); render();
-      var id = await agnesCreateVideo(prompt, p.photoUri, frames);
-      p.videoMsg = "Préparation…"; save(); render();
-      url = await agnesPollVideo(id, function (msg) {
-        var el = document.querySelector('#vv-' + i + '-' + j + ' .badge');
-        if (el) el.textContent = "⏳ " + msg;
-      });
-    }
-    p.videoUrl = url;
-    p.videoStatus = "done";
-    p.videoMsg = "";
-    save(); render();
-    toast("Vidéo du plan " + p.n + " prête.");
-  } catch (e) {
-    p.videoStatus = "err";
-    p.videoError = (e.message || "Erreur").slice(0, 120);
-    p.videoMsg = "";
-    save(); render();
-    toast("Échec : " + p.videoError);
-  }
-}
-/* ============================================================
-   PROMPTS FINAUX (pour ChatGPT/Gemini)
+   PROMPTS FINAUX
    ============================================================ */
 function imagePrompt(pl) {
   var parts = [sentence(pl.pi)];
@@ -1004,7 +888,68 @@ function briefText() { return (has(P.genre) ? "Genre : " + P.genre + ".\n" : "")
 function leconsText() { return has(P.lecons) ? "LEÇONS DES STATS PRÉCÉDENTES :\n" + P.lecons.trim() + "\n" : ""; }
 
 /* ============================================================
-   APPEL AGNES + EXTRACTION JSON
+   EXTRACTION JSON (5 stratégies + réparation JSON tronqué)
+   ============================================================ */
+function salvageTruncatedJson(text) {
+  var s = String(text || "").trim();
+  var start = s.indexOf('{');
+  if (start < 0) return null;
+  s = s.slice(start);
+
+  var lastObjEnd = -1, depth = 0, inString = false, escape = false;
+  for (var i = 0; i < s.length; i++) {
+    var c = s[i];
+    if (escape) { escape = false; continue; }
+    if (c === '\\') { escape = true; continue; }
+    if (c === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 2) lastObjEnd = i;
+    }
+  }
+  if (lastObjEnd < 0) return null;
+
+  var fixed = s.slice(0, lastObjEnd + 1) + "]}";
+  try { return JSON.parse(fixed); } catch (e) { return null; }
+}
+
+function extractJson(t) {
+  var s = String(t || "").trim();
+  s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+  var a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if (a < 0 || b < a) throw new Error("no json");
+  var raw = s.slice(a, b + 1);
+
+  try { return JSON.parse(raw); } catch (e1) {}
+  try { return JSON.parse(raw.replace(/(?<!\\)\n/g, "\\n")); } catch (e2) {}
+  try {
+    var fixed = raw.replace(/:(\s*)"((?:[^"\\]|\\.)*?)"/g, function (m, sp, inner) {
+      return ":" + sp + '"' + inner.replace(/\n/g, "\\n").replace(/\r/g, "").replace(/(?<!\\)"/g, '\\"') + '"';
+    });
+    return JSON.parse(fixed);
+  } catch (e3) {}
+  try {
+    var m = raw.match(/"script"\s*:\s*"([\s\S]*?)"\s*[,}]/);
+    if (m) {
+      var scriptLines = m[1].split(/\\n|\n/).map(function (l) { return l.replace(/\\"/g, '"').replace(/"/g, '\\"'); });
+      var newRaw = raw.replace(m[0], '"script":["' + scriptLines.join('","') + '"]');
+      return JSON.parse(newRaw);
+    }
+  } catch (e4) {}
+
+  /* Réparation JSON tronqué (AVANT le throw final) */
+  try {
+    var salv = salvageTruncatedJson(raw);
+    if (salv) { console.warn("[PARSE] JSON tronqué réparé"); return salv; }
+  } catch (e5) {}
+
+  throw new Error("JSON invalide");
+}
+
+/* ============================================================
+   APPEL AGNES + ASK
    ============================================================ */
 function ask(label, prompt, apply) {
   var p = new Promise(function (resolve, reject) {
@@ -1032,59 +977,6 @@ function ask(label, prompt, apply) {
   p.catch(function () {});
   return p;
 }
-function salvageTruncatedJson(text) {
-  var s = String(text || "").trim();
-  var start = s.indexOf('{');
-  if (start < 0) return null;
-  s = s.slice(start);
-
-  // Trouve le dernier objet plan COMPLET (depth revient à 2 = fermeture d'un plan)
-  var lastObjEnd = -1, depth = 0, inString = false, escape = false;
-  for (var i = 0; i < s.length; i++) {
-    var c = s[i];
-    if (escape) { escape = false; continue; }
-    if (c === '\\') { escape = true; continue; }
-    if (c === '"') { inString = !inString; continue; }
-    if (inString) continue;
-    if (c === '{') depth++;
-    else if (c === '}') {
-      depth--;
-      if (depth === 2) lastObjEnd = i;
-    }
-  }
-  if (lastObjEnd < 0) return null;
-
-  var fixed = s.slice(0, lastObjEnd + 1) + "]}";
-  try { return JSON.parse(fixed); } catch (e) { return null; }
-}
-function extractJson(t) {
-  var s = String(t || "").trim();
-  s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
-  var a = s.indexOf("{"), b = s.lastIndexOf("}");
-  if (a < 0 || b < a) throw new Error("no json");
-  var raw = s.slice(a, b + 1);
-  try { return JSON.parse(raw); } catch (e1) {}
-  try { return JSON.parse(raw.replace(/(?<!\\)\n/g, "\\n")); } catch (e2) {}
-  try {
-    var fixed = raw.replace(/:(\s*)"((?:[^"\\]|\\.)*?)"/g, function (m, sp, inner) {
-      return ":" + sp + '"' + inner.replace(/\n/g, "\\n").replace(/\r/g, "").replace(/(?<!\\)"/g, '\\"') + '"';
-    });
-    return JSON.parse(fixed);
-  } catch (e3) {}
-  try {
-    var m = raw.match(/"script"\s*:\s*"([\s\S]*?)"\s*[,}]/);
-    if (m) {
-      var scriptLines = m[1].split(/\\n|\n/).map(function (l) { return l.replace(/\\"/g, '"').replace(/"/g, '\\"'); });
-      var newRaw = raw.replace(m[0], '"script":["' + scriptLines.join('","') + '"]');
-      return JSON.parse(newRaw);
-    }
-  } catch (e4) {}
-  throw new Error("JSON invalide");
-     try {
-    var salv = salvageTruncatedJson(raw);
-    if (salv) { console.warn("[PARSE] JSON tronqué réparé"); return salv; }
-  } catch (e5) {}
-}
 function overlay() {
   var o = document.getElementById("overlay");
   if (!R.busy) { o.innerHTML = ""; return; }
@@ -1093,10 +985,8 @@ function overlay() {
 var JSONNOTE = "\n\nAnswer ONLY with a valid JSON object, no text before or after, no code fences.";
 
 /* ============================================================
-   GÉNÉRATEURS — Instructions en anglais, contenu en français
+   GÉNÉRATEURS
    ============================================================ */
-
-/* ---- GEN SURPRISE (remplacé par genConcepts dans l'onglet Idées) ---- */
 
 /* ---- GEN UNIVERS ---- */
 function genUnivers() {
@@ -1150,9 +1040,7 @@ function genCast() {
   });
 }
 
-/* ============================================================
-   SCRIPT — instructions EN, dialogue FR
-   ============================================================ */
+/* ---- GEN SCRIPT ---- */
 function scriptBody(ep) {
   var rec = P.rec, last = isLast(ep);
   var structure = "3-second hook, " + (ep.n > 1 && rec === "oui" && P.nb > 1 ? "5-second recap of the previous episode, " : "") + "setup, conflict, twist, " + (last ? "clean ending." : "ending on a question.");
@@ -1166,14 +1054,14 @@ function scriptBody(ep) {
     (has(ep.note) ? "Starting note (in French): " + ep.note.trim() + "\n" : "") +
     (ep.n > 1 && rec === "oui" ? "Previous recap (in French): " + (recapFor(ep.n) || "non fourni") + "\n" : "") +
     (rec !== "oui" ? "Invent characters (4 max), visual description IN ENGLISH 40-60 words ending with: " + phrase() + "\n" : "") +
-        "\nTarget duration: " + P.duree + " s. Structure: " + structure + " Max 2 characters per scene, only one person speaks at a time. " + DIALOGUE_RULES + "\n" +
+    "\nTarget duration: " + P.duree + " s. Structure: " + structure + " Max 2 characters per scene, only one person speaks at a time. " + DIALOGUE_RULES + "\n" +
     "⚠️ HARD CONSTRAINT: The story must fit in " + P.duree + " seconds. Count your lines BEFORE answering. If you write " + Math.floor(P.duree / 3) + " lines at 3s each, you get " + (Math.floor(P.duree / 3) * 3) + "s. Do not write more. A line of 5 words takes 3s, not 1s.\n" +
     "MANDATORY TIKTOK RULES (for maximum virality):\n" +
     "1. 3-SECOND HOOK: The very first line or action must create surprise, tension or an immediate question. Tag this line with [HOOK] at the start.\n" +
     "2. VISUAL CHANGE EVERY 2 TO 3 SECONDS: Each line must have a shot type DIFFERENT from the previous one. Use ENGLISH shot names: CLOSE-UP, MEDIUM SHOT, WIDE SHOT, OVER-THE-SHOULDER, HANDHELD, ORBIT, TIGHT SHOT, HIGH ANGLE, LOW ANGLE, etc.\n" +
     rehook +
     "4. ENDING: " + (last ? "Clean, memorable ending that closes the story." : "End on a cliffhanger or an unanswered question.") + "\n" +
-        "5. RHYTHM — ABSOLUTE MAXIMUM: " + Math.floor(P.duree / 3) + " lines of dialogue TOTAL (that is one line every ~3 seconds). Do NOT exceed this count. The last timestamp MUST be BEFORE " + Math.floor(P.duree - 5) + "s. SHORT lines: 5 to 12 words maximum. Each line = ~3 seconds of screen time.\n" +
+    "5. RHYTHM — ABSOLUTE MAXIMUM: " + Math.floor(P.duree / 3) + " lines of dialogue TOTAL (that is one line every ~3 seconds). Do NOT exceed this count. The last timestamp MUST be BEFORE " + Math.floor(P.duree - 5) + "s. SHORT lines: 5 to 12 words maximum. Each line = ~3 seconds of screen time.\n" +
     "6. TONE: Each line starts with a tone tag in parentheses, IN ENGLISH: (angry), (whispers), (nervous laugh), (cold), (panicked), (sarcastic), etc. Alternate tones to create rhythm.\n" +
     "\nSCRIPT FORMAT (one line per dialogue, follow EXACTLY this format):\n" +
     "[00:00] [HOOK] CLOSE-UP - Mango (sarcastic): C'est ca, ton grand secret ?\n" +
@@ -1222,12 +1110,10 @@ function applyScript(ep, r) {
 }
 function genScript(ep) { return ask("le script de " + unit(ep.n), scriptBody(ep), function (r) { applyScript(ep, r); }); }
 
-/* ============================================================
-   PLANS — champs techniques en anglais
-   ============================================================ */
+/* ---- GEN PLANS ---- */
 function plansBody(ep, scriptText) {
-    var minPlans = Math.floor(P.duree / 8);
-     var maxPlans = Math.floor(P.duree / 5);
+  var minPlans = Math.floor(P.duree / 8);
+  var maxPlans = Math.floor(P.duree / 5);
   var durationsList = DUREES_PLAN.map(function (x) { return x.v + " s (" + x.frames + " frames)"; }).join(", ");
   return "Visual style: " + phrase() + "\n" + bible(ep) + "\n\nScript:\n" + scriptText + "\n\n" +
     "Break this script into shots. Total video must be " + P.duree + " seconds. " +
@@ -1242,7 +1128,7 @@ function plansBody(ep, scriptText) {
     "You will need between " + minPlans + " and " + maxPlans + " shots + 2 spare shots. " +
     "For each shot: place IN FRENCH, 2 characters max, action IN ENGLISH (short, no accents, e.g. 'fast nervous hand gesture'), shot type IN ENGLISH (wide shot / medium shot / close-up), line IN FRENCH (12 words max), who speaks (name or 'personne'), emotion IN ENGLISH (panicked / cold / angry / scared / happy / surprised), pace IN ENGLISH (calm / fast / tense / shock). " +
     "prompt_image IN ENGLISH describes ONLY the scene (shot type, positions, action, light). Do NOT add appearance or style. prompt_video IN ENGLISH: movement only. " +
-        "⚠️ HARD CONSTRAINT: sum of durations for shots 1 to N (without spare shots) MUST equal " + P.duree + " seconds exactly (tolerance +/-3 s). If you exceed, remove shots. " + JSONNOTE +
+    "⚠️ HARD CONSTRAINT: sum of durations for shots 1 to N (without spare shots) MUST equal " + P.duree + " seconds exactly (tolerance +/-3 s). If you exceed, remove shots. " + JSONNOTE +
     '\nFormat: {"plans":[{"n":1,"duree_s":6,"lieu":"in French","personnages":["name"],"action":"in English","cadrage":"medium shot","replique":"in French","qui_parle":"name","emotion":"panicked","rythme":"tense","prompt_image":"in English","prompt_video":"in English","reserve":false}]}';
 }
 function applyPlans(ep, r) {
@@ -1267,9 +1153,7 @@ function applyPlans(ep, r) {
 }
 function genPlans(ep) { return ask("le storyboard de " + unit(ep.n), plansBody(ep, ep.script), function (r) { applyPlans(ep, r); }); }
 
-/* ============================================================
-   MONTAGE — instructions EN, rendu FR
-   ============================================================ */
+/* ---- GEN MONTAGE ---- */
 function montBody(ep, list, titre, fin) {
   return "Series: " + (P.titre || "sans titre") + ". Episode " + ep.n + " : " + titre + "\nShots:\n" + list + "\nEnding question: " + fin + "\nSpeech method: " + SPEECH.filter(function (s) { return s.id === P.speech; })[0].t + "\n\n" +
     "Write the output IN FRENCH, with these 4 headings:\n" +
@@ -1306,6 +1190,68 @@ function genMontage(ep) {
       toast("Échec : " + (e.message || "").slice(0, 80));
       reject(e);
     });
+  });
+}
+
+/* ---- BILAN ---- */
+function genBilan(ep) {
+  var st = ep.stats || statsFresh();
+  var prompt = "Series: " + (P.titre || "sans titre") + ". " + P.concept + "\nEpisode " + ep.n + " : " + ep.titre + ". Summary: " + ep.resume + "\nScript excerpt:\n" + String(ep.script || "").slice(0, 700) + "\n\n" +
+    "Stats: " + st.vues + " views, " + st.r3 + " % still watching at 3 s, " + st.moy + " s average, " + st.part + " shares." + (has(st.comm) ? " Comments: " + st.comm : "") +
+    (has(P.lecons) ? "\nLessons already noted:\n" + P.lecons + "\n" : "") +
+    "\nWrite the output IN FRENCH: diagnosis in 3 sentences max, 3 short rules, 1 test for the next episode." + JSONNOTE +
+    '\nFormat: {"diagnostic":"in French","regles":["in French","in French","in French"],"test":"in French"}';
+  return ask("le bilan de l'épisode " + ep.n, prompt, function (r) {
+    if (!r || !r.diagnostic) throw new Error("vide");
+    var e2 = epBy(ep.n) || ep;
+    e2.bilan = r.diagnostic + (has(r.test) ? "\nÀ tester : " + r.test : "");
+    var add = "Épisode " + ep.n + " : " + (r.regles || []).join(" ; ") + (has(r.test) ? " | Test : " + r.test : "");
+    var l = (P.lecons || "").split("\n").filter(function (x) { return has(x) && x.indexOf("Épisode " + ep.n + " :") !== 0; });
+    l.push(add);
+    P.lecons = l.slice(-12).join("\n");
+  });
+}
+
+/* ---- CONCEPTS (idées d'histoires) ---- */
+function genConcepts(o) {
+  o = o || {};
+  var seeds = "", amb = ambText(), n = 3;
+  if (o.surprise) {
+    var picks = AMBS.slice().sort(function () { return Math.random() - .5; }).slice(0, 2);
+    amb = picks.map(function (a) { return a.nom; });
+    seeds = "CONTRAINTES TIRÉES AU HASARD (à respecter dans au moins une idée sur deux) : un lieu, " +
+      rnd(RND.lieu) + " ; un personnage, " + rnd(RND.heros) + " ; un objet ou un secret, " +
+      rnd(RND.objet) + " ; un retournement du type : " + rnd(RND.twist) + ".\n";
+  }
+  var vus = (P.vus || []).slice(-30);
+  var prompt = "You are a screenwriter for short vertical series (TikTok, Shorts, Reels). " +
+    "OUTPUT IN FRENCH for user-facing content, all instructions here are for you in English.\n" +
+    (P.genre ? "Genre: " + P.genre + ".\n" : "") +
+    (P.cible ? "Audience: " + P.cible + ".\n" : "") +
+    (amb.length ? "Mood required: " + amb.join(" | ") + ".\n" : "Mood: free, vary it.\n") + seeds +
+    "Format: " + (P.nb === 1 ? "one video" : P.nb + " episodes") + " of " + P.duree + " seconds each." +
+    (sty() ? " Visual style: " + sty().nom + ".\n" : "\n") +
+    (has(P.idee) && !o.surprise ? "Starting hint from user: " + P.idee.trim() + "\n" : "") +
+    (vus.length ? "Ideas already suggested (do NOT repeat, not even a variant): " + vus.join(" ; ") + "\n" : "") +
+    "\nPropose " + n + " DIFFERENT ideas. Each must have: a clear main goal, a concrete obstacle, " +
+    "a secret that changes everything, a twist nobody sees coming. Avoid: amnesia, evil twin, " +
+    "'it was a dream', hidden inheritance.\n" +
+    "For each: short catchy title (in French), mood, the idea in 3 sentences (in French), " +
+    "the 3-second hook (in French), the twist (in French), the end of episode 1 (in French), " +
+    "why it could work (in French), main risk (in French).\n" +
+    "No brand, no real person, no resemblance to known series." + JSONNOTE +
+    '\nFormat: {"concepts":[{"titre":"in French","ambiance":"in French","idee":"in French","hook":"in French","twist":"in French","chute":"in French","pourquoi":"in French","risque":"in French"}]}';
+  return ask(o.more ? "trois idées de plus" : "trois idées d'histoires", prompt, function (r) {
+    if (!r || !r.concepts || !r.concepts.length) throw new Error("vide");
+    var neu = r.concepts.slice(0, 6).map(function (c) {
+      return { titre: c.titre || "", ambiance: c.ambiance || "", idee: c.idee || "",
+        hook: c.hook || "", twist: c.twist || "", chute: c.chute || "",
+        pourquoi: c.pourquoi || "", risque: c.risque || "" };
+    });
+    P.vus = (P.vus || [])
+      .concat(P.concepts.map(function (c) { return c.titre; }), neu.map(function (c) { return c.titre; }))
+      .filter(has).filter(function (t, k, a) { return a.indexOf(t) === k; }).slice(-60);
+    P.concepts = (o.more ? P.concepts : []).concat(neu).slice(-18);
   });
 }
 
@@ -1375,26 +1321,127 @@ async function seasonJob() {
 }
 function genSeason() { if (!todoEps().length) { toast("Tout est déjà préparé."); return; } runChain(seasonJob); }
 
+/* ═══ PARTIE 4 ═══ */
+
 /* ============================================================
-   BILAN — instructions EN, rendu FR
+   GÉNÉRATION PHOTO PAR PLAN (avec références)
    ============================================================ */
-function genBilan(ep) {
-  var st = ep.stats || statsFresh();
-  var prompt = "Series: " + (P.titre || "sans titre") + ". " + P.concept + "\nEpisode " + ep.n + " : " + ep.titre + ". Summary: " + ep.resume + "\nScript excerpt:\n" + String(ep.script || "").slice(0, 700) + "\n\n" +
-    "Stats: " + st.vues + " views, " + st.r3 + " % still watching at 3 s, " + st.moy + " s average, " + st.part + " shares." + (has(st.comm) ? " Comments: " + st.comm : "") +
-    (has(P.lecons) ? "\nLessons already noted:\n" + P.lecons + "\n" : "") +
-    "\nWrite the output IN FRENCH: diagnosis in 3 sentences max, 3 short rules, 1 test for the next episode." + JSONNOTE +
-    '\nFormat: {"diagnostic":"in French","regles":["in French","in French","in French"],"test":"in French"}';
-  return ask("le bilan de l'épisode " + ep.n, prompt, function (r) {
-    if (!r || !r.diagnostic) throw new Error("vide");
-    var e2 = epBy(ep.n) || ep;
-    e2.bilan = r.diagnostic + (has(r.test) ? "\nÀ tester : " + r.test : "");
-    var add = "Épisode " + ep.n + " : " + (r.regles || []).join(" ; ") + (has(r.test) ? " | Test : " + r.test : "");
-    var l = (P.lecons || "").split("\n").filter(function (x) { return has(x) && x.indexOf("Épisode " + ep.n + " :") !== 0; });
-    l.push(add);
-    P.lecons = l.slice(-12).join("\n");
-  });
+async function planGeneratePhoto(i, j) {
+  var ep = P.eps[i], p = ep && ep.plans[j];
+  if (!p) return;
+  if (!getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); return; }
+
+  p.photoStatus = "busy";
+  p.photoMsg = "Agnes dessine…";
+  p.photoError = "";
+  save(); render();
+
+  try {
+    var prompt = imagePrompt(p);
+
+    var refImages = [];
+    var noms = String(p.persos || "").split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
+    noms.forEach(function (nom) {
+      var c = persoBy(nom);
+      if (c && c.refUri) refImages.push(c.refUri);
+    });
+    if (p.lieu) {
+      var l = findLieu(p.lieu);
+      if (l && l.refUri) refImages.push(l.refUri);
+    }
+
+    p.photoMsg = "Génération (" + refImages.length + " réf.)…"; save(); render();
+    var url = await agnesCreateImage(prompt, refImages);
+    p.photoUri = url;
+    p.photoStatus = "done";
+    p.photoMsg = "";
+    p.videoUrl = null;
+    p.videoStatus = null;
+    await planPhotoStore(i, j, url);
+    save(); render();
+    toast("Photo du plan " + p.n + " prête (" + refImages.length + " réf.)");
+  } catch (e) {
+    p.photoStatus = "err";
+    p.photoError = (e.message || "Erreur").slice(0, 140);
+    p.photoMsg = "";
+    save(); render();
+    toast("Échec : " + p.photoError);
+  }
 }
+
+async function planGenerateAllPhotos(epNum) {
+  var ep = epBy(epNum);
+  if (!ep) return;
+  if (!getAgnesKey()) { toast("Ajoute ta clé Agnes."); return; }
+
+  var epIdx = P.eps.indexOf(ep);
+  var todo = [];
+  ep.plans.forEach(function (p, j) {
+    if (!p.reserve && !p.photoUri) todo.push({ idx: j, n: p.n });
+  });
+
+  if (!todo.length) { toast("Toutes les photos sont déjà faites."); return; }
+  if (!confirm("Générer " + todo.length + " photos avec Agnes ?\n\nÀ ~20 secondes par photo, compte environ " + Math.ceil(todo.length * 20 / 60) + " minutes. Garde l'écran ouvert.")) return;
+
+  var done = 0, failed = 0;
+  for (var k = 0; k < todo.length; k++) {
+    try {
+      toast("Photo " + (k+1) + "/" + todo.length + " en cours…", 1500);
+      await planGeneratePhoto(epIdx, todo[k].idx);
+      var p2 = P.eps[epIdx].plans[todo[k].idx];
+      if (p2.photoUri) done++; else failed++;
+    } catch (e) { failed++; }
+  }
+  toast("Terminé : " + done + " photo(s) OK, " + failed + " échec(s).", 4000);
+}
+
+/* ============================================================
+   GÉNÉRATION VIDÉO PAR PLAN
+   ============================================================ */
+async function planGenerateVideo(i, j) {
+  var ep = P.eps[i], p = ep && ep.plans[j];
+  if (!p || !p.photoUri) return;
+  if (P.videoEngine === "agnes" && !getAgnesKey()) { toast("Ajoute ta clé Agnes dans l'onglet Univers."); return; }
+  if (P.videoEngine === "wangp" && !has(P.wangpUrl)) { toast("Renseigne l'URL de ton serveur WanGP."); return; }
+  if (P.videoEngine === "ltx" && !has(P.ltxApiKey)) { toast("Ajoute ta clé API LTX."); return; }
+
+  p.videoStatus = "busy"; p.videoMsg = "Création de la tâche…"; p.videoError = "";
+  save(); render();
+
+  try {
+    var frames = p.frames || perPlan().frames;
+    var prompt = videoPrompt(p);
+    var url;
+
+    if (P.videoEngine === "wangp") {
+      p.videoMsg = "Envoi à WanGP…"; save(); render();
+      url = await wangpCreateVideo(prompt, p.photoUri, frames);
+    } else if (P.videoEngine === "ltx") {
+      p.videoMsg = "Envoi à LTX…"; save(); render();
+      url = await ltxCreateVideo(prompt, p.photoUri, frames);
+    } else {
+      p.videoMsg = "Envoi à Agnes…"; save(); render();
+      var id = await agnesCreateVideo(prompt, p.photoUri, frames);
+      p.videoMsg = "Préparation…"; save(); render();
+      url = await agnesPollVideo(id, function (msg) {
+        var el = document.querySelector('#vv-' + i + '-' + j + ' .badge');
+        if (el) el.textContent = "⏳ " + msg;
+      });
+    }
+    p.videoUrl = url;
+    p.videoStatus = "done";
+    p.videoMsg = "";
+    save(); render();
+    toast("Vidéo du plan " + p.n + " prête.");
+  } catch (e) {
+    p.videoStatus = "err";
+    p.videoError = (e.message || "Erreur").slice(0, 120);
+    p.videoMsg = "";
+    save(); render();
+    toast("Échec : " + p.videoError);
+  }
+}
+
 /* ============================================================
    BANDEAU D'ÉTAPES
    ============================================================ */
@@ -1541,48 +1588,6 @@ function ideesHtml() {
   return h;
 }
 
-function genConcepts(o) {
-  o = o || {};
-  var seeds = "", amb = ambText(), n = 3;
-  if (o.surprise) {
-    var picks = AMBS.slice().sort(function () { return Math.random() - .5; }).slice(0, 2);
-    amb = picks.map(function (a) { return a.nom; });
-    seeds = "CONTRAINTES TIRÉES AU HASARD (à respecter dans au moins une idée sur deux) : un lieu, " +
-      rnd(RND.lieu) + " ; un personnage, " + rnd(RND.heros) + " ; un objet ou un secret, " +
-      rnd(RND.objet) + " ; un retournement du type : " + rnd(RND.twist) + ".\n";
-  }
-  var vus = (P.vus || []).slice(-30);
-  var prompt = "You are a screenwriter for short vertical series (TikTok, Shorts, Reels). " +
-    "OUTPUT IN FRENCH for user-facing content, all instructions here are for you in English.\n" +
-    (P.genre ? "Genre: " + P.genre + ".\n" : "") +
-    (P.cible ? "Audience: " + P.cible + ".\n" : "") +
-    (amb.length ? "Mood required: " + amb.join(" | ") + ".\n" : "Mood: free, vary it.\n") + seeds +
-    "Format: " + (P.nb === 1 ? "one video" : P.nb + " episodes") + " of " + P.duree + " seconds each." +
-    (sty() ? " Visual style: " + sty().nom + ".\n" : "\n") +
-    (has(P.idee) && !o.surprise ? "Starting hint from user: " + P.idee.trim() + "\n" : "") +
-    (vus.length ? "Ideas already suggested (do NOT repeat, not even a variant): " + vus.join(" ; ") + "\n" : "") +
-    "\nPropose " + n + " DIFFERENT ideas. Each must have: a clear main goal, a concrete obstacle, " +
-    "a secret that changes everything, a twist nobody sees coming. Avoid: amnesia, evil twin, " +
-    "'it was a dream', hidden inheritance.\n" +
-    "For each: short catchy title (in French), mood, the idea in 3 sentences (in French), " +
-    "the 3-second hook (in French), the twist (in French), the end of episode 1 (in French), " +
-    "why it could work (in French), main risk (in French).\n" +
-    "No brand, no real person, no resemblance to known series." + JSONNOTE +
-    '\nFormat: {"concepts":[{"titre":"in French","ambiance":"in French","idee":"in French","hook":"in French","twist":"in French","chute":"in French","pourquoi":"in French","risque":"in French"}]}';
-  return ask(o.more ? "trois idées de plus" : "trois idées d'histoires", prompt, function (r) {
-    if (!r || !r.concepts || !r.concepts.length) throw new Error("vide");
-    var neu = r.concepts.slice(0, 6).map(function (c) {
-      return { titre: c.titre || "", ambiance: c.ambiance || "", idee: c.idee || "",
-        hook: c.hook || "", twist: c.twist || "", chute: c.chute || "",
-        pourquoi: c.pourquoi || "", risque: c.risque || "" };
-    });
-    P.vus = (P.vus || [])
-      .concat(P.concepts.map(function (c) { return c.titre; }), neu.map(function (c) { return c.titre; }))
-      .filter(has).filter(function (t, k, a) { return a.indexOf(t) === k; }).slice(-60);
-    P.concepts = (o.more ? P.concepts : []).concat(neu).slice(-18);
-  });
-}
-
 function conceptsHtml() {
   var h = "";
   P.concepts.forEach(function (c, i) {
@@ -1620,10 +1625,10 @@ function universHtml() {
     '</div></div></section>';
 
   h += '<section class="glass card"><h2>2. Mon idée</h2>' +
-  bind("titre", P.titre, 0, "Titre (facultatif)", "L'IA en propose un si tu laisses vide.") +
-  bind("idee", P.idee, 5, "Mon idée ou mon script", "Une phrase suffit. Exemple : une laverie de quartier où chaque machine révèle un secret.") +
-  '<button type="button" class="linkbtn" data-act="tab" data-v="idees">Pas d\'idée ? L\'IA en propose trois dans l\'onglet Idées</button>' +
-  '</section>';
+    bind("titre", P.titre, 0, "Titre (facultatif)", "L'IA en propose un si tu laisses vide.") +
+    bind("idee", P.idee, 5, "Mon idée ou mon script", "Une phrase suffit. Exemple : une laverie de quartier où chaque machine révèle un secret.") +
+    '<button type="button" class="linkbtn" data-act="tab" data-v="idees">Pas d\'idée ? L\'IA en propose trois dans l\'onglet Idées</button>' +
+    '</section>';
 
   h += '<section class="glass card"><h2>3. Mon look</h2><div class="fld"><span class="q">Styles visuels (max ' + MAX_STYLES + ')<span class="q-hint">Le style est appliqué à toutes les images et vidéos de la série.</span></span>' +
     '<input type="search" id="style-search" placeholder="🔍 Rechercher un style…" style="margin-top:8px;margin-bottom:8px">' +
@@ -1716,12 +1721,11 @@ function refsHtml() {
   if (!all.length) return '<section class="glass empty"><h2>Pas encore de références</h2><p class="muted">Génère ton univers pour obtenir les prompts.</p><button type="button" class="btn" data-act="tab" data-v="univers">Aller à Univers</button></section>';
   var d = all.filter(function (x) { return x.o.ok; }).length;
   var h = '<header class="hero"><span class="kicker">Étape 3</span><h1>Références</h1><p class="muted">' + d + ' sur ' + all.length + ' faites.</p></header>';
-    all.forEach(function (x, i) {
+  all.forEach(function (x, i) {
     var canGen = !!getAgnesKey();
     var alreadyHas = !!x.o.refUri;
     h += '<section class="glass card"><div class="row" style="justify-content:space-between"><h2>' + esc(x.o.nom || "Sans nom") + '</h2><span class="badge' + (x.o.ok ? " done" : "") + '">' + (x.k === "lieu" ? "Lieu" : "Personnage") + '</span></div>';
 
-    // Zone image de référence
     h += '<div class="stack"><b class="small">Image de référence</b>';
 
     if (alreadyHas) {
@@ -1745,13 +1749,10 @@ function refsHtml() {
     h += '<input type="file" class="ref-file-input" id="rf-in-' + i + '" accept="image/*" data-v="' + i + '" style="display:none">';
     h += '<p class="small muted">Cette image garantit la cohérence du ' + (x.k === "lieu" ? "décor" : "visage") + ' dans tous les plans.</p></div>';
 
-    // Prompt
     h += '<div class="stack"><b class="small">Prompt (anglais)</b><pre class="fin" id="rf' + i + '">' + esc(refPrompt(x.k, x.o.visuel)) + '</pre><button type="button" class="btn ghost" data-act="copypre" data-v="rf' + i + '">📋 Copier le prompt</button></div>';
 
-    // Bouton "faite"
     h += '<button type="button" class="chip" data-act="refok" data-v="' + i + '" aria-pressed="' + !!x.o.ok + '">' + (x.o.ok ? "✓ Référence faite" : "Marquer comme faite") + '</button>';
 
-    // Modifier
     h += '<details class="glass acc"><summary><div><b>Modifier</b></div></summary><div class="in">' +
       bind(x.path + ".nom", x.o.nom, 0, "Nom") +
       bind(x.path + ".visuel", x.o.visuel, 6, "Description visuelle (anglais)") +
@@ -1846,7 +1847,7 @@ function epHtml(e) {
   var h = '<button type="button" class="back" data-act="epback">‹ Tous les épisodes</button>' +
     '<header class="hero"><span class="kicker">' + (P.nb === 1 ? "Vidéo" : "Épisode " + e.n + " / " + P.nb) + '</span><h1>' + esc(e.titre || (P.nb === 1 ? "Ma vidéo" : "Épisode " + e.n)) + '</h1></header>';
   h += cinemaPanelHtml(e);
-    h += '<section class="glass card"><h2>Tout en un clic</h2><p class="small muted">Script → Plans → Photos → Vidéos → Montage. Cette opération peut prendre 20 à 40 minutes pour un épisode complet. Garde l\'écran ouvert.</p><button type="button" class="btn big" data-act="genall" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>🚀 Tout préparer pour cet épisode</button></section>';
+  h += '<section class="glass card"><h2>Tout en un clic</h2><p class="small muted">Script → Plans → Photos → Vidéos → Montage. Cette opération peut prendre 20 à 40 minutes pour un épisode complet. Garde l\'écran ouvert.</p><button type="button" class="btn big" data-act="genall" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>🚀 Tout préparer pour cet épisode</button></section>';
   h += '<section class="glass card"><h2>1. Script</h2>' +
     bind("eps." + i + ".titre", e.titre, 0, "Titre") +
     bind("eps." + i + ".note", e.note, 2, "Note pour cette vidéo") +
@@ -1875,7 +1876,7 @@ function epHtml(e) {
     var totalDur = main.reduce(function (t, p) { return t + (p.duree || 0); }, 0);
     h += '<div class="glass card"><b>' + cl + ' clips prêts · ' + ph + ' photos · ' + main.length + ' plans · ' + totalDur + ' s au total</b>' +
       '<div class="bar"><i style="width:' + Math.round(cl / main.length * 100) + '%"></i></div>' +
-            '<div class="rowbtns" style="margin-top:10px">' +
+      '<div class="rowbtns" style="margin-top:10px">' +
       '<button type="button" class="btn" data-act="genallphotos" data-v="' + e.n + '"' + (getAgnesKey() ? "" : " disabled") + '>🎨 Générer toutes les photos</button>' +
       '<button type="button" class="btn ghost" data-act="copyimgs" data-v="' + e.n + '">📋 Copier tous les prompts image</button>' +
       '<button type="button" class="btn ghost" data-act="copyvids" data-v="' + e.n + '">📋 Copier tous les prompts vidéo</button>' +
@@ -1990,7 +1991,7 @@ document.addEventListener("click", function (e) {
     save(); render();
   }
   else if (a === "amb") { var ai = P.ambs.indexOf(v); if (ai >= 0) P.ambs.splice(ai, 1); else P.ambs.push(v); save(); render(); }
-    else if (a === "concepts") { genConcepts(); }
+  else if (a === "concepts") { genConcepts(); }
   else if (a === "surprise") { genConcepts({ surprise: true }); }
   else if (a === "moreconcepts") { genConcepts({ more: true }); }
   else if (a === "dropconcept") { P.concepts.splice(+v, 1); save(); render(); }
@@ -2038,7 +2039,7 @@ document.addEventListener("click", function (e) {
     if (inp) inp.click();
   }
   else if (a === "plan-photo-clear") { planClearPhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
-   else if (a === "ref-regen-agnes") {
+  else if (a === "ref-regen-agnes") {
     var rr = R.refs[+v];
     if (rr) refGenerate(rr.k, rr.o.id);
   }
@@ -2052,11 +2053,11 @@ document.addEventListener("click", function (e) {
     var cpl = P.eps[ci] && P.eps[ci].plans[cj];
     if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + note cohérence copiés. Joins les images de référence.");
   }
-   else if (a === "genallphotos") { planGenerateAllPhotos(+v); }
-   else if (a === "plan-photo-gen") { planGeneratePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
+  else if (a === "genallphotos") { planGenerateAllPhotos(+v); }
+  else if (a === "plan-photo-gen") { planGeneratePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
   else if (a === "genseason") { genSeason(); }
-    else if (a === "genall") {
+  else if (a === "genall") {
     var eg = epBy(+v);
     if (!eg) return;
     if (!confirm("Tout préparer va générer le script, les plans, PUIS toutes les photos et vidéos.\n\n⚠️ Les vidéos prennent environ 1 à 2 minutes chacune. Un épisode de 12 plans = 20 à 30 minutes.\n\nContinuer ?")) return;
