@@ -436,7 +436,7 @@ async function callAgnesText(system, user) {
         { role: "user", content: user }
       ],
       temperature: 0.85,
-      max_tokens: 8000,
+      max_tokens: 16000,
       response_format: { type: "json_object" }
     })
   }, "Texte");
@@ -985,6 +985,31 @@ function ask(label, prompt, apply) {
   p.catch(function () {});
   return p;
 }
+function salvageTruncatedJson(text) {
+  var s = String(text || "").trim();
+  var start = s.indexOf('{');
+  if (start < 0) return null;
+  s = s.slice(start);
+
+  // Trouve le dernier objet plan COMPLET (depth revient à 2 = fermeture d'un plan)
+  var lastObjEnd = -1, depth = 0, inString = false, escape = false;
+  for (var i = 0; i < s.length; i++) {
+    var c = s[i];
+    if (escape) { escape = false; continue; }
+    if (c === '\\') { escape = true; continue; }
+    if (c === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 2) lastObjEnd = i;
+    }
+  }
+  if (lastObjEnd < 0) return null;
+
+  var fixed = s.slice(0, lastObjEnd + 1) + "]}";
+  try { return JSON.parse(fixed); } catch (e) { return null; }
+}
 function extractJson(t) {
   var s = String(t || "").trim();
   s = s.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
@@ -1008,6 +1033,10 @@ function extractJson(t) {
     }
   } catch (e4) {}
   throw new Error("JSON invalide");
+     try {
+    var salv = salvageTruncatedJson(raw);
+    if (salv) { console.warn("[PARSE] JSON tronqué réparé"); return salv; }
+  } catch (e5) {}
 }
 function overlay() {
   var o = document.getElementById("overlay");
