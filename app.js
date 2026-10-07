@@ -754,7 +754,7 @@ async function planGenerateVideo(i, j) {
 
   try {
     var frames = p.frames || perPlan().frames;
-    var prompt = videoPrompt(p);
+    var prompt = (p);
     var url;
 
     if (P.videoEngine === "wangp") {
@@ -827,18 +827,41 @@ function videoPrompt(pl) {
     .replace(/"/g, "'")
     .replace(/[«»„""]/g, "")
     .replace(/\n/g, " ");
+
+  /* Identification visuelle du personnage qui parle */
+  var speakerId = "";
+  if (spoke) {
+    var c = persoBy(who);
+    if (c && has(c.visuel)) {
+      var words = c.visuel.split(/\s+/).slice(0, 18).join(" ");
+      speakerId = " [IMPORTANT: The character who speaks is " + who + ", visually: " + words + ". Only THIS character's lips move. The OTHER character(s) keep their mouth closed, stay still, and do NOT react unless explicitly described.]";
+    } else {
+      speakerId = " [IMPORTANT: Only " + who + " speaks. The other character(s) keep their mouth closed and stay still.]";
+    }
+  }
+
+  /* Émotion du script */
+  var emotionLine = has(pl.emotion) ? " EMOTION: " + who + " is " + pl.emotion + ". The face, eyes, and body posture must clearly show this emotion. " : "";
+
+  /* Action visible */
+  var actionLine = has(pl.action) ? " VISIBLE ACTION: " + pl.action + ". " : "";
+
   if (!spoke || P.speech === "A") {
     rule = "No dialogue. No one speaks, all mouths stay closed. AUDIO: no voice.";
   } else if (P.speech === "B") {
-    rule = who + " speaks, lips moving in sync with the words. AUDIO: " + who + " says in French: '" + replique + "'. Brisk natural pace. Every other character keeps the mouth closed. No music.";
+    rule = "ONLY " + who + " speaks. Only " + who + "'s lips move. AUDIO: " + who + " says in French with the emotion of the scene: '" + replique + "'. No music, no other voice.";
   } else {
-    rule = who + " talks animatedly, mouth opening and closing. Every other character keeps the mouth closed. AUDIO: silence.";
+    rule = "ONLY " + who + " talks animatedly, mouth opening and closing. Every other character keeps the mouth closed and still. AUDIO: silence.";
   }
+
   return sentence(pl.pv) + " " +
     (has(pl.duree) ? "Clip length about " + pl.duree + " seconds. " : "") +
     (camPhrase() ? camPhrase() + " " : "") +
+    emotionLine +
+    actionLine +
     rule +
-    " CRITICAL: Show ONLY the characters visible in the starting image. Do NOT add new people. Do NOT change faces, hair or clothes. Keep every identity exactly as in the input image. " +
+    speakerId + " " +
+    "CRITICAL: Show ONLY the characters visible in the starting image. Do NOT add new people. Do NOT change faces, hair or clothes. Keep every identity exactly as in the input image. " +
     "ANIMATION STYLE: If the character is anthropomorphic (fruit, animal, food, object), use exaggerated cartoon animation with bouncy movements, squash and stretch, big expressive eyes, and lively gestures. " +
     "Stable face, natural motion, no text, vertical 9:16.";
 }
