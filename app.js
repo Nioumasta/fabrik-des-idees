@@ -1284,3 +1284,782 @@ function genBilan(ep) {
     P.lecons = l.slice(-12).join("\n");
   });
 }
+/* ============================================================
+   STEPPER / PROGRESS BAR
+   ============================================================ */
+function stageInfo() {
+  var refs = P.persos.concat(P.lieux).concat(P.eps.reduce(function (a, x) { return a.concat(x.cast || []); }, []));
+  var rd = refs.filter(function (r) { return r.ok; }).length;
+  var ep = P.eps[P.eps.length - 1];
+  var pl = ep ? ep.plans.filter(function (p) { return !p.reserve; }) : [];
+  var cl = pl.filter(function (p) { return p.st === 2; }).length;
+  var s = [
+    { k: "Idea", v: has(P.idee) && P.style.length ? "ok" : "", tab: "univers" },
+    { k: P.rec === "oui" ? "Cast" : "Concept", v: P.persos.length ? P.persos.length + " chars" : (has(P.concept) ? "done" : ""), ok: P.persos.length > 0 || (P.rec !== "oui" && has(P.concept)), tab: "univers" },
+    { k: "Universe", v: P.lieux.length ? P.lieux.length + " places" : "", ok: P.lieux.length > 0 && has(P.concept), tab: "univers" },
+    { k: "References", v: refs.length ? rd + "/" + refs.length : "", ok: refs.length > 0 && rd === refs.length, tab: "refs" },
+    { k: "Shots", v: pl.length ? cl + "/" + pl.length + " clips" : "", ok: pl.length > 0 && cl === pl.length, tab: "eps" },
+    { k: "Episode", v: ep && has(ep.montage) ? "ready" : "", ok: !!(ep && has(ep.montage)), tab: "eps" }
+  ];
+  s[0].ok = s[0].v === "ok"; s[0].v = s[0].ok ? "done" : "";
+  var found = false;
+  s.forEach(function (x) { x.cur = !found && !x.ok; if (x.cur) found = true; });
+  return s;
+}
+function stripHtml() {
+  return '<div class="strip" id="strip">' + stageInfo().map(function (x) {
+    return '<button type="button" class="stage' + (x.ok ? " ok" : "") + (x.cur ? " cur" : "") + '" data-act="tab" data-v="' + x.tab + '"><small>' + (x.ok ? "✓ done" : (x.v || "to do")) + '</small><b>' + x.k + '</b></button>';
+  }).join("") + '</div>';
+}
+function refreshStrip() { var s = document.getElementById("strip"); if (s) s.outerHTML = stripHtml(); }
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function goPrev() {
+  var order = ["idees", "univers", "refs", "eps"];
+  var idx = order.indexOf(R.tab);
+  if (idx > 0) { go(order[idx - 1]); toast("← " + order[idx - 1]); }
+  else toast("Already at start.");
+}
+function goNext() {
+  var order = ["idees", "univers", "refs", "eps"];
+  var idx = order.indexOf(R.tab);
+  if (idx < order.length - 1) { go(order[idx + 1]); toast("→ " + order[idx + 1]); }
+  else toast("Already at end.");
+}
+
+/* ============================================================
+   MAIN RENDER
+   ============================================================ */
+var $v = document.getElementById("view");
+function go(tab, ep) { R.tab = tab; R.ep = ep || 0; R.mont = false; R.arm = ""; render(); window.scrollTo(0, 0); }
+function render() {
+  var wasOpen = !!document.querySelector("#view details.acc[data-keep][open]");
+  document.querySelectorAll(".dock button").forEach(function (b) {
+    if (b.getAttribute("data-tab") === R.tab) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
+  var h = '<header class="proj"><div class="row" style="justify-content:space-between;align-items:center;gap:8px"><div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span class="kicker">Series factory</span><b>' + esc(P.titre || "My series") + '</b></div><div class="row" style="gap:6px;flex:none"><button type="button" class="chip small" data-act="nav-prev" title="Previous step">← Prev.</button><button type="button" class="chip small" data-act="nav-next" title="Next step">Next →</button></div></div></header>' + stripHtml();
+
+  if (R.tab === "idees") h += ideesHtml();
+  else if (R.tab === "univers") h += universHtml();
+  else if (R.tab === "refs") h += refsHtml();
+  else h += R.ep ? (R.mont && has((epBy(R.ep) || {}).montage || "") ? montView(epBy(R.ep)) : epHtml(epBy(R.ep))) : epsHtml();
+
+  h += '<div class="nav-bottom"><button type="button" class="btn ghost" data-act="nav-prev">← Previous</button><button type="button" class="btn" data-act="nav-next">Next →</button></div>';
+  $v.innerHTML = h;
+  if (wasOpen) { var dk = document.querySelector("#view details.acc[data-keep]"); if (dk) dk.open = true; }
+}
+function bind(path, val, rows, label, hint) {
+  return '<div class="fld"><label class="q" for="b-' + path + '">' + esc(label) + (hint ? '<span class="q-hint">' + esc(hint) + '</span>' : '') + '</label>' +
+    (rows
+      ? '<textarea id="b-' + path + '" data-path="' + path + '" style="min-height:' + (rows * 24 + 30) + 'px">' + esc(val) + '</textarea>'
+      : '<input type="text" id="b-' + path + '" data-path="' + path + '" value="' + esc(val) + '">') + '</div>';
+}
+
+/* ============================================================
+   SCRIPT — COLORED BLOCKS
+   ============================================================ */
+function parseScriptLine(line) {
+  var s = String(line || "").trim();
+  if (!s) return null;
+  var out = { time:"", flag:"", cadrage:"", perso:"", ton:"", texte:"", type:"action", raw:s };
+  var mT = /^\[(\d{1,2}:\d{2})\]\s*/.exec(s);
+  if (mT) { out.time = mT[1]; s = s.slice(mT[0].length); }
+  var mF = /^\[(HOOK|RE-HOOK)\]\s*/i.exec(s);
+  if (mF) { out.flag = mF[1].toUpperCase(); s = s.slice(mF[0].length); }
+  var mC = /^([A-Z][A-Z\/\s\-]{2,40}?)\s+-\s+/.exec(s);
+  if (mC) { out.cadrage = mC[1].trim(); s = s.slice(mC[0].length); }
+  var mP = /^([A-Za-z0-9' \-]{1,30}?)\s*\(([^)]{1,40})\)\s*:\s*(.+)$/.exec(s);
+  if (mP) {
+    out.perso = mP[1].trim();
+    out.ton = mP[2].trim();
+    out.texte = mP[3].trim();
+    out.type = "dialogue";
+  } else {
+    out.texte = s;
+    out.type = "action";
+  }
+  if (out.flag === "HOOK") out.type = "hook";
+  else if (out.flag === "RE-HOOK") out.type = "rehook";
+  return out;
+}
+function scriptBlocksHtml(scriptText) {
+  var lines = String(scriptText || "").split("\n").map(parseScriptLine).filter(Boolean);
+  if (!lines.length) return "";
+  var colors = {
+    hook:    { bg: "rgba(255, 90, 120, .18)",  border: "#E85A7D", label: "🎣 HOOK" },
+    rehook:  { bg: "rgba(255, 150, 60, .18)",  border: "#E8913A", label: "🔄 RE-HOOK" },
+    dialogue:{ bg: "rgba(109, 74, 232, .12)",  border: "#6D4AE8", label: "" },
+    action:  { bg: "rgba(120, 120, 140, .12)", border: "#9E9EAF", label: "" }
+  };
+  return '<div class="stack" style="gap:8px">' + lines.map(function (l) {
+    var c = colors[l.type] || colors.action;
+    var timeTag = l.time ? '<span class="badge" style="background:' + c.border + ';color:#fff;font-size:.65rem">' + esc(l.time) + '</span>' : '';
+    var flagTag = l.flag ? '<span class="badge" style="background:' + c.border + ';color:#fff;font-size:.65rem;margin-left:4px">' + esc(c.label) + '</span>' : '';
+    var cadrage = l.cadrage ? '<span class="small" style="color:' + c.border + ';font-weight:700;text-transform:uppercase;font-size:.7rem;letter-spacing:.05em">' + esc(l.cadrage) + '</span>' : '';
+    var persoHtml = "";
+    if (l.perso) {
+      persoHtml = '<b style="color:' + c.border + '">' + esc(l.perso) + '</b>';
+      if (l.ton) persoHtml += ' <i class="small" style="color:var(--muted)">(' + esc(l.ton) + ')</i>';
+      persoHtml += ' : ';
+    }
+    return '<div style="background:' + c.bg + ';border-left:4px solid ' + c.border + ';border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">' +
+      '<div class="row" style="gap:6px;flex-wrap:wrap">' + timeTag + flagTag + cadrage + '</div>' +
+      '<div>' + persoHtml + esc(l.texte) + '</div>' +
+    '</div>';
+  }).join("") + '</div>';
+}
+
+/* ============================================================
+   IDEAS TAB
+   ============================================================ */
+function ideesHtml() {
+  var h = '<header class="hero"><span class="kicker">Step 1</span><h1>Ideas</h1><p class="muted">Pick a mood. The concept is generated from the Universe tab.</p></header>';
+  h += '<section class="glass card"><h2>Mood</h2><div class="chips">' + AMBS.map(function (a) {
+    return '<button type="button" class="chip small" data-act="amb" data-v="' + a.id + '" aria-pressed="' + (P.ambs.indexOf(a.id) >= 0) + '">' + esc(a.nom) + '</button>';
+  }).join("") + '</div>' +
+    '<p class="small muted" style="margin-top:10px">Go to the Universe tab to write your idea and generate the concept, cast and universe.</p>' +
+    '<div class="rowbtns" style="margin-top:8px">' +
+    '<button type="button" class="btn big" data-act="surprise">🎲 Surprise me (title + story)</button>' +
+    '<button type="button" class="btn ghost big" data-act="tab" data-v="univers">Go to Universe ›</button>' +
+    '</div></section>';
+  return h;
+}
+
+/* ============================================================
+   UNIVERSE TAB
+   ============================================================ */
+function universHtml() {
+  var ready = has(P.idee) && P.style.length > 0;
+  var hasU = P.persos.length > 0 || has(P.concept);
+  var h = '<header class="hero"><span class="kicker">Step 2</span><h1>Universe</h1><p class="muted">Format, idea, visual style, Agnes key.</p></header>';
+
+  h += agnesPanelHtml();
+
+  h += '<section class="glass card"><h2>1. My format</h2>' +
+    '<div class="fld"><span class="q">Number of videos</span><div class="chips">' +
+    NBS.map(function (n) { return '<button type="button" class="chip" data-act="nb" data-v="' + n + '" aria-pressed="' + (P.nb === n) + '">' + (n === 1 ? "1 video" : n + " episodes") + '</button>'; }).join("") +
+    '</div></div>' +
+    '<div class="fld"><span class="q">Total video duration<span class="q-hint">Number of shots is calculated automatically from the script.</span></span><div class="chips">' +
+    DUREES_TOTALES.map(function (x) { return '<button type="button" class="chip" data-act="duree" data-v="' + x.v + '" aria-pressed="' + (P.duree === x.v) + '">' + x.t + '</button>'; }).join("") +
+    '</div></div>' +
+    '<div class="fld"><span class="q">Recurring characters?</span><div class="opt">' +
+    RECS.map(function (r) { return '<button type="button" class="optb" data-act="rec" data-v="' + r.id + '" aria-pressed="' + (P.rec === r.id) + '"><b>' + esc(r.t) + '</b><span>' + esc(r.d) + '</span></button>'; }).join("") +
+    '</div></div></section>';
+
+  h += '<section class="glass card"><h2>2. My idea</h2>' +
+    bind("titre", P.titre, 0, "Title") +
+    bind("idee", P.idee, 5, "My idea or my script", "One sentence is enough. Example: a neighborhood laundromat where each machine reveals a secret.") +
+    '</section>';
+
+  h += '<section class="glass card"><h2>3. My look</h2><div class="fld"><span class="q">Visual styles (max ' + MAX_STYLES + ')<span class="q-hint">Style is applied to all images and videos of the series.</span></span>' +
+    '<input type="search" id="style-search" placeholder="🔍 Search a style…" style="margin-top:8px;margin-bottom:8px">' +
+    '<select id="style-add" data-act="styles-add" style="margin-bottom:8px"><option value="">+ Add a style…</option>' +
+    GROUPS.map(function (g, gi) {
+      return '<optgroup label="' + esc(g) + '">' + STYLES.filter(function (s) { return s.g === gi; }).map(function (s) {
+        return '<option value="' + s.id + '">' + (s.emoji ? s.emoji + ' ' : '') + esc(s.nom) + '</option>';
+      }).join("") + '</optgroup>';
+    }).join("") +
+    '</select>' +
+    '<div class="chips" id="style-chips">' +
+    (styList().length
+      ? styList().map(function (s) { return '<button type="button" class="chip small" data-act="style-remove" data-v="' + s.id + '" aria-pressed="true">✓ ' + (s.emoji ? s.emoji + ' ' : '') + esc(s.nom) + ' ✕</button>'; }).join("")
+      : '<p class="small muted">No style — prompts will be generic.</p>') +
+    '</div></div>' +
+    '<details class="glass acc" data-keep="1"><summary><div><b>Refine: skin, complexion, eyes, captions</b><br><span>' + (P.skin || P.teints.length || P.yeux.length || sousList().length > 1 ? "Settings chosen" : "Optional") + '</span></div></summary><div class="in">' +
+    '<div class="fld"><span class="q">Skin rendering</span><div class="chips">' + SKINS.map(function (k) { return '<button type="button" class="chip small" data-act="skin" data-v="' + k.id + '" aria-pressed="' + (P.skin === k.id) + '" title="' + esc(k.d) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
+    '<div class="fld"><span class="q">Complexions</span><div class="chips">' + TEINTS.map(function (k) { return '<button type="button" class="chip small" data-act="teint" data-v="' + k.id + '" aria-pressed="' + (P.teints.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
+    '<div class="fld"><span class="q">Eyes (multiple possible)</span><div class="chips">' + YEUX.map(function (k) { var arr = Array.isArray(P.yeux) ? P.yeux : []; return '<button type="button" class="chip small" data-act="yeux" data-v="' + k.id + '" aria-pressed="' + (arr.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
+    '<div class="fld"><span class="q">Captions</span><div class="chips">' + SOUS.map(function (k) { return '<button type="button" class="chip small" data-act="sous" data-v="' + k.id + '" aria-pressed="' + (sousList().indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
+    bind("custom", P.custom, 2, "My personal touch", "Added to the style phrase.") +
+    '</div></details>' +
+    '<div class="fld" style="margin-top:10px"><span class="q">Final style phrase</span><pre class="fin">' + esc(phrase() || "Pick a style to see it appear.") + '</pre>' + (skinPhrase() ? '<p class="small muted">Skin/complexion bonus: ' + esc(skinPhrase()) + '</p>' : '') + '</div></section>';
+
+  h += '<section class="glass card"><h2>4. Voice</h2><div class="opt">' +
+    SPEECH.map(function (s) { return '<button type="button" class="optb" data-act="speech" data-v="' + s.id + '" aria-pressed="' + (P.speech === s.id) + '"><b>' + esc(s.t) + '</b><span>' + esc(s.d) + '</span></button>'; }).join("") +
+    '</div></section>';
+
+  h += '<section class="glass card"><h2>5. Generate</h2>' +
+    '<div class="fld"><label class="q" for="video-engine">Video generation engine</label><select id="video-engine">' +
+    '<option value="agnes"' + (P.videoEngine === "agnes" ? " selected" : "") + '>🎬 Agnes (cloud, free)</option>' +
+    '<option value="wangp"' + (P.videoEngine === "wangp" ? " selected" : "") + '>🖥️ WanGP (local, PC GPU)</option>' +
+    '<option value="ltx"' + (P.videoEngine === "ltx" ? " selected" : "") + '>⚡ LTX (cloud, paid)</option>' +
+    '</select></div>' +
+    (P.videoEngine === "wangp" ? '<div class="fld"><label class="q">WanGP server URL</label><input type="text" id="wangp-url" data-path="wangpUrl" value="' + esc(P.wangpUrl || "") + '" placeholder="http://192.168.1.100:7860"><span class="q-hint">Local IP of your PC + WanGP port</span></div>' : '') +
+    (P.videoEngine === "ltx" ? '<div class="fld"><label class="q">LTX API key</label><input type="password" id="ltx-key" data-path="ltxApiKey" value="' + esc(P.ltxApiKey || "") + '" placeholder="ltx-..."></div>' : '') +
+    '<button type="button" class="btn big" data-act="genuni"' + (ready ? "" : " disabled") + '>' + (hasU ? "Regenerate" : "Generate") + (P.rec === "oui" ? " cast and universe" : " concept and universe") + '</button>' +
+    (!hasU && ready ? '<p class="small muted">Tap once to generate.</p>' : '') +
+    (hasU ? '<p class="small muted">Regenerating replaces everything after.</p>' : '') +
+    '</section>';
+
+  if (hasU) {
+    h += '<section class="glass card"><h2>My concept</h2>' +
+      bind("concept", P.concept, 3, "Concept phrase") +
+      bind("regle", P.regle, 2, "Special rule") +
+      bind("ton", P.ton, 2, "Tone") +
+      bind("arc", P.arc, Math.max(3, Math.min(P.nb, 10)), P.nb === 1 ? "Storyline" : "Series arc") +
+      '</section>';
+
+    if (P.rec === "oui") {
+      h += '<section class="stack"><h2>Cast</h2>' + P.persos.map(function (p, i) {
+        return '<details class="glass acc"><summary><div><b>' + esc(p.nom || "Unnamed") + '</b><br><span>' + esc(p.role) + '</span></div></summary><div class="in">' +
+          bind("persos." + i + ".nom", p.nom, 0, "Name") +
+          bind("persos." + i + ".role", p.role, 0, "Role") +
+          bind("persos." + i + ".caractere", p.caractere, 0, "Personality") +
+          bind("persos." + i + ".secret", p.secret, 2, "Secret") +
+          bind("persos." + i + ".voix", p.voix, 2, "Voice (fr)") +
+          bind("persos." + i + ".voix_en", p.voix_en, 2, "Voice (en)") +
+          bind("persos." + i + ".visuel", p.visuel, 7, "Visual description (English)", "Without the style: added automatically.") +
+          '<button type="button" class="del" data-act="delperso" data-v="' + i + '">Delete</button></div></details>';
+      }).join("") + '<button type="button" class="btn ghost big" data-act="addperso">Add character</button></section>';
+    }
+
+    h += '<section class="stack"><h2>Places</h2>' + P.lieux.map(function (l, i) {
+      return '<details class="glass acc"><summary><div><b>' + esc(l.nom || "Unnamed") + '</b></div></summary><div class="in">' +
+        bind("lieux." + i + ".nom", l.nom, 0, "Name") +
+        bind("lieux." + i + ".visuel", l.visuel, 6, "Visual description (English)") +
+        '<button type="button" class="del" data-act="dellieu" data-v="' + i + '">Delete</button></div></details>';
+    }).join("") + '<button type="button" class="btn ghost big" data-act="addlieu">Add place</button></section>';
+  }
+
+  h += '<section class="glass card"><h2>Backup</h2>' +
+    '<button type="button" class="btn ghost big" data-act="hard-reload" style="color:var(--accent-text)">🔄 Reload app (clear cache)</button>' +
+    '<button type="button" class="btn ghost big" data-act="bkfile">Download my backup</button>' +
+    '<label class="btn ghost big" for="bk-file" style="display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer">Open a backup file</label><input type="file" id="bk-file" accept=".json" style="position:absolute;width:1px;height:1px;opacity:0">' +
+    '<textarea id="bk-in" placeholder="Paste a backup here to restore" style="min-height:80px"></textarea>' +
+    '<button type="button" class="btn ghost big" data-act="bkrestore">Restore</button>' +
+    '<button type="button" class="btn big" data-act="reset" style="background:linear-gradient(135deg,#E85A7D,#B5348F)">🗑️ Erase everything to start over</button></section>';
+
+  return h;
+}
+
+/* ============================================================
+   REFERENCES TAB
+   ============================================================ */
+function refPrompt(kind, visuel) {
+  if (kind === "lieu") return "Empty background plate, no characters, no people. " + sentence(visuel) + " Wide establishing shot, eye level, no text, no logo, vertical 9:16. " + phrase() + ".";
+  return "Character reference sheet. " + sentence(visuel) + " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
+}
+function refsHtml() {
+  var all = [];
+  P.persos.forEach(function (p, j) { all.push({ k: "perso", o: p, path: "persos." + j }); });
+  P.lieux.forEach(function (l, j) { all.push({ k: "lieu", o: l, path: "lieux." + j }); });
+  P.eps.forEach(function (ep, ei) { (ep.cast || []).forEach(function (p, j) { all.push({ k: "perso", o: p, path: "eps." + ei + ".cast." + j }); }); });
+  R.refs = all;
+
+  if (!all.length) return '<section class="glass empty"><h2>No references yet</h2><p class="muted">Generate your universe to get prompts.</p><button type="button" class="btn" data-act="tab" data-v="univers">Go to Universe</button></section>';
+
+  var d = all.filter(function (x) { return x.o.ok; }).length;
+  var h = '<header class="hero"><span class="kicker">Step 3</span><h1>References</h1><p class="muted">' + d + ' of ' + all.length + ' done.</p></header>';
+  all.forEach(function (x, i) {
+    h += '<section class="glass card"><div class="row" style="justify-content:space-between"><h2>' + esc(x.o.nom || "Unnamed") + '</h2><span class="badge' + (x.o.ok ? " done" : "") + '">' + (x.k === "lieu" ? "Place" : "Character") + '</span></div>' +
+      '<div class="stack"><b class="small">Reference image (to attach in ChatGPT/Gemini)</b>' +
+      (x.o.refUri
+        ? '<div class="plan-thumb" style="max-width:200px"><img src="' + esc(x.o.refUri) + '" alt=""><div class="bar"><button type="button" class="btn ghost" data-act="ref-change" data-v="' + i + '">🔄 Change</button><button type="button" class="btn ghost" data-act="ref-clear" data-v="' + i + '" style="color:var(--warn)">🗑️</button></div></div>'
+        : '<button type="button" class="plan-drop" data-act="ref-upload" data-v="' + i + '">📥 Upload reference image</button>'
+      ) +
+      '<input type="file" class="ref-file-input" id="rf-in-' + i + '" accept="image/*" data-v="' + i + '" style="display:none">' +
+      '<p class="small muted">This image ensures the ' + (x.k === "lieu" ? "decor" : "face") + ' stays consistent across every shot.</p>' +
+      '</div>' +
+      '<div class="stack"><b class="small">Prompt (English)</b><pre class="fin" id="rf' + i + '">' + esc(refPrompt(x.k, x.o.visuel)) + '</pre><button type="button" class="btn ghost" data-act="copypre" data-v="rf' + i + '">📋 Copy prompt</button></div>' +
+      '<button type="button" class="chip" data-act="refok" data-v="' + i + '" aria-pressed="' + !!x.o.ok + '">' + (x.o.ok ? "✓ Reference done" : "Mark as done") + '</button>' +
+      '<details class="glass acc"><summary><div><b>Edit</b></div></summary><div class="in">' +
+      bind(x.path + ".nom", x.o.nom, 0, "Name") +
+      bind(x.path + ".visuel", x.o.visuel, 6, "Visual description (English)") +
+      '</div></details></section>';
+  });
+  return h;
+}
+
+/* ============================================================
+   EPISODES LIST
+   ============================================================ */
+function epsHtml() {
+  var h = '<header class="hero"><span class="kicker">Step 4</span><h1>' + (P.nb === 1 ? "My video" : "Episodes") + '</h1><p class="muted">' + (P.nb === 1 ? "A script, shots, editing." : P.eps.length + " of " + P.nb + " created.") + '</p></header>';
+  if (!canScript()) h += '<div class="warnbox"><h3>Start with Universe</h3><p class="small">Write your idea and generate your universe first.</p></div>';
+  if (canScript() && todoEps().length) {
+    h += '<section class="glass card"><h2>Prepare everything</h2><p class="small muted">Script, shots, prompts and editing for every missing episode.</p><button type="button" class="btn big" data-act="genseason">Prepare ' + todoEps().length + (todoEps().length > 1 ? " episodes" : " episode") + '</button></section>';
+  }
+  if (!P.eps.length) h += '<section class="glass empty"><h2>No episode</h2><p class="muted">Create the first episode.</p></section>';
+  P.eps.forEach(function (e) {
+    var pl = e.plans.filter(function (p) { return !p.reserve; });
+    var cl = pl.filter(function (p) { return p.st === 2; }).length;
+    h += '<button type="button" class="glass chrow" data-act="openep" data-v="' + e.n + '"><span class="n">' + e.n + '</span><span class="t"><b>' + esc(e.titre || (P.nb === 1 ? "My video" : "Episode " + e.n)) + '</b><span>' + (has(e.script) ? "Script done" : "Script to write") + ' · ' + (pl.length ? cl + "/" + pl.length + " clips" : "shots to do") + (has(e.montage) ? " · editing ready" : "") + '</span></span></button>';
+  });
+  return h + (P.eps.length < P.nb ? '<button type="button" class="btn big" data-act="newep">' + (P.nb === 1 ? "Create video" : "New episode") + '</button>' : '');
+}
+
+/* ============================================================
+   CINEMA PANEL (per episode)
+   ============================================================ */
+function cinemaPanelHtml(ep) {
+  if (!ep) return "";
+  var i = P.eps.indexOf(ep);
+  return '<details class="glass acc" data-keep="1" id="cinema-' + i + '"><summary><div><b>🎬 Cinema settings</b><br><span>' + (P.effets.length || P.cam ? "Custom" : "Default") + '</span></div></summary><div class="in">' +
+    '<p class="small muted">These settings apply to every shot of this episode.</p>' +
+    ["Light", "Image", "Color"].map(function (g) {
+      return '<div class="fld"><span class="q">' + g + '</span><div class="chips">' + EFFETS.filter(function (x) { return x.g === g; }).map(function (k) {
+        return '<button type="button" class="chip small" data-act="effet" data-v="' + k.id + '" aria-pressed="' + (P.effets.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>';
+      }).join("") + '</div></div>';
+    }).join("") +
+    '<div class="fld"><label class="q" for="cam">Camera: dominant move</label><select id="cam"><option value="">Free choice</option>' + CAMS.map(function (c) { return '<option value="' + c.id + '"' + (P.cam === c.id ? " selected" : "") + '>' + esc(c.nom) + '</option>'; }).join("") + '</select></div>' +
+    '<div class="fld"><span class="q">Final style phrase (preview)</span><pre class="fin">' + esc(phrase() || "No style chosen.") + '</pre></div>' +
+    '</div></details>';
+}
+
+/* ============================================================
+   EPISODE DETAIL
+   ============================================================ */
+var STAT = ["To do", "Photo ready", "Clip ready"];
+function planPhotoHtml(i, j, p) {
+  if (p.photoUri) {
+    return '<div class="plan-thumb"><img src="' + esc(p.photoUri) + '" alt="">' +
+      '<div class="bar"><button type="button" class="btn ghost" data-act="plan-photo-change" data-i="' + i + '" data-j="' + j + '">🔄 Change</button>' +
+      '<button type="button" class="btn ghost" data-act="plan-photo-clear" data-i="' + i + '" data-j="' + j + '" style="color:var(--warn)">🗑️ Remove</button></div></div>';
+  }
+  return '<button type="button" class="plan-drop" data-act="plan-photo-upload" data-i="' + i + '" data-j="' + j + '">📥 Upload shot photo</button>' +
+    '<input type="file" class="plan-file-input" id="pf-' + i + '-' + j + '" accept="image/*" data-i="' + i + '" data-j="' + j + '" style="display:none">' +
+    '<p class="small muted">Paste here the photo generated from the image prompt.</p>';
+}
+function planVideoHtml(i, j, p) {
+  if (!p.photoUri) return '<p class="small muted">Upload a photo first.</p>';
+  if (p.videoStatus === "busy") return '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(p.videoMsg || "Working…") + '</div>';
+  if (p.videoStatus === "err") return '<div class="warnbox"><h3>Failed</h3><p class="small">' + esc(p.videoError || "") + '</p></div><button type="button" class="btn big" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '">🔁 Retry</button>';
+  if (p.videoUrl) {
+    return '<div class="plan-thumb"><video src="' + esc(p.videoUrl) + '" controls playsinline preload="metadata"></video>' +
+      '<div class="bar"><button type="button" class="btn ghost" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '">🔁 Regenerate</button>' +
+      '<a class="btn ghost" href="' + esc(p.videoUrl) + '" download="shot-' + p.n + '.mp4" target="_blank" rel="noopener">⬇ Download</a></div></div>';
+  }
+  var canGen = (P.videoEngine === "agnes" && getAgnesKey()) || P.videoEngine === "wangp" || (P.videoEngine === "ltx" && P.ltxApiKey);
+  return '<button type="button" class="btn big" data-act="plan-video-gen" data-i="' + i + '" data-j="' + j + '"' + (canGen ? "" : " disabled") + '>🎬 Generate video (' + P.videoEngine + ')</button>' +
+    '<p class="small muted">' + (canGen ? "Uses the photo + the video prompt." : "Configure the engine in the Universe tab.") + '</p>';
+}
+function planRefsHtml(p) {
+  var noms = String(p.persos || "").split(/[,;]/).map(function (n) { return n.trim(); }).filter(Boolean);
+  var thumbs = [];
+  noms.forEach(function (nom) {
+    var c = persoBy(nom);
+    if (!c) return;
+    if (c.refUri) {
+      thumbs.push('<div style="text-align:center"><img src="' + esc(c.refUri) + '" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:2px solid var(--accent-a)"><div class="small" style="font-size:.7rem;margin-top:2px">' + esc(c.nom) + '</div></div>');
+    } else {
+      thumbs.push('<div style="text-align:center"><div style="width:64px;height:64px;border-radius:12px;border:2px dashed var(--warn);display:grid;place-items:center;font-size:1.4rem;color:var(--warn)">?</div><div class="small" style="font-size:.7rem;margin-top:2px">' + esc(c.nom) + '</div></div>');
+    }
+  });
+  if (p.lieu) {
+    var l = findLieu(p.lieu);
+    if (l && l.refUri) {
+      thumbs.push('<div style="text-align:center"><img src="' + esc(l.refUri) + '" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:12px;border:2px solid var(--accent-b)"><div class="small" style="font-size:.7rem;margin-top:2px">📍 ' + esc(l.nom) + '</div></div>');
+    }
+  }
+  if (!thumbs.length) return "";
+  return '<div class="stack"><b class="small">📎 Images to attach to the image prompt</b><div class="row" style="gap:10px;flex-wrap:wrap">' + thumbs.join("") + '</div><p class="small muted">Copy the prompt, then attach these images in ChatGPT / Gemini.</p></div>';
+}
+function epHtml(e) {
+  if (!e) return '<section class="glass empty"><p>Episode not found.</p><button type="button" class="btn" data-act="epback">Back</button></section>';
+  var pl = e.plans, i = P.eps.indexOf(e);
+  var h = '<button type="button" class="back" data-act="epback">‹ All episodes</button>' +
+    '<header class="hero"><span class="kicker">' + (P.nb === 1 ? "Video" : "Episode " + e.n + " / " + P.nb) + '</span><h1>' + esc(e.titre || (P.nb === 1 ? "My video" : "Episode " + e.n)) + '</h1></header>';
+
+  h += cinemaPanelHtml(e);
+
+  h += '<section class="glass card"><h2>All in one click</h2><button type="button" class="btn big" data-act="genall" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>Prepare everything (script + shots + editing)</button></section>';
+
+  h += '<section class="glass card"><h2>1. Script</h2>' +
+    bind("eps." + i + ".titre", e.titre, 0, "Title") +
+    bind("eps." + i + ".note", e.note, 2, "Note for this video") +
+    '<button type="button" class="btn big" data-act="genscript" data-v="' + e.n + '"' + (canScript() ? "" : " disabled") + '>' + (has(e.script) ? "Rewrite script" : "Write script") + '</button>' +
+    (has(e.script)
+      ? '<div class="stack"><b class="small">📜 Block preview</b>' + scriptBlocksHtml(e.script) + '</div>' +
+        '<details class="stack"><summary class="small" style="cursor:pointer;padding:6px 0"><b>✏️ Edit script manually</b></summary>' +
+        bind("eps." + i + ".script", e.script, 12, "") +
+        '</details>' +
+        bind("eps." + i + ".resume", e.resume, 3, "Summary") +
+        bind("eps." + i + ".fin", e.fin, 2, "Ending question")
+      : '') +
+    '</section>';
+
+  if (e.cast && e.cast.length) {
+    h += '<section class="glass card"><h2>Characters in this video</h2>' +
+      e.cast.map(function (p) { return '<p class="small"><b>' + esc(p.nom) + '</b> ' + (p.role ? '(' + esc(p.role) + ')' : '') + '</p>'; }).join("") +
+      '</section>';
+  }
+
+  h += '<section class="stack"><h2>2. Shots</h2>';
+  if (!pl.length) {
+    h += '<div class="glass card"><p class="muted small">Break the script into shots.</p><button type="button" class="btn big" data-act="genplans" data-v="' + e.n + '"' + (has(e.script) ? "" : " disabled") + '>Break into shots</button></div>';
+  } else {
+    var main = pl.filter(function (p) { return !p.reserve; });
+    var cl = main.filter(function (p) { return p.st === 2; }).length;
+    var ph = main.filter(function (p) { return p.photoUri; }).length;
+    var totalDur = main.reduce(function (t, p) { return t + (p.duree || 0); }, 0);
+    h += '<div class="glass card"><b>' + cl + ' clips ready · ' + ph + ' photos · ' + main.length + ' shots · ' + totalDur + ' s total</b>' +
+      '<div class="bar"><i style="width:' + Math.round(cl / main.length * 100) + '%"></i></div>' +
+      '<div class="rowbtns" style="margin-top:10px">' +
+      '<button type="button" class="btn ghost" data-act="copyimgs" data-v="' + e.n + '">📋 Copy all image prompts</button>' +
+      '<button type="button" class="btn ghost" data-act="copyvids" data-v="' + e.n + '">📋 Copy all video prompts</button>' +
+      '</div></div>';
+
+    pl.forEach(function (p, j) {
+      var pre = "eps." + i + ".plans." + j + ".";
+      h += '<details class="glass acc"><summary><div class="shot-h"><b>Shot ' + esc(p.n) + (p.reserve ? " (spare)" : "") + ' · ' + esc(p.duree) + ' s · ' + esc(p.lieu) + (p.cadrage ? " · " + esc(p.cadrage) : "") + '</b><span>' + esc(p.action) + '</span></div><span class="badge' + (p.st === 2 ? " done" : "") + '">' + STAT[p.st] + '</span></summary><div class="in">' +
+        '<div class="chips">' + STAT.map(function (s, k) { return '<button type="button" class="chip small" data-act="shotst" data-i="' + i + '" data-j="' + j + '" data-v="' + k + '" aria-pressed="' + (p.st === k) + '">' + s + '</button>'; }).join("") + '</div>' +
+        planRefsHtml(p) +
+        '<div class="stack"><b class="small">Image prompt</b><pre class="fin" id="pi-' + i + '-' + j + '">' + esc(imagePrompt(p)) + '</pre>' +
+          '<div class="rowbtns">' +
+            '<button type="button" class="btn ghost" data-act="copypre" data-v="pi-' + i + '-' + j + '">📋 Copy simple</button>' +
+            '<button type="button" class="btn" data-act="copypre-coherent" data-i="' + i + '" data-j="' + j + '">📋 Copy + coherence note</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="stack"><b class="small">Shot photo</b><div id="ph-' + i + '-' + j + '">' + planPhotoHtml(i, j, p) + '</div></div>' +
+        '<div class="stack"><b class="small">Video prompt</b><pre class="fin" id="pv-' + i + '-' + j + '">' + esc(videoPrompt(p)) + '</pre><button type="button" class="btn big" data-act="copypre" data-v="pv-' + i + '-' + j + '">📋 Copy video prompt</button></div>' +
+        '<div class="stack"><b class="small">Video (' + P.videoEngine + ')</b><div id="vv-' + i + '-' + j + '">' + planVideoHtml(i, j, p) + '</div></div>' +
+        '<details><summary class="small"><b>Edit this shot</b></summary><div class="stack" style="margin-top:10px">' +
+        bind(pre + "action", p.action, 2, "Action (English)") +
+        bind(pre + "lieu", p.lieu, 0, "Place") +
+        bind(pre + "cadrage", p.cadrage, 0, "Shot type (English)") +
+        bind(pre + "replique", p.replique, 2, "Line (French)") +
+        bind(pre + "qui", p.qui, 0, "Who speaks") +
+        bind(pre + "emotion", p.emotion, 0, "Emotion (English)") +
+        bind(pre + "pi", p.pi, 4, "Image prompt (English)") +
+        bind(pre + "pv", p.pv, 3, "Video prompt (English)") +
+        '</div></details></div></details>';
+    });
+    h += '<button type="button" class="btn ghost big" data-act="genplans" data-v="' + e.n + '">Redo shot breakdown</button>';
+  }
+  h += '</section>';
+
+  h += '<section class="glass card"><h2>3. Editing and publishing</h2>' +
+    '<button type="button" class="btn big" data-act="genmont" data-v="' + e.n + '"' + (pl.length ? "" : " disabled") + '>' + (has(e.montage) ? "Redo editing" : "Prepare editing") + '</button>' +
+    (has(e.montage) ? '<button type="button" class="btn ghost big" data-act="montopen" data-v="' + e.n + '">Open editing</button>' : '') +
+    '<button type="button" class="btn ghost big" data-act="ffmpeg-ep" data-v="' + e.n + '"' + (pl.filter(function (p) { return p.videoUrl; }).length >= 2 ? "" : " disabled") + '>🎬 Assemble final video (FFmpeg)</button>' +
+    '<button type="button" class="btn ghost big" data-act="copylist" data-v="' + e.n + '"' + (pl.filter(function (p) { return p.videoUrl; }).length >= 1 ? "" : " disabled") + '>📋 Copy clips list (manual editing)</button>' +
+    (e.finalVideoUrl ? '<div class="plan-thumb" style="margin-top:10px"><video src="' + esc(e.finalVideoUrl) + '" controls playsinline></video><div class="bar"><a class="btn ghost" href="' + esc(e.finalVideoUrl) + '" download="' + esc(e.titre || ("episode-" + e.n)) + '.mp4" target="_blank" rel="noopener">⬇ Download final video</a></div></div>' : '') +
+    (e.finalVideoStatus === "busy" ? '<div class="badge" style="display:block;text-align:center;padding:12px">⏳ ' + esc(e.finalVideoError || "Assembling…") + '</div>' : '') +
+    '</section>';
+
+  h += '<section class="glass card"><h2>4. Review</h2>' +
+    '<div class="two">' + bind("eps." + i + ".stats.vues", e.stats.vues, 0, "Views") + bind("eps." + i + ".stats.r3", e.stats.r3, 0, "Still watching at 3s (%)") + '</div>' +
+    '<div class="two">' + bind("eps." + i + ".stats.moy", e.stats.moy, 0, "Average duration (s)") + bind("eps." + i + ".stats.part", e.stats.part, 0, "Shares") + '</div>' +
+    bind("eps." + i + ".stats.comm", e.stats.comm, 3, "Comments (optional)") +
+    '<button type="button" class="btn big" data-act="bilan" data-v="' + e.n + '"' + (has(e.stats.vues) || has(e.stats.r3) ? "" : " disabled") + '>' + (has(e.bilan) ? "Redo review" : "Analyze") + '</button>' +
+    (has(e.bilan) ? bind("eps." + i + ".bilan", e.bilan, 6, "Diagnosis") : '') +
+    '</section>';
+
+  return h;
+}
+
+/* ============================================================
+   EDITING — READER
+   ============================================================ */
+function mdInline(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(?!\s)([^*]+?)\*/g, "<i>$1</i>"); }
+function mdRender(text) {
+  var L = String(text || "").replace(/\r/g, "").split("\n"), out = [], i = 0, m, buf;
+  while (i < L.length) {
+    var l = L[i];
+    if (!l.trim()) { i++; continue; }
+    if ((m = /^(#{1,6})\s+(.*)$/.exec(l))) { out.push(m[1].length <= 2 ? "<h3>" + mdInline(m[2]) + "</h3>" : "<h4>" + mdInline(m[2]) + "</h4>"); i++; continue; }
+    if (/^\s*[-*•]\s+/.test(l)) { buf = []; while (i < L.length && /^\s*[-*•]\s+/.test(L[i])) { buf.push("<li>" + mdInline(L[i].replace(/^\s*[-*•]\s+/, "")) + "</li>"); i++; } out.push("<ul>" + buf.join("") + "</ul>"); continue; }
+    if (/^\s*\d+[.)]\s+/.test(l)) { buf = []; while (i < L.length && /^\s*\d+[.)]\s+/.test(L[i])) { buf.push("<li>" + mdInline(L[i].replace(/^\s*\d+[.)]\s+/, "")) + "</li>"); i++; } out.push("<ol>" + buf.join("") + "</ol>"); continue; }
+    out.push("<p>" + mdInline(l.trim()) + "</p>"); i++;
+  }
+  return out.join("");
+}
+function montView(ep) {
+  var h = '<button type="button" class="back" data-act="montclose">‹ Back to episode</button>' +
+    '<header class="hero"><h1>Editing and publishing</h1><p class="muted">' + esc(ep.titre || "") + '</p></header>';
+  if (!has(ep.montage)) return h + '<div class="glass card"><p class="muted small">Not prepared yet.</p><button type="button" class="btn big" data-act="genmont" data-v="' + ep.n + '">Prepare editing</button></div>';
+  h += '<section class="glass card stack"><div class="md">' + mdRender(ep.montage) + '</div><button type="button" class="btn ghost big" data-act="copymall" data-v="' + ep.n + '">📋 Copy all</button></section>';
+  return h;
+}
+
+/* ============================================================
+   CLICK EVENTS
+   ============================================================ */
+function arm(key, msg) {
+  if (R.arm === key) { R.arm = ""; return true; }
+  R.arm = key;
+  toast(msg || "Tap again to confirm.");
+  setTimeout(function () { if (R.arm === key) R.arm = ""; }, 4000);
+  return false;
+}
+
+document.addEventListener("click", function (e) {
+  var b = e.target.closest("[data-act]");
+  if (!b) return;
+  var a = b.getAttribute("data-act"), v = b.getAttribute("data-v");
+  if (a === "stop") { if (R.chain) R.chain.stop = true; R.busy = null; overlay(); return; }
+  if (!$v.contains(b) && a !== "stop") return;
+
+  if (a === "nav-prev") { goPrev(); return; }
+  else if (a === "nav-next") { goNext(); return; }
+  else if (a === "tab") { go(v); }
+  else if (a === "speech") { P.speech = v; save(); render(); }
+  else if (a === "nb") { P.nb = +v; save(); render(); }
+  else if (a === "duree") { P.duree = +v; save(); render(); }
+  else if (a === "rec") { P.rec = v; save(); render(); }
+  else if (a === "skin") { P.skin = P.skin === v ? "" : v; save(); render(); }
+  else if (a === "yeux") {
+    var y = Array.isArray(P.yeux) ? P.yeux : (P.yeux ? [P.yeux] : []);
+    var yi = y.indexOf(v);
+    if (yi >= 0) y.splice(yi, 1); else y.push(v);
+    P.yeux = y;
+    save(); render();
+  }
+  else if (a === "teint") { var ti = P.teints.indexOf(v); if (ti >= 0) P.teints.splice(ti, 1); else P.teints.push(v); save(); render(); }
+  else if (a === "effet") { var ei = P.effets.indexOf(v); if (ei >= 0) P.effets.splice(ei, 1); else if (P.effets.length >= 3) { toast("3 effects max."); return; } else P.effets.push(v); save(); render(); }
+  else if (a === "sous") {
+    var sl = sousList();
+    var si = sl.indexOf(v);
+    if (si >= 0) sl.splice(si, 1); else sl.push(v);
+    P.sous = sl.length ? sl : ["U1"];
+    save(); render();
+  }
+  else if (a === "amb") { var ai = P.ambs.indexOf(v); if (ai >= 0) P.ambs.splice(ai, 1); else P.ambs.push(v); save(); render(); }
+  else if (a === "surprise") { genSurprise(); }
+  else if (a === "agnes-save") { saveAgnesKey(); }
+  else if (a === "style-remove") {
+    if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
+    var sri = P.style.indexOf(v);
+    if (sri >= 0) P.style.splice(sri, 1);
+    save(); render();
+  }
+  else if (a === "genuni") { if (P.persos.length && !arm("uni", "Tap again to replace everything.")) return; genUnivers(); }
+  else if (a === "addperso") { P.persos.push({ id: uid(), nom: "", role: "", caractere: "", secret: "", voix: "", voix_en: "", visuel: "", ok: false }); save(); render(); }
+  else if (a === "addlieu") { P.lieux.push({ id: uid(), nom: "", visuel: "", ok: false }); save(); render(); }
+  else if (a === "delperso") { if (arm("dp" + v)) { P.persos.splice(+v, 1); save(); render(); } }
+  else if (a === "dellieu") { if (arm("dl" + v)) { P.lieux.splice(+v, 1); save(); render(); } }
+  else if (a === "copypre") { var pre = document.getElementById(v); if (pre) copyText(pre.textContent, pre, "Prompt copied."); }
+  else if (a === "refok") { var o = R.refs[+v].o; o.ok = !o.ok; save(); render(); }
+  else if (a === "newep") { var n = P.eps.length + 1; P.eps.push(newEp(n)); save(); go("eps", n); }
+  else if (a === "openep") { go("eps", +v); }
+  else if (a === "epback") { go("eps"); }
+  else if (a === "genscript") { var ep = epBy(+v); if (has(ep.script) && !arm("gs" + v)) return; genScript(ep); }
+  else if (a === "genplans") { var ep2 = epBy(+v); if (ep2.plans.length && !arm("gp" + v)) return; genPlans(ep2); }
+  else if (a === "genmont") { var ep3 = epBy(+v); if (has(ep3.montage) && !arm("gm" + v)) return; genMontage(ep3); }
+  else if (a === "shotst") {
+    var pls = P.eps[+b.getAttribute("data-i")].plans[+b.getAttribute("data-j")];
+    pls.st = +v;
+    save(); render();
+  }
+  else if (a === "plan-photo-upload" || a === "plan-photo-change") {
+    var inp = document.getElementById("pf-" + b.getAttribute("data-i") + "-" + b.getAttribute("data-j"));
+    if (inp) inp.click();
+  }
+  else if (a === "plan-photo-clear") { planClearPhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
+  else if (a === "ref-upload" || a === "ref-change") {
+    var rIn = document.getElementById("rf-in-" + v);
+    if (rIn) rIn.click();
+  }
+  else if (a === "ref-clear") { var r = R.refs[+v]; if (r) refClear(r.k, r.o.id); }
+  else if (a === "copypre-coherent") {
+    var ci = +b.getAttribute("data-i"), cj = +b.getAttribute("data-j");
+    var cpl = P.eps[ci] && P.eps[ci].plans[cj];
+    if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + coherence note copied. Attach the reference images.");
+  }
+  else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
+  else if (a === "genseason") { genSeason(); }
+  else if (a === "genall") {
+    var eg = epBy(+v);
+    if (!eg) return;
+    runChain(function () { return chainEpisode(eg.n, P.nb === 1 ? "The video" : "Episode " + eg.n); });
+  }
+  else if (a === "copyimgs") {
+    var ei2 = epBy(+v);
+    if (ei2) copyAll(ei2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "SHOT " + p.n + " (" + p.duree + " s)\n" + imagePrompt(p); }).join("\n\n"), "Image prompts copied.");
+  }
+  else if (a === "copyvids") {
+    var ev2 = epBy(+v);
+    if (ev2) copyAll(ev2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "SHOT " + p.n + " (" + p.duree + " s)\n" + videoPrompt(p); }).join("\n\n"), "Video prompts copied.");
+  }
+  else if (a === "montopen") { R.mont = true; R.ep = +v; render(); window.scrollTo(0, 0); }
+  else if (a === "montclose") { R.mont = false; render(); }
+  else if (a === "copymall") { var em = epBy(+v); if (em) copyAll(em.montage, "Text copied."); }
+  else if (a === "bilan") { var eb = epBy(+v); if (eb) genBilan(eb); }
+  else if (a === "copylist") {
+    var el = epBy(+v);
+    if (!el) return;
+    var clips = el.plans.filter(function (p) { return !p.reserve && p.videoUrl; }).map(function (p, k) {
+      return "Shot " + (k + 1) + " (" + p.n + ") : " + p.videoUrl;
+    });
+    copyAll(clips.join("\n"), clips.length + " clip" + (clips.length > 1 ? "s" : "") + " copied. Paste this list somewhere, open each link and save.");
+  }
+  else if (a === "hard-reload") {
+    if (confirm("Reload the app? Code changes will take effect.")) {
+      if ('caches' in window) {
+        caches.keys().then(function (names) {
+          Promise.all(names.map(function (n) { return caches.delete(n); })).then(function () {
+            location.reload(true);
+          });
+        });
+      } else {
+        location.reload(true);
+      }
+    }
+  }
+  else if (a === "ffmpeg-ep") {
+    var ef = epBy(+v);
+    if (!ef) return;
+    ef.finalVideoStatus = "busy";
+    ef.finalVideoError = "Preparing…";
+    save(); render();
+    (async function () {
+      try {
+        var url = await ffmpegConcatenate(ef, function (msg) {
+          ef.finalVideoError = msg;
+          var el2 = document.querySelector('#view .badge');
+          if (el2 && el2.textContent.indexOf("⏳") === 0) el2.textContent = "⏳ " + msg;
+        });
+        ef.finalVideoUrl = url;
+        ef.finalVideoStatus = "done";
+        ef.finalVideoError = "";
+        save(); render(); toast("Final video assembled.");
+      } catch (err) {
+        ef.finalVideoStatus = "err";
+        ef.finalVideoError = (err.message || "").slice(0, 120);
+        save(); render();
+        toast("FFmpeg failed: " + ef.finalVideoError);
+      }
+    })();
+  }
+  else if (a === "bkfile") {
+    var data = JSON.stringify(P, null, 1);
+    var blob = new Blob([data], { type: "application/json" });
+    var a2 = document.createElement("a");
+    a2.href = URL.createObjectURL(blob);
+    a2.download = "fabrique-backup.json";
+    document.body.appendChild(a2);
+    a2.click();
+    document.body.removeChild(a2);
+    toast("Backup downloaded.");
+  }
+  else if (a === "bkrestore") {
+    try {
+      var d2 = JSON.parse(document.getElementById("bk-in").value);
+      var f2 = fresh();
+      P = f2;
+      for (var k2 in f2) P[k2] = d2[k2] !== undefined ? d2[k2] : f2[k2];
+      fixEps(); save(); render();
+      toast("Backup restored.");
+    } catch (err) { toast("Unreadable backup."); }
+  }
+  else if (a === "reset") {
+    if (arm("reset", "Tap again: EVERYTHING will be erased (photos, references, scripts).")) {
+      (async function () {
+        try {
+          if (typeof idbKeyval !== "undefined") {
+            var keys = await idbKeyval.keys();
+            for (var i = 0; i < keys.length; i++) {
+              var k = String(keys[i]);
+              if (k.indexOf("plan-photo-") === 0 || k.indexOf("ref-") === 0) {
+                await idbKeyval.del(k);
+              }
+            }
+          }
+        } catch (e) { console.warn("Reset IndexedDB:", e); }
+        P = fresh();
+        save();
+        go("univers");
+        toast("Everything erased. New story!");
+      })();
+    }
+  }
+});
+
+/* ============================================================
+   INPUT EVENTS
+   ============================================================ */
+document.addEventListener("input", function (e) {
+  var el = e.target;
+  if (el.id === "style-search") {
+    var q = String(el.value || "").toLowerCase().trim();
+    var sel = document.getElementById("style-add");
+    if (!sel) return;
+    Array.prototype.forEach.call(sel.querySelectorAll("optgroup"), function (grp) {
+      var visible = 0;
+      Array.prototype.forEach.call(grp.querySelectorAll("option"), function (opt) {
+        var match = !q || opt.textContent.toLowerCase().indexOf(q) >= 0;
+        opt.style.display = match ? "" : "none";
+        if (match) visible++;
+      });
+      grp.style.display = visible ? "" : "none";
+    });
+    return;
+  }
+  if (el.hasAttribute("data-path")) {
+    setPath(P, el.getAttribute("data-path"), el.value);
+    save();
+    var m = /^eps\.(\d+)\.plans\.(\d+)\./.exec(el.getAttribute("data-path"));
+    if (m) {
+      var pl = P.eps[+m[1]].plans[+m[2]];
+      var a = document.getElementById("pi-" + m[1] + "-" + m[2]);
+      var b = document.getElementById("pv-" + m[1] + "-" + m[2]);
+      if (a) a.textContent = imagePrompt(pl);
+      if (b) b.textContent = videoPrompt(pl);
+    }
+    refreshStrip();
+  }
+});
+
+/* ============================================================
+   CHANGE EVENTS
+   ============================================================ */
+document.addEventListener("change", function (e) {
+  var id = e.target.id;
+  if (id === "style-add") {
+    var v = e.target.value;
+    if (v) {
+      if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
+      if (P.style.length >= MAX_STYLES) { toast("Max " + MAX_STYLES + " styles. Remove one first."); e.target.value = ""; return; }
+      if (P.style.indexOf(v) < 0) P.style.push(v);
+      save(); render();
+    }
+    return;
+  }
+  if (id === "cam") { P.cam = e.target.value; save(); }
+  else if (id === "video-engine") { P.videoEngine = e.target.value; save(); render(); }
+  else if (id === "bk-file") {
+    var f = e.target.files[0];
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function (ev) {
+      try {
+        var d3 = JSON.parse(ev.target.result);
+        var f3 = fresh();
+        P = f3;
+        for (var k3 in f3) P[k3] = d3[k3] !== undefined ? d3[k3] : f3[k3];
+        fixEps(); save(); render();
+        toast("Backup opened.");
+      } catch (err) { toast("Invalid file."); }
+    };
+    rd.readAsText(f);
+    e.target.value = "";
+  }
+  else if (e.target.classList && e.target.classList.contains("plan-file-input")) {
+    planUploadPhoto(+e.target.getAttribute("data-i"), +e.target.getAttribute("data-j"), e.target.files[0]);
+    e.target.value = "";
+  }
+  else if (e.target.classList && e.target.classList.contains("ref-file-input")) {
+    var rv = +e.target.getAttribute("data-v");
+    var ro = R.refs[rv];
+    if (ro) refUpload(ro.k, ro.o.id, e.target.files[0]);
+    e.target.value = "";
+  }
+});
+
+/* ============================================================
+   DOCK
+   ============================================================ */
+document.querySelectorAll(".dock button").forEach(function (b) {
+  b.addEventListener("click", function () { go(b.getAttribute("data-tab")); });
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+load();
+render();
+setTimeout(planPhotosRestore, 800);
+setTimeout(refsRestoreAll, 900);
