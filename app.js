@@ -134,6 +134,39 @@ var AMBS = [
   { id: "touchant", nom: "Touchant" }, { id: "potins", nom: "Trash et potins" }, { id: "mystere", nom: "Mystérieux" }, { id: "romance", nom: "Romantique" }
 ];
 
+var RND = {
+  lieu: ["une laverie automatique", "un mariage en plein air", "un camping en bord de mer",
+    "un immeuble dont l'ascenseur est en panne", "un supermarché le dimanche soir",
+    "une salle de sport", "une école de danse", "une gare un jour de grève",
+    "un marché du dimanche", "une maison de vacances partagée en famille",
+    "la cuisine d'un restaurant", "un cabinet de dentiste", "un studio photo",
+    "un bus scolaire", "une résidence étudiante", "une ferme",
+    "un château loué pour un week-end", "un salon de coiffure",
+    "une boulangerie de village", "un salon de thé"],
+  heros: ["une mère seule débordée", "un ado discret", "une grand-mère rusée",
+    "deux meilleures amies", "un nouveau voisin mystérieux", "une jeune cheffe d'entreprise",
+    "un père maladroit", "un frère et une sœur", "une influenceuse en panne d'inspiration",
+    "un vieux couple", "une fille timide qui devient le centre d'attention",
+    "un stagiaire que personne ne remarque"],
+  objet: ["une lettre jamais ouverte", "une clé qui n'ouvre rien", "un téléphone trouvé",
+    "une valise échangée par erreur", "un message envoyé au mauvais numéro",
+    "une vieille photo", "un cadeau anonyme", "un héritage inattendu",
+    "un colis qui n'est pas pour elle", "une recette secrète",
+    "une cagnotte qui disparaît", "un faire-part de mariage sans nom"],
+  twist: ["celui qu'on prend pour le méchant a raison sur un point",
+    "l'aide vient de la personne qu'on soupçonnait",
+    "tout le monde cachait la même chose",
+    "l'objet n'a aucune valeur, sauf pour une seule personne",
+    "le secret est tendre et pas coupable",
+    "deux histoires qu'on croyait séparées n'en font qu'une",
+    "la victime a elle-même lancé l'histoire",
+    "le plan parfait échoue à cause d'un détail minuscule"]
+};
+function rnd(a) { return a[Math.floor(Math.random() * a.length)]; }
+function ambText() {
+  return P.ambs.map(function (id) { var a = byId(AMBS, id); return a ? a.nom : ""; }).filter(has);
+}
+
 var NONE = ["", "personne", "aucun", "aucune", "-", "nobody", "none", "sans voix", "n/a", "x"];
 
 var STORE = "fabrique-series-v3";
@@ -880,53 +913,7 @@ var JSONNOTE = "\n\nAnswer ONLY with a valid JSON object, no text before or afte
    GÉNÉRATEURS — Instructions en anglais, contenu en français
    ============================================================ */
 
-/* ---- GEN SURPRISE ---- */
-function genSurprise() {
-  var amb = P.ambs.map(function (id) { var a = byId(AMBS, id); return a ? a.nom : ""; }).filter(has);
-  var genres = ["Drame familial", "Thriller domestique", "Comédie de couple", "Mystère de quartier", "Romance contrariée", "Amitié trahie", "Secret de famille", "Humour absurde"];
-  var contexts = [
-    "un immeuble où tous les voisins se connaissent",
-    "un mariage qui tourne mal",
-    "un héritage inattendu",
-    "une laverie de quartier",
-    "un camping en été",
-    "une réunion de famille après 10 ans",
-    "un repas de Noël",
-    "une soirée entre amis qui dérape",
-    "un premier jour dans un nouveau travail",
-    "une colocation chaotique",
-    "un examen médical qui révèle tout",
-    "une lettre jamais ouverte",
-    "un retour au village natal",
-    "un match de foot qui change une vie"
-  ];
-  var seed = Math.random().toString(36).slice(2, 8);
-  var prompt = "You are a professional screenwriter for short vertical series (TikTok/Shorts/Reels). The output must be in FRENCH, but all instructions are for you in English.\n" +
-    "Your mission: invent ONE COMPLETE, ORIGINAL and COHERENT story that will hold the viewer from start to finish.\n\n" +
-    "CONSTRAINTS:\n" +
-    "- Genre: " + randomItem(genres) + "\n" +
-    (amb.length ? "- Mood: " + amb.join(", ") + "\n" : "") +
-    "- Starting context (inspire yourself, do not copy verbatim): " + randomItem(contexts) + "\n" +
-    "- Format: " + (P.nb === 1 ? "one video" : P.nb + " episodes") + " of " + P.duree + " seconds each\n" +
-    "- Visual style: " + (sty() ? sty().nom : "not specified") + "\n" +
-    "- Uniqueness seed: " + seed + " (use it to make the story different every time)\n\n" +
-    "GOLDEN RULES:\n" +
-    "1. The title must be SHORT (3 to 6 words), catchy, poetic or intriguing. It must make people click.\n" +
-    "2. The story must have: a main character with a clear goal, a concrete obstacle, a secret that changes everything, a twist nobody sees coming.\n" +
-    "3. FORBIDDEN: amnesia, hidden twin, 'it was a dream', cliché hidden inheritance, basic revenge, boring love triangle.\n" +
-    "4. DRAW INSPIRATION from TikTok codes (3s hook, cliffhanger, A/B choice) but NEVER copy an existing story.\n" +
-    "5. The end of the first episode must leave an unanswered question.\n\n" +
-    JSONNOTE +
-    '\nFormat: {"titre":"3-6 mots en français","idee":"3 à 5 phrases en français racontant toute l\'histoire avec les personnages","ton":"1 mot en français","genre":"1 mot en français","cible":"public en 5 mots en français"}';
-  return ask("une histoire surprise", prompt, function (r) {
-    if (!r || !r.titre) throw new Error("vide");
-    P.titre = r.titre;
-    P.idee = Array.isArray(r.idee) ? r.idee.join(" ") : String(r.idee || "");
-    if (has(r.ton)) P.ton = r.ton;
-    if (has(r.genre)) P.genre = r.genre;
-    if (has(r.cible)) P.cible = r.cible;
-  });
-}
+/* ---- GEN SURPRISE (remplacé par genConcepts dans l'onglet Idées) ---- */
 
 /* ---- GEN UNIVERS ---- */
 function genUnivers() {
@@ -1315,15 +1302,91 @@ function scriptBlocksHtml(scriptText) {
 }
 
 function ideesHtml() {
-  var h = '<header class="hero"><span class="kicker">Étape 1</span><h1>Idées</h1><p class="muted">Choisis une ambiance. Le concept se génère depuis l\'onglet Univers.</p></header>';
-  h += '<section class="glass card"><h2>Ambiance</h2><div class="chips">' + AMBS.map(function (a) {
-    return '<button type="button" class="chip small" data-act="amb" data-v="' + a.id + '" aria-pressed="' + (P.ambs.indexOf(a.id) >= 0) + '">' + esc(a.nom) + '</button>';
-  }).join("") + '</div>' +
-    '<p class="small muted" style="margin-top:10px">Rends-toi dans l\'onglet Univers pour écrire ton idée et générer le concept, le casting et l\'univers complet.</p>' +
-    '<div class="rowbtns" style="margin-top:8px">' +
-    '<button type="button" class="btn big" data-act="surprise">🎲 Surprends-moi (titre + histoire)</button>' +
-    '<button type="button" class="btn ghost big" data-act="tab" data-v="univers">Aller à l\'Univers ›</button>' +
-    '</div></section>';
+  var h = '<header class="hero"><span class="kicker">Étape 1</span><h1>Idées</h1>' +
+    '<p class="muted">Choisis une ambiance, ou laisse-toi surprendre. L\'IA te propose trois idées d\'histoires, tu en choisis une.</p></header>';
+  h += '<section class="glass card"><h2>Quelle histoire ?</h2>' +
+    '<div class="fld"><span class="q">Ambiance (tu peux en cocher plusieurs)</span>' +
+    '<div class="chips" role="group" aria-label="Ambiance">' +
+    AMBS.map(function (a) {
+      return '<button type="button" class="chip small" data-act="amb" data-v="' + a.id +
+        '" aria-pressed="' + (P.ambs.indexOf(a.id) >= 0) + '">' + esc(a.nom) + '</button>';
+    }).join("") + '</div></div>' +
+    bind("cible", P.cible, 2, "Public visé", "Exemple : filles de 9 à 16 ans, ou adultes 18-35.") +
+    '<p class="small muted">Le nombre d\'épisodes, la durée et le style se règlent dans l\'onglet Univers.</p>' +
+    '<div class="rowbtns">' +
+    '<button type="button" class="btn big" data-act="concepts">' +
+    (P.concepts.length ? "Nouvelles idées" : "Générer 3 idées") + '</button>' +
+    '<button type="button" class="btn ghost big" data-act="surprise">🎲 Surprends-moi</button>' +
+    '</div>' +
+    '<p class="small muted">« Surprends-moi » tire au hasard deux ambiances, un lieu, un personnage, un objet et un retournement, puis écrit les idées autour.</p>' +
+    '</section>';
+  h += conceptsHtml();
+  if (P.concepts.length) {
+    h += '<section class="glass card"><button type="button" class="btn ghost big" data-act="moreconcepts">Encore 3 idées</button>' +
+      '<p class="small muted">Elles s\'ajoutent à la liste, sans répéter les précédentes.</p></section>';
+  }
+  return h;
+}
+
+function genConcepts(o) {
+  o = o || {};
+  var seeds = "", amb = ambText(), n = 3;
+  if (o.surprise) {
+    var picks = AMBS.slice().sort(function () { return Math.random() - .5; }).slice(0, 2);
+    amb = picks.map(function (a) { return a.nom; });
+    seeds = "CONTRAINTES TIRÉES AU HASARD (à respecter dans au moins une idée sur deux) : un lieu, " +
+      rnd(RND.lieu) + " ; un personnage, " + rnd(RND.heros) + " ; un objet ou un secret, " +
+      rnd(RND.objet) + " ; un retournement du type : " + rnd(RND.twist) + ".\n";
+  }
+  var vus = (P.vus || []).slice(-30);
+  var prompt = "You are a screenwriter for short vertical series (TikTok, Shorts, Reels). " +
+    "OUTPUT IN FRENCH for user-facing content, all instructions here are for you in English.\n" +
+    (P.genre ? "Genre: " + P.genre + ".\n" : "") +
+    (P.cible ? "Audience: " + P.cible + ".\n" : "") +
+    (amb.length ? "Mood required: " + amb.join(" | ") + ".\n" : "Mood: free, vary it.\n") + seeds +
+    "Format: " + (P.nb === 1 ? "one video" : P.nb + " episodes") + " of " + P.duree + " seconds each." +
+    (sty() ? " Visual style: " + sty().nom + ".\n" : "\n") +
+    (has(P.idee) && !o.surprise ? "Starting hint from user: " + P.idee.trim() + "\n" : "") +
+    (vus.length ? "Ideas already suggested (do NOT repeat, not even a variant): " + vus.join(" ; ") + "\n" : "") +
+    "\nPropose " + n + " DIFFERENT ideas. Each must have: a clear main goal, a concrete obstacle, " +
+    "a secret that changes everything, a twist nobody sees coming. Avoid: amnesia, evil twin, " +
+    "'it was a dream', hidden inheritance.\n" +
+    "For each: short catchy title (in French), mood, the idea in 3 sentences (in French), " +
+    "the 3-second hook (in French), the twist (in French), the end of episode 1 (in French), " +
+    "why it could work (in French), main risk (in French).\n" +
+    "No brand, no real person, no resemblance to known series." + JSONNOTE +
+    '\nFormat: {"concepts":[{"titre":"in French","ambiance":"in French","idee":"in French","hook":"in French","twist":"in French","chute":"in French","pourquoi":"in French","risque":"in French"}]}';
+  return ask(o.more ? "trois idées de plus" : "trois idées d'histoires", prompt, function (r) {
+    if (!r || !r.concepts || !r.concepts.length) throw new Error("vide");
+    var neu = r.concepts.slice(0, 6).map(function (c) {
+      return { titre: c.titre || "", ambiance: c.ambiance || "", idee: c.idee || "",
+        hook: c.hook || "", twist: c.twist || "", chute: c.chute || "",
+        pourquoi: c.pourquoi || "", risque: c.risque || "" };
+    });
+    P.vus = (P.vus || [])
+      .concat(P.concepts.map(function (c) { return c.titre; }), neu.map(function (c) { return c.titre; }))
+      .filter(has).filter(function (t, k, a) { return a.indexOf(t) === k; }).slice(-60);
+    P.concepts = (o.more ? P.concepts : []).concat(neu).slice(-18);
+  });
+}
+
+function conceptsHtml() {
+  var h = "";
+  P.concepts.forEach(function (c, i) {
+    h += '<section class="glass card"><div class="row" style="justify-content:space-between;gap:8px">' +
+      '<h3 style="min-width:0">' + esc(c.titre || "Idée " + (i + 1)) + '</h3>' +
+      '<span class="badge">' + esc(has(c.ambiance) ? c.ambiance : "Idée " + (i + 1)) + '</span></div>' +
+      '<p>' + esc(c.idee) + '</p>' +
+      (has(c.hook) ? '<p class="small"><b>Accroche :</b> ' + esc(c.hook) + '</p>' : '') +
+      (has(c.twist) ? '<p class="small"><b>Retournement :</b> ' + esc(c.twist) + '</p>' : '') +
+      (has(c.chute) ? '<p class="small"><b>Fin de l\'épisode 1 :</b> ' + esc(c.chute) + '</p>' : '') +
+      (has(c.pourquoi) ? '<p class="small"><b>Pourquoi ça peut marcher :</b> ' + esc(c.pourquoi) + '</p>' : '') +
+      (has(c.risque) ? '<p class="small muted"><b>Risque :</b> ' + esc(c.risque) + '</p>' : '') +
+      '<div class="rowbtns">' +
+      '<button type="button" class="btn big" data-act="pickconcept" data-v="' + i + '">Choisir cette idée</button>' +
+      '<button type="button" class="del" data-act="dropconcept" data-v="' + i + '">Écarter</button>' +
+      '</div></section>';
+  });
   return h;
 }
 
@@ -1344,9 +1407,10 @@ function universHtml() {
     '</div></div></section>';
 
   h += '<section class="glass card"><h2>2. Mon idée</h2>' +
-    bind("titre", P.titre, 0, "Titre") +
-    bind("idee", P.idee, 5, "Mon idée ou mon script", "Une phrase suffit. Exemple : une laverie de quartier où chaque machine révèle un secret.") +
-    '</section>';
+  bind("titre", P.titre, 0, "Titre (facultatif)", "L'IA en propose un si tu laisses vide.") +
+  bind("idee", P.idee, 5, "Mon idée ou mon script", "Une phrase suffit. Exemple : une laverie de quartier où chaque machine révèle un secret.") +
+  '<button type="button" class="linkbtn" data-act="tab" data-v="idees">Pas d\'idée ? L\'IA en propose trois dans l\'onglet Idées</button>' +
+  '</section>';
 
   h += '<section class="glass card"><h2>3. Mon look</h2><div class="fld"><span class="q">Styles visuels (max ' + MAX_STYLES + ')<span class="q-hint">Le style est appliqué à toutes les images et vidéos de la série.</span></span>' +
     '<input type="search" id="style-search" placeholder="🔍 Rechercher un style…" style="margin-top:8px;margin-bottom:8px">' +
@@ -1683,7 +1747,24 @@ document.addEventListener("click", function (e) {
     save(); render();
   }
   else if (a === "amb") { var ai = P.ambs.indexOf(v); if (ai >= 0) P.ambs.splice(ai, 1); else P.ambs.push(v); save(); render(); }
-  else if (a === "surprise") { genSurprise(); }
+    else if (a === "concepts") { genConcepts(); }
+  else if (a === "surprise") { genConcepts({ surprise: true }); }
+  else if (a === "moreconcepts") { genConcepts({ more: true }); }
+  else if (a === "dropconcept") { P.concepts.splice(+v, 1); save(); render(); }
+  else if (a === "pickconcept") {
+    var cc = P.concepts[+v];
+    if (cc) {
+      P.idee = cc.idee +
+        (has(cc.hook) ? "\nAccroche de l'épisode 1 : " + cc.hook : "") +
+        (has(cc.twist) ? "\nRetournement : " + cc.twist : "") +
+        (has(cc.chute) ? "\nFin de l'épisode 1 : " + cc.chute : "");
+      if (has(cc.titre)) P.titre = cc.titre;
+      if (has(cc.ambiance)) P.genre = cc.ambiance;
+      save();
+      toast("Idée choisie. Choisis un style puis génère ton univers.");
+      go("univers");
+    }
+  }
   else if (a === "agnes-save") { saveAgnesKey(); }
   else if (a === "style-remove") {
     if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
