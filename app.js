@@ -7,8 +7,11 @@
 var AGNES_API = "https://apihub.agnes-ai.com/v1";
 var AGNES_POLL = "https://apihub.agnes-ai.com/agnesapi";
 var AGNES_TEXT_MODEL = "agnes-2.5-flash";
-var AGNES_VIDEO_MODEL = "agnes-video-2.5-flash";
+var AGNES_IMAGE_MODEL = "agnes-image-2.1-flash";
+var AGNES_VIDEO_MODEL = "agnes-video-v2.0";
 var AGNES_FPS = 24;
+var AGNES_B429 = [10000, 20000, 35000, 50000, 75000, 100000, 150000];
+var AGNES_B503 = [5000, 10000, 15000, 20000, 30000, 45000];
 
 var STYLES = [];
 var GROUPS = [];
@@ -399,8 +402,16 @@ async function agnesFetch(url, options, label) {
   for (var i = 0; i < 10; i++) {
     try {
       var r = await fetch(url, options);
-      if (r.status === 429) { await new Promise(function (ok) { setTimeout(ok, Math.min(120000, 15000 * (i + 1))); }); continue; }
-      if (r.status === 503) { await new Promise(function (ok) { setTimeout(ok, Math.min(60000, 8000 * (i + 1))); }); continue; }
+      if (r.status === 429) {
+        var d429 = AGNES_B429[Math.min(i, AGNES_B429.length - 1)];
+        await new Promise(function (ok) { setTimeout(ok, d429); });
+        continue;
+      }
+      if (r.status === 503) {
+        var d503 = AGNES_B503[Math.min(i, AGNES_B503.length - 1)];
+        await new Promise(function (ok) { setTimeout(ok, d503); });
+        continue;
+      }
       return r;
     } catch (e) {
       await new Promise(function (ok) { setTimeout(ok, 5000 * (i + 1)); });
@@ -432,9 +443,9 @@ async function callAgnesText(system, user) {
   return content;
 }
 
-async function agnesCreateImage(prompt, refImages, negativePrompt) {
+async function agnesCreateImage(prompt, refImages) {
   var body = {
-    model: "agnes-image-2.5-flash",
+    model: AGNES_IMAGE_MODEL,
     prompt: prompt,
     size: "2K",
     ratio: "9:16",
@@ -458,7 +469,7 @@ async function agnesCreateImage(prompt, refImages, negativePrompt) {
 async function agnesCreateVideo(prompt, imageDataUri, numFrames) {
   var seconds = String(Math.max(4, Math.min(12, Math.round((numFrames || 145) / 24))));
   var body = {
-    model: "agnes-video-2.5-flash",
+    model: AGNES_VIDEO_MODEL,
     prompt: prompt,
     seconds: seconds,
     mode: imageDataUri ? "reference" : "text",
@@ -723,7 +734,7 @@ async function refGenerate(kind, id) {
   save(); render();
 
   try {
-        var url = await agnesCreateImage(prompt, null, "person, people, human, face, figure, character, portrait, body, girl, boy, man, woman, child, crowd, silhouette, cartoon, doll");
+    var url = await agnesCreateImage(prompt);
     obj.refUri = url;
     obj.refStatus = "done";
     obj.refMsg = "";
@@ -793,7 +804,6 @@ function imagePrompt(pl) {
     if (l && has(l.visuel)) parts.push("Place: " + sentence(l.visuel));
   }
 
-    /* Renforcement anthropomorphe (F1, F2) */
   var fruitStyle = Array.isArray(P.style) && (P.style.indexOf("F1") >= 0 || P.style.indexOf("F2") >= 0);
   if (fruitStyle) {
     parts.push("⚠️ STRICT SHAPE RULE: The character's HEAD (or ENTIRE BODY if F2) MUST keep the fruit silhouette exactly. This is NOT a human with colored skin — the fruit shape must be instantly recognizable. No human head. No realistic human anatomy. Only the face features are cartoon-human-like, everything else is the fruit. The fruit shape is the ENTIRE head, not a helmet or costume. No human skull underneath.");
@@ -830,11 +840,24 @@ function videoPrompt(pl) {
   var cleanPv = cleanForAgnes(pl.pv);
 
   var speakerId = "";
-  if (spoke) {
-    var c = persoBy(who);
-    if (c && has(c.visuel)) {
-      var words = cleanForAgnes(c.visuel).split(/\s+/).slice(0, 18).join(" ");
-      speakerId = " [IMPORTANT: The character who speaks is " + who + ", visually: " + words + ". Only THIS character's lips move. The OTHER character(s) keep their mouth closed, stay still, and do NOT react unless explicitly described.]";
+  if (!spoke || P.speech === "A") {
+    rule = "No dialogue. No one speaks, all mouths stay closed. AUDIO: no voice.";
+    speakerId = "";
+  } else if (P.speech === "B") {
+    rule = "ONLY " + who + " speaks. Only " + who + "'s lips move. AUDIO: " + who + " says in French with the emotion of the scene: '" + replique + "'. No music, no other voice.";
+    var cB = persoBy(who);
+    if (cB && has(cB.visuel)) {
+      var wordsB = cleanForAgnes(cB.visuel).split(/\s+/).slice(0, 18).join(" ");
+      speakerId = " [IMPORTANT: The character who speaks is " + who + ", visually: " + wordsB + ". Only THIS character's lips move. The OTHER character(s) keep their mouth closed, stay still, and do NOT react unless explicitly described.]";
+    } else {
+      speakerId = " [IMPORTANT: Only " + who + " speaks. The other character(s) keep their mouth closed and stay still.]";
+    }
+  } else {
+    rule = "ONLY " + who + " talks animatedly, mouth opening and closing. Every other character keeps the mouth closed and still. AUDIO: silence.";
+    var cC = persoBy(who);
+    if (cC && has(cC.visuel)) {
+      var wordsC = cleanForAgnes(cC.visuel).split(/\s+/).slice(0, 18).join(" ");
+      speakerId = " [IMPORTANT: The character who speaks is " + who + ", visually: " + wordsC + ". Only THIS character's lips move. The OTHER character(s) keep their mouth closed, stay still, and do NOT react unless explicitly described.]";
     } else {
       speakerId = " [IMPORTANT: Only " + who + " speaks. The other character(s) keep their mouth closed and stay still.]";
     }
@@ -842,14 +865,6 @@ function videoPrompt(pl) {
 
   var emotionLine = has(cleanEmotion) ? " EMOTION: " + who + " feels " + cleanEmotion + ". Show this emotion clearly on the face and body. " : "";
   var actionLine = has(cleanAction) ? " VISIBLE ACTION: " + cleanAction + ". " : "";
-
-  if (!spoke || P.speech === "A") {
-    rule = "No dialogue. No one speaks, all mouths stay closed. AUDIO: no voice.";
-  } else if (P.speech === "B") {
-    rule = "ONLY " + who + " speaks. Only " + who + "'s lips move. AUDIO: " + who + " says in French with the emotion of the scene: '" + replique + "'. No music, no other voice.";
-  } else {
-    rule = "ONLY " + who + " talks animatedly, mouth opening and closing. Every other character keeps the mouth closed and still. AUDIO: silence.";
-  }
 
   return (cleanPv ? cleanPv + " " : "") +
     (has(pl.duree) ? "Clip length about " + pl.duree + " seconds. " : "") +
@@ -883,7 +898,7 @@ function briefText() { return (has(P.genre) ? "Genre : " + P.genre + ".\n" : "")
 function leconsText() { return has(P.lecons) ? "LEÇONS DES STATS PRÉCÉDENTES :\n" + P.lecons.trim() + "\n" : ""; }
 
 /* ============================================================
-   EXTRACTION JSON (5 stratégies + réparation JSON tronqué)
+   EXTRACTION JSON
    ============================================================ */
 function salvageTruncatedJson(text) {
   var s = String(text || "").trim();
@@ -934,7 +949,6 @@ function extractJson(t) {
     }
   } catch (e4) {}
 
-  /* Réparation JSON tronqué (AVANT le throw final) */
   try {
     var salv = salvageTruncatedJson(raw);
     if (salv) { console.warn("[PARSE] JSON tronqué réparé"); return salv; }
@@ -979,23 +993,36 @@ function overlay() {
 }
 var JSONNOTE = "\n\nAnswer ONLY with a valid JSON object, no text before or after, no code fences.";
 
+function cleanStyleFromVisuel(v) {
+  if (!has(v)) return "";
+  var s = String(v);
+  var patterns = [
+    /3D cartoon Pixar-style character where the HEAD is literally[\s\S]*?clean pastel background\.?/gi,
+    /3D cartoon Pixar-style character where the entire BODY is the fruit[\s\S]*?urban background\.?/gi,
+    /high-end stylized 3D render of a glamorous fashion doll in the style of Rainbow High and Bratz[\s\S]*?Octane render\.?/gi,
+    /high-end stylized 3D render of a glamorous fashion doll, full-body[\s\S]*?Octane render\.?/gi
+  ];
+  patterns.forEach(function (re) { s = s.replace(re, ""); });
+  s = s.replace(/\s+/g, " ").replace(/^[.,;:\s]+/, "").trim();
+  return s;
+}
+
 /* ============================================================
    GÉNÉRATEURS
    ============================================================ */
 
-/* ---- GEN UNIVERS ---- */
 function genUnivers() {
   var st = sty(), ph = phrase();
   var fmt = P.nb === 1 ? "A single video of " + P.duree + " seconds." : P.nb + " videos of " + P.duree + " seconds each.";
   var persoRule = P.rec === "oui" ? "Create the season's cast: 4 to 6 characters maximum. " : "Characters change between videos: characters = empty list. ";
-    var coherenceRule = "CULTURAL COHERENCE: if a character has dark skin, their hairstyle MUST match (braids, afro, cornrows, gradient, wig with edges). NEVER blonde hair on dark skin unless explicitly stated. NEVER straight European hair on deep brown skin. Be specific: 'box braids with gold cuffs', 'natural 4C afro', 'long sleek cornrows', etc.\n";
-   var prompt = "You are a screenwriter for short vertical animated videos (TikTok, YouTube Shorts, Instagram, Facebook). Output user-facing content in FRENCH, but every instruction here is for you in English. Technical fields (visual descriptions) must be IN ENGLISH.\n" +
+  var coherenceRule = "CULTURAL COHERENCE: if a character has dark skin, their hairstyle MUST match (braids, afro, cornrows, gradient, wig with edges). NEVER blonde hair on dark skin unless explicitly stated. NEVER straight European hair on deep brown skin. Be specific: 'box braids with gold cuffs', 'natural 4C afro', 'long sleek cornrows', etc.\n";
+  var prompt = "You are a screenwriter for short vertical animated videos (TikTok, YouTube Shorts, Instagram, Facebook). Output user-facing content in FRENCH, but every instruction here is for you in English. Technical fields (visual descriptions) must be IN ENGLISH.\n" +
     "Starting idea (in French): " + P.idee.trim() + "\n" +
     (has(P.titre) ? "Desired title (in French): " + P.titre.trim() + "\n" : "") +
     "Format: " + fmt + "\n" +
     (has(P.genre) ? "Genre: " + P.genre + ".\n" : "") +
     (has(P.cible) ? "Audience: " + P.cible + ".\n" : "") +
-      "Visual style: " + (st ? st.nom + ". Style phrase: " + ph : "not specified") + "\n" + coherenceRule +
+    "Visual style: " + (st ? st.nom + ". Style phrase: " + ph : "not specified") + "\n" + coherenceRule +
     "\n" + persoRule +
     "No brand, no logo, no real person. No violence, no suggestive scene. Do not mock any body, religion, or origin. " +
     "Each visual description field must be IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with 'character with', then list ONLY literal visual features: body shape, exact colors using descriptive words, skin/fruit/leather texture, eye shape and color, hair style and color, outfit fabrics and colors, one signature accessory. FORBIDDEN: brand names (Bratz, Barbie, Rainbow High, Disney), style references (K-pop, Y2K, cybergoth), metaphors (mango-skin, doll-like), emotions, story elements. Write ONLY what a camera would see. " +
@@ -1010,32 +1037,12 @@ function genUnivers() {
     P.ton = d2.ton || "";
     P.arc = (d2.arc || []).map(function (l, i) { return /^\d+[.)]/.test(l) ? l : (i + 1) + ". " + l; }).join("\n");
     P.persos = P.rec === "oui" ? (d2.personnages || []).map(function (p) {
-      return { id: uid(), nom: p.nom || "", role: p.role || "", caractere: p.caractere || "", secret: p.secret || "", voix: p.voix || "", voix_en: p.voix_en || "", visuel: p.visuel || "", ok: false };
+      return { id: uid(), nom: p.nom || "", role: p.role || "", caractere: p.caractere || "", secret: p.secret || "", voix: p.voix || "", voix_en: p.voix_en || "", visuel: cleanStyleFromVisuel(p.visuel) || (p.visuel || ""), ok: false };
     }) : [];
     P.lieux = (d2.lieux || []).map(function (l) { return { id: uid(), nom: l.nom || "", visuel: l.visuel || "", ok: false }; });
   });
 }
 
-/* ---- GEN CAST ---- */
-function genCast() {
-  var st = sty(), ph = phrase();
-  var prompt = "You are a screenwriter for short vertical animated videos. Output user-facing content in FRENCH, technical visual fields IN ENGLISH.\nIdea (in French): " + P.idee.trim() + "\n" +
-    (has(P.titre) ? "Title (in French): " + P.titre.trim() + "\n" : "") +
-    (has(P.concept) ? "Concept (in French): " + P.concept.trim() + "\n" : "") +
-    "Existing places: " + (P.lieux.map(function (l) { return l.nom; }).join(", ") || "none") + "\n" +
-    (st ? "Visual style: " + st.nom + ". Style phrase: " + ph + "\n" : "") +
-    "\nCreate the fixed cast: all already-named characters, plus the missing ones, 6 maximum. Each visual field IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with '3D rendered character with', then list ONLY literal visual features. FORBIDDEN: brand names, style references, metaphors. Write ONLY what a camera would see." + JSONNOTE +
-    '\nFormat: {"personnages":[{"nom":"in French","role":"in French","caractere":"3 mots","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}]}';
-  return ask("le casting", prompt, function (d2) {
-    if (!d2 || !d2.personnages || !d2.personnages.length) throw new Error("vide");
-    P.rec = "oui";
-    P.persos = d2.personnages.slice(0, 8).map(function (p) {
-      return { id: uid(), nom: p.nom || "", role: p.role || "", caractere: p.caractere || "", secret: p.secret || "", voix: p.voix || "", voix_en: p.voix_en || "", visuel: p.visuel || "", ok: false };
-    });
-  });
-}
-
-/* ---- GEN SCRIPT ---- */
 function scriptBody(ep) {
   var rec = P.rec, last = isLast(ep);
   var structure = "3-second hook, " + (ep.n > 1 && rec === "oui" && P.nb > 1 ? "5-second recap of the previous episode, " : "") + "setup, conflict, twist, " + (last ? "clean ending." : "ending on a question.");
@@ -1100,12 +1107,11 @@ function applyScript(ep, r) {
     ep.script = String(r.script || "");
   }
   if (P.rec !== "oui") ep.cast = (r.personnages || []).map(function (p) {
-    return { id: uid(), nom: p.nom || "", role: p.role || "", visuel: p.visuel || "", ok: false };
+    return { id: uid(), nom: p.nom || "", role: p.role || "", visuel: cleanStyleFromVisuel(p.visuel) || (p.visuel || ""), ok: false };
   });
 }
 function genScript(ep) { return ask("le script de " + unit(ep.n), scriptBody(ep), function (r) { applyScript(ep, r); }); }
 
-/* ---- GEN PLANS ---- */
 function plansBody(ep, scriptText) {
   var minPlans = Math.floor(P.duree / 8);
   var maxPlans = Math.floor(P.duree / 5);
@@ -1148,7 +1154,6 @@ function applyPlans(ep, r) {
 }
 function genPlans(ep) { return ask("le storyboard de " + unit(ep.n), plansBody(ep, ep.script), function (r) { applyPlans(ep, r); }); }
 
-/* ---- GEN MONTAGE ---- */
 function montBody(ep, list, titre, fin) {
   return "Series: " + (P.titre || "sans titre") + ". Episode " + ep.n + " : " + titre + "\nShots:\n" + list + "\nEnding question: " + fin + "\nSpeech method: " + SPEECH.filter(function (s) { return s.id === P.speech; })[0].t + "\n\n" +
     "Write the output IN FRENCH, with these 4 headings:\n" +
@@ -1188,7 +1193,6 @@ function genMontage(ep) {
   });
 }
 
-/* ---- BILAN ---- */
 function genBilan(ep) {
   var st = ep.stats || statsFresh();
   var prompt = "Series: " + (P.titre || "sans titre") + ". " + P.concept + "\nEpisode " + ep.n + " : " + ep.titre + ". Summary: " + ep.resume + "\nScript excerpt:\n" + String(ep.script || "").slice(0, 700) + "\n\n" +
@@ -1207,10 +1211,9 @@ function genBilan(ep) {
   });
 }
 
-/* ---- CONCEPTS (idées d'histoires) ---- */
 function genConcepts(o) {
   o = o || {};
-  var seeds = "", amb = ambText(), n = 3;
+  var seeds = "", amb = ambText();
   if (o.surprise) {
     var picks = AMBS.slice().sort(function () { return Math.random() - .5; }).slice(0, 2);
     amb = picks.map(function (a) { return a.nom; });
@@ -1218,8 +1221,7 @@ function genConcepts(o) {
       rnd(RND.lieu) + " ; un personnage, " + rnd(RND.heros) + " ; un objet ou un secret, " +
       rnd(RND.objet) + " ; un retournement du type : " + rnd(RND.twist) + ".\n";
   }
-  var vus = (P.vus || []).slice(-30);
-    var prompt = "You are a TikTok viral short-video writer. Output in FRENCH. Your job: create stories that make people STOP scrolling in the first 2 seconds.\n" +
+  var prompt = "You are a TikTok viral short-video writer. Output in FRENCH. Your job: create stories that make people STOP scrolling in the first 2 seconds.\n" +
     "AUDIENCE: 13-30 year old TikTok users. They have 2-second attention spans. They want EMOTION, DRAMA, SHOCK, TABOO, REVENGE.\n" +
     (P.cible ? "Target audience: " + P.cible + "\n" : "") +
     (amb.length ? "Mood: " + amb.join(" | ") + "\n" : "") + seeds +
@@ -1249,7 +1251,6 @@ function genConcepts(o) {
     P.concepts = (o.more ? P.concepts : []).concat(neu).slice(-18);
   });
 }
-
 /* ============================================================
    CHAÎNE / SAISON
    ============================================================ */
@@ -1293,7 +1294,7 @@ async function chainEpisode(n, label, options) {
       if (!p.videoUrl) {
         setSub(label + " · vidéo " + (k+1) + "/" + main.length + " (peut prendre 2 min)");
         await planGenerateVideo(epIdx, j);
-         await new Promise(function (ok) { setTimeout(ok, 60000); });
+        await new Promise(function (ok) { setTimeout(ok, 90000); });
       }
     }
   }
@@ -1320,7 +1321,7 @@ function genSeason() { if (!todoEps().length) { toast("Tout est déjà préparé
 /* ═══ PARTIE 4 ═══ */
 
 /* ============================================================
-   GÉNÉRATION PHOTO PAR PLAN (avec références)
+   GÉNÉRATION PHOTO PAR PLAN
    ============================================================ */
 async function planGeneratePhoto(i, j) {
   var ep = P.eps[i], p = ep && ep.plans[j];
@@ -1387,6 +1388,9 @@ async function planGenerateAllPhotos(epNum) {
       var p2 = P.eps[epIdx].plans[todo[k].idx];
       if (p2.photoUri) done++; else failed++;
     } catch (e) { failed++; }
+    if (k < todo.length - 1) {
+      await new Promise(function (ok) { setTimeout(ok, 3400); });
+    }
   }
   toast("Terminé : " + done + " photo(s) OK, " + failed + " échec(s).", 4000);
 }
@@ -1431,9 +1435,9 @@ async function planGenerateVideo(i, j) {
     toast("Vidéo du plan " + p.n + " prête.");
   } catch (e) {
     p.videoStatus = "err";
-    p.videoError = /HTTP 503|HTTP 429/.test(e.message || "") 
-  ? "Agnes est surchargée. Attends 10-15 min puis réessaie." 
-  : (e.message || "Erreur").slice(0, 120);
+    p.videoError = /HTTP 503|HTTP 429/.test(e.message || "")
+      ? "Agnes est surchargée. Attends 10-15 min puis réessaie."
+      : (e.message || "Erreur").slice(0, 120);
     p.videoMsg = "";
     save(); render();
     toast("Échec : " + p.videoError);
@@ -1605,7 +1609,6 @@ function conceptsHtml() {
   });
   return h;
 }
-
 function universHtml() {
   var ready = has(P.idee) && P.style.length > 0;
   var hasU = P.persos.length > 0 || has(P.concept);
@@ -1706,7 +1709,7 @@ function universHtml() {
 }
 
 function refPrompt(kind, visuel) {
-  if (kind === "lieu") return "Empty background plate. " + sentence(visuel) + " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, photorealistic interior rendering.";
+  if (kind === "lieu") return "Empty background plate. " + sentence(visuel) + " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, no people, no human figure, photorealistic interior rendering.";
   return sentence(visuel) + " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
 }
 function refsHtml() {
@@ -1944,314 +1947,3 @@ function montView(ep) {
   h += '<section class="glass card stack"><div class="md">' + mdRender(ep.montage) + '</div><button type="button" class="btn ghost big" data-act="copymall" data-v="' + ep.n + '">📋 Copier tout</button></section>';
   return h;
 }
-
-/* ============================================================
-   ÉVÉNEMENTS — CLIC
-   ============================================================ */
-function arm(key, msg) {
-  if (R.arm === key) { R.arm = ""; return true; }
-  R.arm = key;
-  toast(msg || "Touche encore pour confirmer.");
-  setTimeout(function () { if (R.arm === key) R.arm = ""; }, 4000);
-  return false;
-}
-
-document.addEventListener("click", function (e) {
-  var b = e.target.closest("[data-act]");
-  if (!b) return;
-  var a = b.getAttribute("data-act"), v = b.getAttribute("data-v");
-  if (a === "stop") { if (R.chain) R.chain.stop = true; R.busy = null; overlay(); return; }
-  if (!$v.contains(b) && a !== "stop") return;
-
-  if (a === "nav-prev") { goPrev(); return; }
-  else if (a === "nav-next") { goNext(); return; }
-  else if (a === "tab") { go(v); }
-  else if (a === "speech") { P.speech = v; save(); render(); }
-  else if (a === "nb") { P.nb = +v; save(); render(); }
-  else if (a === "duree") { P.duree = +v; save(); render(); }
-  else if (a === "rec") { P.rec = v; save(); render(); }
-  else if (a === "yeux") {
-    var y = Array.isArray(P.yeux) ? P.yeux : (P.yeux ? [P.yeux] : []);
-    var yi = y.indexOf(v);
-    if (yi >= 0) y.splice(yi, 1); else y.push(v);
-    P.yeux = y;
-    save(); render();
-  }
-  else if (a === "teint") { var ti = P.teints.indexOf(v); if (ti >= 0) P.teints.splice(ti, 1); else P.teints.push(v); save(); render(); }
-  else if (a === "effet") { var ei = P.effets.indexOf(v); if (ei >= 0) P.effets.splice(ei, 1); else if (P.effets.length >= 3) { toast("3 effets max."); return; } else P.effets.push(v); save(); render(); }
-  else if (a === "sous") {
-    var sl = sousList();
-    var si = sl.indexOf(v);
-    if (si >= 0) sl.splice(si, 1); else sl.push(v);
-    P.sous = sl.length ? sl : ["U1"];
-    save(); render();
-  }
-  else if (a === "amb") { var ai = P.ambs.indexOf(v); if (ai >= 0) P.ambs.splice(ai, 1); else P.ambs.push(v); save(); render(); }
-  else if (a === "concepts") { genConcepts(); }
-  else if (a === "surprise") { genConcepts({ surprise: true }); }
-  else if (a === "moreconcepts") { genConcepts({ more: true }); }
-  else if (a === "dropconcept") { P.concepts.splice(+v, 1); save(); render(); }
-  else if (a === "pickconcept") {
-    var cc = P.concepts[+v];
-    if (cc) {
-      P.idee = cc.idee +
-        (has(cc.hook) ? "\nAccroche de l'épisode 1 : " + cc.hook : "") +
-        (has(cc.twist) ? "\nRetournement : " + cc.twist : "") +
-        (has(cc.chute) ? "\nFin de l'épisode 1 : " + cc.chute : "");
-      if (has(cc.titre)) P.titre = cc.titre;
-      if (has(cc.ambiance)) P.genre = cc.ambiance;
-      save();
-      toast("Idée choisie. Choisis un style puis génère ton univers.");
-      go("univers");
-    }
-  }
-  else if (a === "agnes-save") { saveAgnesKey(); }
-  else if (a === "style-remove") {
-    if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
-    var sri = P.style.indexOf(v);
-    if (sri >= 0) P.style.splice(sri, 1);
-    save(); render();
-  }
-  else if (a === "genuni") { if (P.persos.length && !arm("uni", "Touche encore pour tout remplacer.")) return; genUnivers(); }
-  else if (a === "addperso") { P.persos.push({ id: uid(), nom: "", role: "", caractere: "", secret: "", voix: "", voix_en: "", visuel: "", ok: false }); save(); render(); }
-  else if (a === "addlieu") { P.lieux.push({ id: uid(), nom: "", visuel: "", ok: false }); save(); render(); }
-  else if (a === "delperso") { if (arm("dp" + v)) { P.persos.splice(+v, 1); save(); render(); } }
-  else if (a === "dellieu") { if (arm("dl" + v)) { P.lieux.splice(+v, 1); save(); render(); } }
-  else if (a === "copypre") { var pre = document.getElementById(v); if (pre) copyText(pre.textContent, pre, "Prompt copié."); }
-  else if (a === "refok") { var o = R.refs[+v].o; o.ok = !o.ok; save(); render(); }
-  else if (a === "newep") { var n = P.eps.length + 1; P.eps.push(newEp(n)); save(); go("eps", n); }
-  else if (a === "openep") { go("eps", +v); }
-  else if (a === "epback") { go("eps"); }
-  else if (a === "genscript") { var ep = epBy(+v); if (has(ep.script) && !arm("gs" + v)) return; genScript(ep); }
-  else if (a === "genplans") { var ep2 = epBy(+v); if (ep2.plans.length && !arm("gp" + v)) return; genPlans(ep2); }
-  else if (a === "genmont") { var ep3 = epBy(+v); if (has(ep3.montage) && !arm("gm" + v)) return; genMontage(ep3); }
-  else if (a === "shotst") {
-    var pls = P.eps[+b.getAttribute("data-i")].plans[+b.getAttribute("data-j")];
-    pls.st = +v;
-    save(); render();
-  }
-  else if (a === "plan-photo-upload" || a === "plan-photo-change") {
-    var inp = document.getElementById("pf-" + b.getAttribute("data-i") + "-" + b.getAttribute("data-j"));
-    if (inp) inp.click();
-  }
-  else if (a === "plan-photo-clear") { planClearPhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
-  else if (a === "ref-regen-agnes") {
-    var rr = R.refs[+v];
-    if (rr) refGenerate(rr.k, rr.o.id);
-  }
-  else if (a === "ref-upload" || a === "ref-change") {
-    var rIn = document.getElementById("rf-in-" + v);
-    if (rIn) rIn.click();
-  }
-  else if (a === "ref-clear") { var r = R.refs[+v]; if (r) refClear(r.k, r.o.id); }
-  else if (a === "copypre-coherent") {
-    var ci = +b.getAttribute("data-i"), cj = +b.getAttribute("data-j");
-    var cpl = P.eps[ci] && P.eps[ci].plans[cj];
-    if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + note cohérence copiés. Joins les images de référence.");
-  }
-  else if (a === "genallphotos") { planGenerateAllPhotos(+v); }
-  else if (a === "plan-photo-gen") { planGeneratePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
-  else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
-  else if (a === "genseason") { genSeason(); }
-  else if (a === "genall") {
-    var eg = epBy(+v);
-    if (!eg) return;
-    if (!confirm("Tout préparer va générer le script, les plans, PUIS toutes les photos et vidéos.\n\n⚠️ Les vidéos prennent environ 1 à 2 minutes chacune. Un épisode de 12 plans = 20 à 30 minutes.\n\nContinuer ?")) return;
-    runChain(function () {
-      return chainEpisode(eg.n, P.nb === 1 ? "La vidéo" : "Épisode " + eg.n, { videos: true });
-    });
-  }
-  else if (a === "copyimgs") {
-    var ei2 = epBy(+v);
-    if (ei2) copyAll(ei2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "PLAN " + p.n + " (" + p.duree + " s)\n" + imagePrompt(p); }).join("\n\n"), "Prompts image copiés.");
-  }
-  else if (a === "copyvids") {
-    var ev2 = epBy(+v);
-    if (ev2) copyAll(ev2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "PLAN " + p.n + " (" + p.duree + " s)\n" + videoPrompt(p); }).join("\n\n"), "Prompts vidéo copiés.");
-  }
-  else if (a === "montopen") { R.mont = true; R.ep = +v; render(); window.scrollTo(0, 0); }
-  else if (a === "montclose") { R.mont = false; render(); }
-  else if (a === "copymall") { var em = epBy(+v); if (em) copyAll(em.montage, "Texte copié."); }
-  else if (a === "bilan") { var eb = epBy(+v); if (eb) genBilan(eb); }
-  else if (a === "copylist") {
-    var el = epBy(+v);
-    if (!el) return;
-    var clips = el.plans.filter(function (p) { return !p.reserve && p.videoUrl; }).map(function (p, k) {
-      return "Plan " + (k + 1) + " (" + p.n + ") : " + p.videoUrl;
-    });
-    copyAll(clips.join("\n"), clips.length + " clip" + (clips.length > 1 ? "s" : "") + " copiés. Colle cette liste quelque part, ouvre chaque lien et enregistre.");
-  }
-  else if (a === "hard-reload") {
-    if (confirm("Recharger l'app ? Les modifications du code seront prises en compte.")) {
-      if ('caches' in window) {
-        caches.keys().then(function (names) {
-          Promise.all(names.map(function (n) { return caches.delete(n); })).then(function () {
-            location.reload(true);
-          });
-        });
-      } else {
-        location.reload(true);
-      }
-    }
-  }
-  else if (a === "ffmpeg-ep") {
-    var ef = epBy(+v);
-    if (!ef) return;
-    ef.finalVideoStatus = "busy";
-    ef.finalVideoError = "Préparation…";
-    save(); render();
-    (async function () {
-      try {
-        var url = await ffmpegConcatenate(ef, function (msg) {
-          ef.finalVideoError = msg;
-          var el2 = document.querySelector('#view .badge');
-          if (el2 && el2.textContent.indexOf("⏳") === 0) el2.textContent = "⏳ " + msg;
-        });
-        ef.finalVideoUrl = url;
-        ef.finalVideoStatus = "done";
-        ef.finalVideoError = "";
-        save(); render(); toast("Vidéo finale assemblée.");
-      } catch (err) {
-        ef.finalVideoStatus = "err";
-        ef.finalVideoError = (err.message || "").slice(0, 120);
-        save(); render();
-        toast("Échec FFmpeg : " + ef.finalVideoError);
-      }
-    })();
-  }
-  else if (a === "bkfile") {
-    var data = JSON.stringify(P, null, 1);
-    var blob = new Blob([data], { type: "application/json" });
-    var a2 = document.createElement("a");
-    a2.href = URL.createObjectURL(blob);
-    a2.download = "fabrique-sauvegarde.json";
-    document.body.appendChild(a2);
-    a2.click();
-    document.body.removeChild(a2);
-    toast("Sauvegarde téléchargée.");
-  }
-  else if (a === "bkrestore") {
-    try {
-      var d2 = JSON.parse(document.getElementById("bk-in").value);
-      var f2 = fresh();
-      P = f2;
-      for (var k2 in f2) P[k2] = d2[k2] !== undefined ? d2[k2] : f2[k2];
-      fixEps(); save(); render();
-      toast("Sauvegarde restaurée.");
-    } catch (err) { toast("Sauvegarde illisible."); }
-  }
-  else if (a === "reset") {
-    if (arm("reset", "Touche encore : TOUT sera effacé (photos, références, scripts).")) {
-      (async function () {
-        try {
-          if (typeof idbKeyval !== "undefined") {
-            var keys = await idbKeyval.keys();
-            for (var i = 0; i < keys.length; i++) {
-              var k = String(keys[i]);
-              if (k.indexOf("plan-photo-") === 0 || k.indexOf("ref-") === 0) {
-                await idbKeyval.del(k);
-              }
-            }
-          }
-        } catch (e) { console.warn("Reset IndexedDB :", e); }
-        P = fresh();
-        save();
-        go("univers");
-        toast("Tout est effacé. Nouvelle histoire !");
-      })();
-    }
-  }
-});
-
-/* ============================================================
-   ÉVÉNEMENTS — SAISIE
-   ============================================================ */
-document.addEventListener("input", function (e) {
-  var el = e.target;
-  if (el.id === "style-search") {
-    var q = String(el.value || "").toLowerCase().trim();
-    var sel = document.getElementById("style-add");
-    if (!sel) return;
-    Array.prototype.forEach.call(sel.querySelectorAll("optgroup"), function (grp) {
-      var visible = 0;
-      Array.prototype.forEach.call(grp.querySelectorAll("option"), function (opt) {
-        var match = !q || opt.textContent.toLowerCase().indexOf(q) >= 0;
-        opt.style.display = match ? "" : "none";
-        if (match) visible++;
-      });
-      grp.style.display = visible ? "" : "none";
-    });
-    return;
-  }
-  if (el.hasAttribute("data-path")) {
-    setPath(P, el.getAttribute("data-path"), el.value);
-    save();
-    var m = /^eps\.(\d+)\.plans\.(\d+)\./.exec(el.getAttribute("data-path"));
-    if (m) {
-      var pl = P.eps[+m[1]].plans[+m[2]];
-      var a = document.getElementById("pi-" + m[1] + "-" + m[2]);
-      var b = document.getElementById("pv-" + m[1] + "-" + m[2]);
-      if (a) a.textContent = imagePrompt(pl);
-      if (b) b.textContent = videoPrompt(pl);
-    }
-    refreshStrip();
-  }
-});
-
-/* ============================================================
-   ÉVÉNEMENTS — CHANGEMENT
-   ============================================================ */
-document.addEventListener("change", function (e) {
-  var id = e.target.id;
-  if (id === "style-add") {
-    var v = e.target.value;
-    if (v) {
-      if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
-      if (P.style.length >= MAX_STYLES) { toast("Max " + MAX_STYLES + " styles. Retires-en un d'abord."); e.target.value = ""; return; }
-      if (P.style.indexOf(v) < 0) P.style.push(v);
-      save(); render();
-    }
-    return;
-  }
-  if (id === "cam") { P.cam = e.target.value; save(); }
-  else if (id === "video-engine") { P.videoEngine = e.target.value; save(); render(); }
-  else if (id === "bk-file") {
-    var f = e.target.files[0];
-    if (!f) return;
-    var rd = new FileReader();
-    rd.onload = function (ev) {
-      try {
-        var d3 = JSON.parse(ev.target.result);
-        var f3 = fresh();
-        P = f3;
-        for (var k3 in f3) P[k3] = d3[k3] !== undefined ? d3[k3] : f3[k3];
-        fixEps(); save(); render();
-        toast("Sauvegarde ouverte.");
-      } catch (err) { toast("Fichier invalide."); }
-    };
-    rd.readAsText(f);
-    e.target.value = "";
-  }
-  else if (e.target.classList && e.target.classList.contains("plan-file-input")) {
-    planUploadPhoto(+e.target.getAttribute("data-i"), +e.target.getAttribute("data-j"), e.target.files[0]);
-    e.target.value = "";
-  }
-  else if (e.target.classList && e.target.classList.contains("ref-file-input")) {
-    var rv = +e.target.getAttribute("data-v");
-    var ro = R.refs[rv];
-    if (ro) refUpload(ro.k, ro.o.id, e.target.files[0]);
-    e.target.value = "";
-  }
-});
-
-document.querySelectorAll(".dock button").forEach(function (b) {
-  b.addEventListener("click", function () { go(b.getAttribute("data-tab")); });
-});
-
-/* ============================================================
-   INITIALISATION
-   ============================================================ */
-load();
-render();
-setTimeout(planPhotosRestore, 800);
-setTimeout(refsRestoreAll, 900);
