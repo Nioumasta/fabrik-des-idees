@@ -808,6 +808,13 @@ function imagePrompt(pl) {
     var l = findLieu(pl.lieu);
     if (l && has(l.visuel)) parts.push("Place: " + sentence(l.visuel));
   }
+
+  /* Renforcement anthropomorphe : empêche Agnes de faire un humain */
+  var anthroSkins = ["K23", "K24", "K25", "K26"];
+  if (anthroSkins.indexOf(P.skin) >= 0) {
+    parts.push("⚠️ STRICT SHAPE RULE: The character's ENTIRE BODY must keep the fruit/animal/object silhouette (round shape, matching silhouette). This is NOT a human with textured skin. Do NOT draw a humanoid body. The face, arms, legs and body must ALL respect the fruit silhouette. No naked human, no realistic human anatomy.");
+  }
+
   parts.push("No logo, no brand, no text. Hands relaxed with five fingers. Vertical 9:16.");
   var ph = phrase();
   if (ph) parts.push(ph + ".");
