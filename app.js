@@ -396,14 +396,14 @@ function agnesPanelHtml() {
 async function agnesFetch(url, options, label) {
   options = options || {};
   label = label || "Agnes";
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < 10; i++) {
     try {
       var r = await fetch(url, options);
-      if (r.status === 429) { await new Promise(function (ok) { setTimeout(ok, Math.min(60000, 10000 * (i + 1))); }); continue; }
-      if (r.status === 503) { await new Promise(function (ok) { setTimeout(ok, 5000 * (i + 1)); }); continue; }
+      if (r.status === 429) { await new Promise(function (ok) { setTimeout(ok, Math.min(120000, 15000 * (i + 1))); }); continue; }
+      if (r.status === 503) { await new Promise(function (ok) { setTimeout(ok, Math.min(60000, 8000 * (i + 1))); }); continue; }
       return r;
     } catch (e) {
-      await new Promise(function (ok) { setTimeout(ok, 3000 * (i + 1)); });
+      await new Promise(function (ok) { setTimeout(ok, 5000 * (i + 1)); });
     }
   }
   return fetch(url, options);
@@ -1431,7 +1431,9 @@ async function planGenerateVideo(i, j) {
     toast("Vidéo du plan " + p.n + " prête.");
   } catch (e) {
     p.videoStatus = "err";
-    p.videoError = (e.message || "Erreur").slice(0, 120);
+    p.videoError = /HTTP 503|HTTP 429/.test(e.message || "") 
+  ? "Agnes est surchargée. Attends 10-15 min puis réessaie." 
+  : (e.message || "Erreur").slice(0, 120);
     p.videoMsg = "";
     save(); render();
     toast("Échec : " + p.videoError);
