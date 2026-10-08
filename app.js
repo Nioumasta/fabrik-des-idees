@@ -801,7 +801,8 @@ function imagePrompt(pl) {
   }
 
   /* Renforcement anthropomorphe (F1, F2) */
-  if (P.skin === "F1" || P.skin === "F2") {
+ var fruitStyle = Array.isArray(P.style) && (P.style.indexOf("F1") >= 0 || P.style.indexOf("F2") >= 0);
+if (fruitStyle) {
     parts.push("⚠️ STRICT SHAPE RULE: The character's HEAD (or ENTIRE BODY if F2) MUST keep the fruit silhouette exactly. This is NOT a human with colored skin — the fruit shape must be instantly recognizable. No human head. No realistic human anatomy. Only the face features are cartoon-human-like, everything else is the fruit.");
   }
 
