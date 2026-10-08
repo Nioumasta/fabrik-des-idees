@@ -724,7 +724,7 @@ async function refGenerate(kind, id) {
   save(); render();
 
   try {
-    var url = await agnesCreateImage(prompt);
+        var url = await agnesCreateImage(prompt, null, "person, people, human, face, figure, character, portrait, body, girl, boy, man, woman, child, crowd, silhouette, cartoon, doll");
     obj.refUri = url;
     obj.refStatus = "done";
     obj.refMsg = "";
