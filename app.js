@@ -290,7 +290,7 @@ function phrase() {
 }
 function skinPhrase() {
   var a = [];
-  P.teints.forEach(...function (id) { var x = byId(TEINTS, id); if (x) a.push(x.p); });
+  P.teints.forEach(function (id) { var x = byId(TEINTS, id); if (x) a.push(x.p); });
   var yeux = Array.isArray(P.yeux) ? P.yeux : (P.yeux ? [P.yeux] : []);
   yeux.forEach(function (id) { var y = byId(YEUX, id); if (y) a.push(y.p); });
   return a.join(", ");
@@ -1019,7 +1019,7 @@ function genUnivers() {
 
 /* ---- GEN CAST ---- */
 function genCast() {
-  var st = sty(), ph = phrase(), sk = skinPhrase();
+  var st = sty(), ph = phrase();
   var prompt = "You are a screenwriter for short vertical animated videos. Output user-facing content in FRENCH, technical visual fields IN ENGLISH.\nIdea (in French): " + P.idee.trim() + "\n" +
     (has(P.titre) ? "Title (in French): " + P.titre.trim() + "\n" : "") +
     (has(P.concept) ? "Concept (in French): " + P.concept.trim() + "\n" : "") +
