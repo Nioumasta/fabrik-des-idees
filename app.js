@@ -440,7 +440,6 @@ async function agnesCreateImage(prompt, refImages, negativePrompt) {
     ratio: "9:16",
     extra_body: { response_format: "url" }
   };
-  if (negativePrompt) body.negative_prompt = negativePrompt;
   if (refImages && refImages.length) {
     body.extra_body.image = refImages.slice(0, 5);
   }
