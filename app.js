@@ -1293,6 +1293,7 @@ async function chainEpisode(n, label, options) {
       if (!p.videoUrl) {
         setSub(label + " · vidéo " + (k+1) + "/" + main.length + " (peut prendre 2 min)");
         await planGenerateVideo(epIdx, j);
+         await new Promise(function (ok) { setTimeout(ok, 60000); });
       }
     }
   }
