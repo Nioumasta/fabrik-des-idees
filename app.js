@@ -994,13 +994,14 @@ function genUnivers() {
   var st = sty(), ph = phrase(), sk = skinPhrase();
   var fmt = P.nb === 1 ? "A single video of " + P.duree + " seconds." : P.nb + " videos of " + P.duree + " seconds each.";
   var persoRule = P.rec === "oui" ? "Create the season's cast: 4 to 6 characters maximum. " : "Characters change between videos: characters = empty list. ";
-  var prompt = "You are a screenwriter for short vertical animated videos (TikTok, YouTube Shorts, Instagram, Facebook). Output user-facing content in FRENCH, but every instruction here is for you in English. Technical fields (visual descriptions) must be IN ENGLISH.\n" +
+    var coherenceRule = "CULTURAL COHERENCE: if a character has dark skin, their hairstyle MUST match (braids, afro, cornrows, gradient, wig with edges). NEVER blonde hair on dark skin unless explicitly stated. NEVER straight European hair on deep brown skin. Be specific: 'box braids with gold cuffs', 'natural 4C afro', 'long sleek cornrows', etc.\n";
+   var prompt = "You are a screenwriter for short vertical animated videos (TikTok, YouTube Shorts, Instagram, Facebook). Output user-facing content in FRENCH, but every instruction here is for you in English. Technical fields (visual descriptions) must be IN ENGLISH.\n" +
     "Starting idea (in French): " + P.idee.trim() + "\n" +
     (has(P.titre) ? "Desired title (in French): " + P.titre.trim() + "\n" : "") +
     "Format: " + fmt + "\n" +
     (has(P.genre) ? "Genre: " + P.genre + ".\n" : "") +
     (has(P.cible) ? "Audience: " + P.cible + ".\n" : "") +
-    "Visual style: " + (st ? st.nom + ". Style phrase: " + ph : "not specified") + "\n" +
+      "Visual style: " + (st ? st.nom + ". Style phrase: " + ph : "not specified") + "\n" + coherenceRule +
     (sk ? "Skin/eyes rendering: " + sk + "\n" : "") + "\n" + persoRule +
     "No brand, no logo, no real person. No violence, no suggestive scene. Do not mock any body, religion, or origin. " +
     "Each visual description field must be IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with '3D rendered character with', then list ONLY literal visual features: body shape, exact colors using descriptive words, skin/fruit/leather texture, eye shape and color, hair style and color, outfit fabrics and colors, one signature accessory. FORBIDDEN: brand names (Bratz, Barbie, Rainbow High, Disney), style references (K-pop, Y2K, cybergoth), metaphors (mango-skin, doll-like), emotions, story elements. Write ONLY what a camera would see. " +
