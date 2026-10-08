@@ -1198,3 +1198,1558 @@ function genConcepts(o) {
     P.concepts = (o.more ? P.concepts : []).concat(neu).slice(-18);
   });
 }
+/* ═══════════════════════════════════════════════════════════
+   INDEXEDDB — PHOTOS DES PLANS
+   ═══════════════════════════════════════════════════════════ */
+async function planPhotoStore(i, j, dataUri) {
+  if (typeof idbKeyval === "undefined") return;
+  try { await idbKeyval.set("plan-photo-" + i + "-" + j, dataUri); } catch (e) {}
+}
+async function planPhotoLoad(i, j) {
+  if (typeof idbKeyval === "undefined") return null;
+  try { return await idbKeyval.get("plan-photo-" + i + "-" + j); } catch (e) { return null; }
+}
+async function planPhotoDelete(i, j) {
+  if (typeof idbKeyval === "undefined") return;
+  try { await idbKeyval.del("plan-photo-" + i + "-" + j); } catch (e) {}
+}
+async function planPhotosRestore() {
+  if (typeof idbKeyval === "undefined") return;
+  for (var i = 0; i < P.eps.length; i++) {
+    for (var j = 0; j < (P.eps[i].plans || []).length; j++) {
+      var uri = await planPhotoLoad(i, j);
+      if (uri) P.eps[i].plans[j].photoUri = uri;
+    }
+  }
+  if (R.tab === "studio" && R.ep) render();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INDEXEDDB — RÉFÉRENCES (persos, lieux)
+   ═══════════════════════════════════════════════════════════ */
+async function refStore(kind, id, dataUri) {
+  if (typeof idbKeyval === "undefined") return;
+  try { await idbKeyval.set("ref-" + kind + "-" + id, dataUri); } catch (e) {}
+}
+async function refLoad(kind, id) {
+  if (typeof idbKeyval === "undefined") return null;
+  try { return await idbKeyval.get("ref-" + kind + "-" + id); } catch (e) { return null; }
+}
+async function refDelete(kind, id) {
+  if (typeof idbKeyval === "undefined") return;
+  try { await idbKeyval.del("ref-" + kind + "-" + id); } catch (e) {}
+}
+async function refsRestoreAll() {
+  if (typeof idbKeyval === "undefined") return;
+  for (var i = 0; i < P.persos.length; i++) {
+    var u1 = await refLoad("perso", P.persos[i].id);
+    if (u1) P.persos[i].refUri = u1;
+  }
+  for (var j = 0; j < P.lieux.length; j++) {
+    var u2 = await refLoad("lieu", P.lieux[j].id);
+    if (u2) P.lieux[j].refUri = u2;
+  }
+  for (var k = 0; k < P.eps.length; k++) {
+    var cast = P.eps[k].cast || [];
+    for (var l = 0; l < cast.length; l++) {
+      var u3 = await refLoad("perso", cast[l].id);
+      if (u3) cast[l].refUri = u3;
+    }
+  }
+  if (R.tab === "studio") render();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITAIRES FICHIERS
+   ═══════════════════════════════════════════════════════════ */
+function fileToDataUri(file) {
+  return new Promise(function (res, rej) {
+    var r = new FileReader();
+    r.onload = function (e) { res(e.target.result); };
+    r.onerror = function () { rej(new Error("Lecture impossible.")); };
+    r.readAsDataURL(file);
+  });
+}
+function compressImage(dataUri, maxSize, quality) {
+  return new Promise(function (resolve) {
+    var img = new Image();
+    img.onload = function () {
+      var w = img.width, h = img.height;
+      var max = Math.max(w, h);
+      if (max > maxSize) {
+        var r = maxSize / max;
+        w = Math.round(w * r);
+        h = Math.round(h * r);
+      }
+      var canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = function () { resolve(dataUri); };
+    img.src = dataUri;
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GÉNÉRATION — RÉFÉRENCES (persos + lieux)
+   ═══════════════════════════════════════════════════════════ */
+function refPrompt(kind, visuel) {
+  if (kind === "lieu") {
+    return "Empty background plate. " + sentence(visuel) +
+      " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, no people, no human figure, photorealistic interior rendering.";
+  }
+  return sentence(visuel) +
+    " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
+}
+
+function findRefObj(kind, id) {
+  if (kind === "perso") {
+    var p = P.persos.filter(function (x) { return x.id === id; })[0];
+    if (p) return p;
+    for (var i = 0; i < P.eps.length; i++) {
+      var c = (P.eps[i].cast || []).filter(function (x) { return x.id === id; })[0];
+      if (c) return c;
+    }
+  } else if (kind === "lieu") {
+    return P.lieux.filter(function (x) { return x.id === id; })[0];
+  }
+  return null;
+}
+
+async function generateRef(kind, id) {
+  var obj = findRefObj(kind, id);
+  if (!obj) { toast("Référence introuvable."); return; }
+  var prompt = refPrompt(kind, obj.visuel);
+  obj.refStatus = "busy";
+  obj.refError = "";
+  save(); render();
+
+  try {
+    var provider = P.imageProvider || "pollinations";
+    var url = await generateImage(provider, prompt);
+    obj.refUri = url;
+    obj.refStatus = "done";
+    obj.refError = "";
+    await refStore(kind, id, url);
+    save(); render();
+    toast("Référence prête : " + (obj.nom || "sans nom"));
+  } catch (e) {
+    obj.refStatus = "err";
+    obj.refError = (e.message || "Erreur").slice(0, 140);
+    save(); render();
+    toast("Échec : " + obj.refError);
+  }
+}
+
+async function generateAllRefs() {
+  var all = [];
+  P.persos.forEach(function (p) { all.push({ kind: "perso", id: p.id, nom: p.nom }); });
+  P.lieux.forEach(function (l) { all.push({ kind: "lieu", id: l.id, nom: l.nom }); });
+
+  if (!all.length) { toast("Rien à générer. Lance d'abord le brief."); return; }
+  if (!confirm("Générer " + all.length + " référence(s) avec " + (P.imageProvider || "pollinations") + " ?\n\nÀ ~15 secondes par image, compte environ " + Math.ceil(all.length * 15 / 60) + " minutes.")) return;
+
+  var done = 0, failed = 0;
+  for (var i = 0; i < all.length; i++) {
+    var item = all[i];
+    if (i > 0) await sleep(3400);
+    toast("Référence " + (i + 1) + "/" + all.length + "…", 1500);
+    try {
+      await generateRef(item.kind, item.id);
+      var obj = findRefObj(item.kind, item.id);
+      if (obj && obj.refUri) done++; else failed++;
+    } catch (e) { failed++; }
+  }
+  toast("Terminé : " + done + " OK, " + failed + " échec(s).", 4000);
+  render();
+}
+
+async function uploadRef(kind, id, file) {
+  if (!file || !file.type.startsWith("image/")) { toast("Ce fichier n'est pas une image."); return; }
+  try {
+    var uri = await fileToDataUri(file);
+    if (uri.length > 500000) uri = await compressImage(uri, 768, 0.75);
+    await refStore(kind, id, uri);
+    var obj = findRefObj(kind, id);
+    if (obj) {
+      obj.refUri = uri;
+      obj.refStatus = "done";
+      save(); render();
+      toast("Référence ajoutée.");
+    }
+  } catch (e) { toast("Impossible de lire cette image."); }
+}
+
+async function clearRef(kind, id) {
+  if (!confirm("Retirer cette référence ?")) return;
+  await refDelete(kind, id);
+  var obj = findRefObj(kind, id);
+  if (obj) {
+    obj.refUri = null;
+    obj.refStatus = null;
+    save(); render();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GÉNÉRATION — PHOTO DE PLAN
+   ═══════════════════════════════════════════════════════════ */
+async function generatePhoto(i, j) {
+  var ep = P.eps[i];
+  var p = ep && ep.plans[j];
+  if (!p) return;
+
+  p.photoStatus = "busy";
+  p.photoError = "";
+  save(); render();
+
+  try {
+    var prompt = imagePrompt(p);
+    var provider = P.imageProvider || "pollinations";
+    var url = await generateImage(provider, prompt);
+    p.photoUri = url;
+    p.photoStatus = "done";
+    p.photoError = "";
+    p.videoUrl = null;
+    p.videoStatus = null;
+    await planPhotoStore(i, j, url);
+    save(); render();
+    toast("Photo plan " + p.n + " prête.");
+  } catch (e) {
+    p.photoStatus = "err";
+    p.photoError = (e.message || "Erreur").slice(0, 140);
+    save(); render();
+    toast("Échec : " + p.photoError);
+  }
+}
+
+async function generateAllPhotos(epNum) {
+  var ep = epBy(epNum);
+  if (!ep) return;
+  var epIdx = P.eps.indexOf(ep);
+  var todo = [];
+  ep.plans.forEach(function (p, j) {
+    if (!p.reserve && !p.photoUri) todo.push({ idx: j, n: p.n });
+  });
+
+  if (!todo.length) { toast("Toutes les photos sont déjà faites."); return; }
+  if (!confirm("Générer " + todo.length + " photos avec " + (P.imageProvider || "pollinations") + " ?\n\nÀ ~15 secondes par photo, compte environ " + Math.ceil(todo.length * 15 / 60) + " minutes.")) return;
+
+  var done = 0, failed = 0;
+  for (var k = 0; k < todo.length; k++) {
+    if (k > 0) await sleep(3400);
+    toast("Photo " + (k + 1) + "/" + todo.length + "…", 1500);
+    try {
+      await generatePhoto(epIdx, todo[k].idx);
+      var p2 = P.eps[epIdx].plans[todo[k].idx];
+      if (p2.photoUri) done++; else failed++;
+    } catch (e) { failed++; }
+  }
+  toast("Terminé : " + done + " photo(s) OK, " + failed + " échec(s).", 4000);
+  render();
+}
+
+async function uploadPhoto(i, j, file) {
+  if (!file || !file.type.startsWith("image/")) { toast("Ce fichier n'est pas une image."); return; }
+  try {
+    var uri = await fileToDataUri(file);
+    if (uri.length > 500000) uri = await compressImage(uri, 768, 0.75);
+    P.eps[i].plans[j].photoUri = uri;
+    P.eps[i].plans[j].photoStatus = "done";
+    P.eps[i].plans[j].videoUrl = null;
+    P.eps[i].plans[j].videoStatus = null;
+    await planPhotoStore(i, j, uri);
+    save(); render();
+    toast("Photo ajoutée.");
+  } catch (e) { toast("Impossible de lire cette image."); }
+}
+
+async function clearPhoto(i, j) {
+  if (!confirm("Retirer cette photo ? La vidéo déjà générée sera perdue.")) return;
+  P.eps[i].plans[j].photoUri = null;
+  P.eps[i].plans[j].photoStatus = null;
+  P.eps[i].plans[j].videoUrl = null;
+  P.eps[i].plans[j].videoStatus = null;
+  await planPhotoDelete(i, j);
+  save(); render();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GÉNÉRATION — VIDÉO DE PLAN
+   ═══════════════════════════════════════════════════════════ */
+async function generateVideo(i, j) {
+  var ep = P.eps[i];
+  var p = ep && ep.plans[j];
+  if (!p || !p.photoUri) { toast("Dépose d'abord une photo."); return; }
+  if (!getAgnesKey()) { toast("Ajoute ta clé Agnes."); return; }
+
+  p.videoStatus = "busy";
+  p.videoMsg = "Création de la tâche…";
+  p.videoError = "";
+  save(); render();
+
+  try {
+    var frames = p.frames || 145;
+    var prompt = videoPrompt(p);
+    var id = await agnesCreateVideo(prompt, p.photoUri, p.lastFrameUri || null, frames);
+    p.videoMsg = "Préparation…";
+    save(); render();
+    var url = await agnesPollVideo(id, function (msg) {
+      var el = document.querySelector('#vv-' + i + '-' + j + ' .badge');
+      if (el) el.textContent = "⏳ " + msg;
+    });
+    p.videoUrl = url;
+    p.videoStatus = "done";
+    p.videoMsg = "";
+    save(); render();
+    toast("Vidéo plan " + p.n + " prête.");
+  } catch (e) {
+    p.videoStatus = "err";
+    p.videoError = /HTTP 503|HTTP 429/.test(e.message || "")
+      ? "Agnes est surchargée. Attends 10-15 min puis réessaie."
+      : (e.message || "Erreur").slice(0, 120);
+    p.videoMsg = "";
+    save(); render();
+    toast("Échec : " + p.videoError);
+  }
+}
+
+async function uploadLastFrame(i, j, file) {
+  if (!file || !file.type.startsWith("image/")) { toast("Ce fichier n'est pas une image."); return; }
+  try {
+    var uri = await fileToDataUri(file);
+    if (uri.length > 500000) uri = await compressImage(uri, 768, 0.75);
+    P.eps[i].plans[j].lastFrameUri = uri;
+    save(); render();
+    toast("Image de fin ajoutée.");
+  } catch (e) { toast("Impossible de lire cette image."); }
+}
+
+async function clearLastFrame(i, j) {
+  P.eps[i].plans[j].lastFrameUri = null;
+  save(); render();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FFMPEG — ASSEMBLAGE FINAL
+   ═══════════════════════════════════════════════════════════ */
+var FF = { instance: null, loaded: false, loading: false };
+
+async function ffmpegLoad() {
+  if (FF.loaded) return FF.instance;
+  if (FF.loading) {
+    while (FF.loading) await sleep(200);
+    return FF.instance;
+  }
+  FF.loading = true;
+  try {
+    var FFCls = (typeof FFmpeg !== "undefined" && FFmpeg.FFmpeg) ? FFmpeg.FFmpeg
+              : (typeof FFmpegWASM !== "undefined" && FFmpegWASM.FFmpeg) ? FFmpegWASM.FFmpeg
+              : null;
+    if (!FFCls) throw new Error("FFmpeg non chargé (CDN inaccessible ?)");
+    var ffmpeg = new FFCls();
+    var baseURL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
+    await ffmpeg.load({
+      coreURL: baseURL + "/ffmpeg-core.js",
+      wasmURL: baseURL + "/ffmpeg-core.wasm"
+    });
+    FF.instance = ffmpeg;
+    FF.loaded = true;
+    console.log("✅ FFmpeg chargé");
+    return ffmpeg;
+  } finally {
+    FF.loading = false;
+  }
+}
+
+async function ffmpegConcatenate(ep, onProgress) {
+  var main = ep.plans.filter(function (p) { return !p.reserve && p.videoUrl; });
+  if (!main.length) throw new Error("Aucun clip à assembler.");
+  if (onProgress) onProgress("Chargement de FFmpeg (30 Mo la 1ère fois)…");
+  var ffmpeg = await ffmpegLoad();
+  var names = [];
+
+  for (var i = 0; i < main.length; i++) {
+    var p = main[i];
+    if (onProgress) onProgress("Téléchargement du clip " + (i + 1) + "/" + main.length + "…");
+    var res;
+    try { res = await fetch(p.videoUrl, { mode: "cors" }); }
+    catch (e) { throw new Error("Clip " + (i + 1) + " inaccessible (CORS)."); }
+    if (!res.ok) throw new Error("Clip " + (i + 1) + " : HTTP " + res.status);
+    var buf = new Uint8Array(await res.arrayBuffer());
+    if (buf.length < 1000) throw new Error("Clip " + (i + 1) + " vide.");
+    var name = "plan" + String(i).padStart(3, "0") + ".mp4";
+    await ffmpeg.writeFile(name, buf);
+    names.push(name);
+  }
+
+  var listTxt = names.map(function (n) { return "file '" + n + "'"; }).join("\n");
+  await ffmpeg.writeFile("list.txt", new TextEncoder().encode(listTxt));
+  if (onProgress) onProgress("Upscale 1080×1920 et assemblage (2-5 min)…");
+
+  var vf = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1";
+
+  try {
+    await ffmpeg.exec([
+      "-f", "concat", "-safe", "0", "-i", "list.txt",
+      "-vf", vf,
+      "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+      "-pix_fmt", "yuv420p", "-r", "30",
+      "-c:a", "aac", "-b:a", "128k",
+      "-movflags", "+faststart",
+      "sortie.mp4"
+    ]);
+  } catch (e) {
+    if (onProgress) onProgress("Réessai avec réencodage rapide…");
+    await ffmpeg.exec([
+      "-f", "concat", "-safe", "0", "-i", "list.txt",
+      "-vf", vf,
+      "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+      "-pix_fmt", "yuv420p", "-r", "30",
+      "-an",
+      "sortie.mp4"
+    ]);
+  }
+
+  var data = await ffmpeg.readFile("sortie.mp4");
+  if (!data || data.length < 1000) throw new Error("Fichier final vide.");
+  var blob = new Blob([data.buffer], { type: "video/mp4" });
+  if (onProgress) onProgress("Terminé — 1080×1920 · " + Math.round(data.length / 1024 / 1024) + " Mo");
+  return URL.createObjectURL(blob);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAÎNE — PIPELINE AUTOMATIQUE
+   ═══════════════════════════════════════════════════════════ */
+function todoEps() {
+  var t = [], n, e;
+  for (n = 1; n <= P.nb; n++) {
+    e = epBy(n);
+    if (!e || !has(e.script) || !e.plans.length || !has(e.montage)) t.push(n);
+  }
+  return t;
+}
+
+function setSub(t) { if (R.chain) R.chain.sub = t; }
+function stopCheck() {
+  if (R.chain && R.chain.stop) {
+    var e = new Error("stop");
+    e.code = "cancelled";
+    throw e;
+  }
+}
+
+async function chainEpisode(n, label, options) {
+  options = options || {};
+  var ep = epBy(n);
+  if (!ep) { P.eps.push(newEp(n)); save(); ep = epBy(n); }
+
+  if (!has(ep.script)) {
+    stopCheck();
+    setSub(label + " · 1/4 script");
+    await genScript(ep);
+  }
+  ep = epBy(n);
+  if (!ep.plans.length) {
+    stopCheck();
+    setSub(label + " · 2/4 plans");
+    await genPlans(ep);
+  }
+  ep = epBy(n);
+
+  if (options.videos) {
+    var epIdx = P.eps.indexOf(ep);
+    var main = [];
+    ep.plans.forEach(function (p, j) {
+      if (!p.reserve) main.push({ idx: j, n: p.n });
+    });
+
+    for (var k = 0; k < main.length; k++) {
+      stopCheck();
+      ep = epBy(n);
+      var j = main[k].idx;
+      var p = ep.plans[j];
+
+      if (!p.photoUri) {
+        setSub(label + " · photo " + (k + 1) + "/" + main.length);
+        await generatePhoto(epIdx, j);
+        if (k < main.length - 1) await sleep(3400);
+      }
+
+      stopCheck();
+      ep = epBy(n);
+      p = ep.plans[j];
+      if (!p.videoUrl) {
+        setSub(label + " · vidéo " + (k + 1) + "/" + main.length + " (2 min)");
+        await generateVideo(epIdx, j);
+        if (k < main.length - 1) await sleep(90000);
+      }
+    }
+  }
+
+  ep = epBy(n);
+  if (!has(ep.montage)) {
+    stopCheck();
+    setSub(label + " · 4/4 montage");
+    await genMontage(ep);
+  }
+}
+
+async function runChain(job) {
+  R.chain = { sub: "", stop: false };
+  try {
+    await job();
+    toast("Terminé. Tout est prêt.");
+  } catch (e) {
+    if (e && e.code === "cancelled") toast("Arrêté. Ce qui est fini est gardé.");
+  }
+  R.chain = null;
+  R.busy = null;
+  overlay();
+  render();
+}
+
+async function seasonJob() {
+  var todo = todoEps(), k, n;
+  for (k = 0; k < todo.length; k++) {
+    n = todo[k];
+    stopCheck();
+    if (!epBy(n)) { P.eps.push(newEp(n)); save(); }
+    await chainEpisode(n, (P.nb === 1 ? "La vidéo" : "Épisode " + n + "/" + P.nb) + " (" + (k + 1) + "/" + todo.length + ")");
+  }
+}
+
+function genSeason() {
+  if (!todoEps().length) { toast("Tout est déjà préparé."); return; }
+  runChain(seasonJob);
+}
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════════════ */
+var $view = null;
+
+function go(tab) {
+  R.tab = tab;
+  R.view = "list";
+  R.ep = 0;
+  R.arm = "";
+  render();
+  window.scrollTo(0, 0);
+}
+
+function render() {
+  if (!$view) $view = document.getElementById("view");
+  if (!$view) return;
+
+  var wasOpen = !!document.querySelector("#view details.acc[data-keep][open]");
+
+  document.querySelectorAll(".dock button").forEach(function (b) {
+    if (b.getAttribute("data-tab") === R.tab) b.setAttribute("aria-current", "page");
+    else b.removeAttribute("aria-current");
+  });
+
+  var h = "";
+  if (R.tab === "brief") h = renderBrief();
+  else if (R.tab === "studio") h = renderStudio();
+  else if (R.tab === "production") h = renderProduction();
+  else h = renderBrief();
+
+  $view.innerHTML = h;
+  if (wasOpen) {
+    var dk = document.querySelector("#view details.acc[data-keep]");
+    if (dk) dk.open = true;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HELPERS UI
+   ═══════════════════════════════════════════════════════════ */
+function field(path, val, rows, label, hint) {
+  return '<div class="fld"><label class="q" for="b-' + path + '">' + esc(label) +
+    (hint ? '<span class="q-hint">' + esc(hint) + '</span>' : '') + '</label>' +
+    (rows
+      ? '<textarea id="b-' + path + '" data-path="' + path + '" style="min-height:' + (rows * 24 + 30) + 'px">' + esc(val) + '</textarea>'
+      : '<input type="text" id="b-' + path + '" data-path="' + path + '" value="' + esc(val) + '">') +
+    '</div>';
+}
+
+function progressBar(done, total) {
+  var pct = total > 0 ? Math.round(done / total * 100) : 0;
+  return '<div class="progress-line"><i style="width:' + pct + '%"></i></div>';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VUE BRIEF
+   ═══════════════════════════════════════════════════════════ */
+function renderBrief() {
+  var h = '<header class="hero">' +
+    '<span class="kicker">Étape 1 · Brief</span>' +
+    '<h1>Nouvelle histoire</h1>' +
+    '<p class="muted">Donne ton idée. Je génère le casting, les lieux et les scripts.</p>' +
+    '</header>';
+
+  /* Clé Agnes */
+  var key = getAgnesKey();
+  h += '<details class="glass acc" data-keep="1"><summary><div><b>🔑 Clé Agnes</b><br><span>Sert à écrire les scripts et générer les vidéos</span></div><span class="badge' + (key ? " done" : "") + '">' + (key ? "Active" : "Manquante") + '</span></summary><div class="in">' +
+    '<p class="small muted">Sans clé, tu peux quand même écrire les textes toi-même et générer les images.</p>' +
+    '<input type="password" id="agnes-key-input" placeholder="sk-..." value="' + esc(key) + '" autocomplete="off">' +
+    '<button type="button" class="btn big" data-act="agnes-save">Enregistrer la clé</button>' +
+    '<p class="small muted">Clé gratuite sur <a href="https://platform.agnes-ai.com" target="_blank" rel="noopener">platform.agnes-ai.com</a>.</p>' +
+    '</div></details>';
+
+  /* Fournisseur d'images */
+  var currentProvider = P.imageProvider || "pollinations";
+  h += '<details class="glass acc" data-keep="1"><summary><div><b>🎨 Fournisseur d\'images</b><br><span>' +
+    (currentProvider === "pollinations" ? "Pollinations (par défaut)" : currentProvider === "cloudflare" ? "Cloudflare" : "Hugging Face") +
+    '</span></div><span class="badge' + (currentProvider !== "pollinations" ? " done" : "") + '">' +
+    (currentProvider === "pollinations" ? "Sans clé" : "Clés requises") + '</span></summary><div class="in">' +
+    '<p class="small muted">Choisis le service qui générera tes images.</p>' +
+
+    '<div class="provider-grid">' +
+    '<button type="button" class="card-pick" data-act="set-provider" data-v="pollinations" aria-pressed="' + (currentProvider === "pollinations") + '">' +
+    '<span class="pick-icon">🌸</span>' +
+    '<span class="pick-text"><b>Pollinations</b><span>Sans clé. Gratuit. Modèle Flux.</span></span>' +
+    '</button>' +
+
+    '<button type="button" class="card-pick" data-act="set-provider" data-v="cloudflare" aria-pressed="' + (currentProvider === "cloudflare") + '">' +
+    '<span class="pick-icon">☁️</span>' +
+    '<span class="pick-text"><b>Cloudflare Workers AI</b><span>Flux Schnell. 10k neurones/jour gratuits.</span></span>' +
+    '</button>' +
+
+    '<button type="button" class="card-pick" data-act="set-provider" data-v="huggingface" aria-pressed="' + (currentProvider === "huggingface") + '">' +
+    '<span class="pick-icon">🤗</span>' +
+    '<span class="pick-text"><b>Hugging Face</b><span>FLUX.1-schnell. 300 req/h gratuites.</span></span>' +
+    '</button>' +
+    '</div>' +
+
+    (currentProvider === "cloudflare" ?
+      '<div class="provider-keys" id="cf-keys-block">' +
+      '<label>Account ID Cloudflare</label>' +
+      '<input type="text" id="cf-account-input" placeholder="1a2b3c4d..." value="' + esc(getCloudflareAccountId()) + '">' +
+      '<label>Token API Workers AI</label>' +
+      '<input type="password" id="cf-token-input" placeholder="AbC123..." value="' + esc(getCloudflareApiToken()) + '">' +
+      '<button type="button" class="btn big" data-act="cf-save">Enregistrer les clés Cloudflare</button>' +
+      (getCloudflareAccountId() && getCloudflareApiToken() ? '<span class="key-status ok">✓ Configuré</span>' : '<span class="key-status">En attente</span>') +
+      '</div>'
+      : '') +
+
+    (currentProvider === "huggingface" ?
+      '<div class="provider-keys" id="hf-keys-block">' +
+      '<label>Token Hugging Face</label>' +
+      '<input type="password" id="hf-token-input" placeholder="hf_..." value="' + esc(getHuggingFaceToken()) + '">' +
+      '<button type="button" class="btn big" data-act="hf-save">Enregistrer le token</button>' +
+      (getHuggingFaceToken() ? '<span class="key-status ok">✓ Configuré</span>' : '<span class="key-status">En attente</span>') +
+      '</div>'
+      : '') +
+
+    '</div></details>';
+
+  /* Format */
+  h += '<section class="glass card"><h2>Format</h2>' +
+    '<div class="fld"><span class="q">Nombre de vidéos</span><div class="chips">' +
+    NBS.map(function (n) {
+      return '<button type="button" class="chip" data-act="nb" data-v="' + n + '" aria-pressed="' + (P.nb === n) + '">' +
+        (n === 1 ? "1 vidéo" : n + " épisodes") + '</button>';
+    }).join("") + '</div></div>' +
+
+    '<div class="fld"><span class="q">Durée de chaque vidéo</span><div class="chips">' +
+    DUREES_TOTALES.map(function (x) {
+      return '<button type="button" class="chip" data-act="duree" data-v="' + x.v + '" aria-pressed="' + (P.duree === x.v) + '">' + x.t + '</button>';
+    }).join("") + '</div></div>' +
+    '</section>';
+
+  /* Idée */
+  h += '<section class="glass card"><h2>Ton idée</h2>' +
+    field("titre", P.titre, 0, "Titre (facultatif)") +
+    field("idee", P.idee, 5, "Raconte l\'histoire en une phrase", "Ex : une laverie de quartier où chaque machine révèle un secret.") +
+    '<div class="rowbtns">' +
+    '<button type="button" class="btn ghost" data-act="concepts">💡 3 idées au hasard</button>' +
+    '<button type="button" class="btn ghost" data-act="surprise">🎲 Surprends-moi</button>' +
+    '</div>' +
+    '</section>';
+
+  /* Concepts générés */
+  if (P.concepts && P.concepts.length) {
+    h += renderConcepts();
+  }
+
+  /* Ambiance */
+  h += '<section class="glass card"><h2>Ambiance</h2><div class="chips">' +
+    AMBS.map(function (a) {
+      return '<button type="button" class="chip small" data-act="amb" data-v="' + a.id + '" aria-pressed="' + ((P.ambs || []).indexOf(a.id) >= 0) + '">' + esc(a.nom) + '</button>';
+    }).join("") + '</div></section>';
+
+  /* Style visuel */
+  h += '<section class="glass card"><h2>Style visuel</h2>' +
+    '<div class="chips">' +
+    STYLES.map(function (s) {
+      var active = Array.isArray(P.style) && P.style.indexOf(s.id) >= 0;
+      return '<button type="button" class="chip" data-act="style" data-v="' + s.id + '" aria-pressed="' + active + '">' +
+        (s.emoji ? s.emoji + " " : "") + esc(s.nom) + '</button>';
+    }).join("") + '</div>' +
+    (styList().length ? '<p class="small muted">Phrase appliquée : ' + esc(phrase()) + '</p>' : '') +
+    '</section>';
+
+  /* Casting fixe */
+  h += '<section class="glass card"><h2>Casting</h2><div class="opt">' +
+    RECS.map(function (r) {
+      return '<button type="button" class="optb" data-act="rec" data-v="' + r.id + '" aria-pressed="' + (P.rec === r.id) + '">' +
+        '<b>' + esc(r.t) + '</b><span>' + esc(r.d) + '</span></button>';
+    }).join("") + '</div></section>';
+
+  /* Options avancées */
+  h += '<details class="glass acc" data-keep="1"><summary><div><b>⚙️ Options avancées</b><br><span>' +
+    (skinPhrase() || sousList().length > 1 || P.cam || P.effets.length || P.speech !== "A" ? "Personnalisées" : "Par défaut") +
+    '</span></div></summary><div class="in">' +
+
+    '<div class="fld"><span class="q">Teints</span><div class="chips">' +
+    TEINTS.map(function (k) {
+      return '<button type="button" class="chip small" data-act="teint" data-v="' + k.id + '" aria-pressed="' + ((P.teints || []).indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>';
+    }).join("") + '</div></div>' +
+
+    '<div class="fld"><span class="q">Regard</span><div class="chips">' +
+    YEUX.map(function (k) {
+      var arr = Array.isArray(P.yeux) ? P.yeux : [];
+      return '<button type="button" class="chip small" data-act="yeux" data-v="' + k.id + '" aria-pressed="' + (arr.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>';
+    }).join("") + '</div></div>' +
+
+    '<div class="fld"><span class="q">Effets visuels (max 3)</span><div class="chips">' +
+    EFFETS.map(function (k) {
+      return '<button type="button" class="chip small" data-act="effet" data-v="' + k.id + '" aria-pressed="' + ((P.effets || []).indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>';
+    }).join("") + '</div></div>' +
+
+    '<div class="fld"><span class="q">Sous-titres</span><div class="chips">' +
+    SOUS.map(function (k) {
+      return '<button type="button" class="chip small" data-act="sous" data-v="' + k.id + '" aria-pressed="' + (sousList().indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>';
+    }).join("") + '</div></div>' +
+
+    field("custom", P.custom, 2, "Détail de style supplémentaire") +
+
+    '<div class="fld"><span class="q">Mode vocal</span><div class="opt">' +
+    SPEECH.map(function (s) {
+      return '<button type="button" class="optb" data-act="speech" data-v="' + s.id + '" aria-pressed="' + (P.speech === s.id) + '">' +
+        '<b>' + esc(s.t) + '</b><span>' + esc(s.d) + '</span></button>';
+    }).join("") + '</div></div>' +
+
+    field("cible", P.cible, 2, "Public visé") +
+
+    '</div></details>';
+
+  /* Bouton principal */
+  var ready = has(P.idee) && P.style.length > 0;
+  var hasU = P.persos.length > 0 || has(P.concept);
+
+  h += '<section class="glass card">' +
+    '<button type="button" class="btn big" data-act="genuni"' + (ready ? "" : " disabled") + '>' +
+    (hasU ? "🔄 Régénérer le casting et l\'univers" : "✨ Générer mon univers") +
+    '</button>' +
+    (ready ? '' : '<p class="small muted" style="text-align:center;margin-top:8px">Remplis ton idée et choisis un style.</p>') +
+    (hasU ? '<button type="button" class="btn ghost big" data-act="tab" data-v="studio" style="margin-top:8px">Aller au Studio →</button>' : '') +
+    '</section>';
+
+  /* Sauvegarde */
+  h += '<section class="glass card"><h2>Sauvegarde</h2>' +
+    '<div class="rowbtns">' +
+    '<button type="button" class="btn ghost" data-act="bkfile">📥 Exporter</button>' +
+    '<label class="btn ghost" for="bk-file" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center">📤 Importer</label>' +
+    '<input type="file" id="bk-file" accept=".json" style="position:absolute;width:1px;height:1px;opacity:0">' +
+    '<button type="button" class="btn ghost" data-act="reset" style="color:var(--warn)">🗑️ Tout effacer</button>' +
+    '</div></section>';
+
+  return h;
+}
+
+function renderConcepts() {
+  var h = '<section class="stack"><h2 style="font-size:1.1rem">Idées proposées</h2>';
+  P.concepts.forEach(function (c, i) {
+    h += '<section class="glass card"><div class="row" style="justify-content:space-between;gap:8px">' +
+      '<h3 style="min-width:0">' + esc(c.titre || "Idée " + (i + 1)) + '</h3>' +
+      (has(c.ambiance) ? '<span class="badge">' + esc(c.ambiance) + '</span>' : '') +
+      '</div>' +
+      '<p>' + esc(c.idee) + '</p>' +
+      (has(c.hook) ? '<p class="small"><b>Accroche :</b> ' + esc(c.hook) + '</p>' : '') +
+      (has(c.twist) ? '<p class="small"><b>Retournement :</b> ' + esc(c.twist) + '</p>' : '') +
+      (has(c.chute) ? '<p class="small"><b>Fin ép. 1 :</b> ' + esc(c.chute) + '</p>' : '') +
+      '<div class="rowbtns">' +
+      '<button type="button" class="btn big" data-act="pickconcept" data-v="' + i + '">Choisir</button>' +
+      '<button type="button" class="del" data-act="dropconcept" data-v="' + i + '">Écarter</button>' +
+      '</div></section>';
+  });
+  h += '</section>';
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VUE STUDIO
+   ═══════════════════════════════════════════════════════════ */
+function renderStudio() {
+  if (!P.persos.length && !P.lieux.length && !has(P.concept)) {
+    return '<header class="hero">' +
+      '<span class="kicker">Étape 2 · Studio</span>' +
+      '<h1>Studio</h1>' +
+      '<p class="muted">Commence par le Brief pour générer ton univers.</p>' +
+      '</header>' +
+      '<section class="glass empty">' +
+      '<h2>Aucun univers</h2>' +
+      '<p class="muted">Retourne au Brief et génère ton univers.</p>' +
+      '<button type="button" class="btn" data-act="tab" data-v="brief">← Aller au Brief</button>' +
+      '</section>';
+  }
+
+  var h = '<header class="hero">' +
+    '<span class="kicker">Étape 2 · Studio</span>' +
+    '<h1>' + esc(P.titre || "Studio") + '</h1>' +
+    '<p class="muted">Génère les références, les photos de plans, puis les vidéos.</p>' +
+    '</header>';
+
+  /* Stats globales */
+  var totalRefs = P.persos.length + P.lieux.length;
+  var doneRefs = P.persos.filter(function (p) { return p.refUri; }).length +
+                 P.lieux.filter(function (l) { return l.refUri; }).length;
+  var totalPlans = 0, donePlans = 0;
+  P.eps.forEach(function (e) {
+    (e.plans || []).forEach(function (p) {
+      if (!p.reserve) {
+        totalPlans++;
+        if (p.videoUrl) donePlans++;
+      }
+    });
+  });
+
+  h += '<section class="glass card">' +
+    '<div class="row" style="justify-content:space-between">' +
+    '<b>Progression globale</b>' +
+    '<span class="badge">' + (doneRefs + donePlans) + "/" + (totalRefs + totalPlans) + '</span>' +
+    '</div>' +
+    progressBar(doneRefs + donePlans, totalRefs + totalPlans) +
+    '</section>';
+
+  /* Section 1 — Casting */
+  h += '<section class="stack"><div class="row" style="justify-content:space-between;align-items:baseline">' +
+    '<h2>1. Casting et lieux</h2>' +
+    '<span class="badge' + (doneRefs === totalRefs && totalRefs > 0 ? " done" : "") + '">' + doneRefs + "/" + totalRefs + '</span>' +
+    '</div>' +
+
+    '<div class="rowbtns">' +
+    '<button type="button" class="btn" data-act="genall-refs"' + (totalRefs === 0 ? " disabled" : "") + '>🎨 Tout générer</button>' +
+    '</div>' +
+
+    '<div class="grid-cards">' +
+    P.persos.map(function (p, i) { return cardRef("perso", p, i); }).join("") +
+    P.lieux.map(function (l, i) { return cardRef("lieu", l, i); }).join("") +
+    '</div>' +
+    '</section>';
+
+  /* Section 2 — Épisodes */
+  h += '<section class="stack"><div class="row" style="justify-content:space-between;align-items:baseline">' +
+    '<h2>2. Épisodes</h2>' +
+    '<span class="badge">' + donePlans + "/" + totalPlans + ' plans</span>' +
+    '</div>';
+
+  if (!P.eps.length) {
+    h += '<section class="glass empty">' +
+      '<p class="muted">Aucun épisode pour l\'instant.</p>' +
+      '<button type="button" class="btn big" data-act="newep">🎬 Créer le premier épisode</button>' +
+      '</section>';
+  } else {
+    P.eps.forEach(function (e) {
+      h += renderEpisodeCard(e);
+    });
+    if (P.eps.length < P.nb) {
+      h += '<button type="button" class="btn ghost big" data-act="newep">+ Créer épisode ' + (P.eps.length + 1) + '</button>';
+    }
+  }
+  h += '</section>';
+
+  return h;
+}
+
+function cardRef(kind, obj, idx) {
+  var hasUri = !!obj.refUri;
+  var cls = "card-asset";
+  if (obj.refStatus === "busy") cls += " busy";
+  if (obj.refStatus === "err") cls += " err";
+
+  var thumb = hasUri
+    ? '<img class="thumb" src="' + esc(obj.refUri) + '" alt="">'
+    : '<div class="thumb" style="display:grid;place-items:center;font-size:2rem">' +
+      (kind === "lieu" ? "🏠" : "👤") + '</div>';
+
+  var actions = "";
+  if (obj.refStatus === "busy") {
+    actions = '<button type="button" disabled>⏳</button>';
+  } else if (hasUri) {
+    actions =
+      '<button type="button" data-act="ref-regen" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">🔄</button>' +
+      '<button type="button" data-act="ref-upload" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">📥</button>' +
+      '<button type="button" data-act="ref-clear" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">🗑️</button>';
+  } else {
+    actions =
+      '<button type="button" data-act="ref-gen" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">🎨</button>' +
+      '<button type="button" data-act="ref-upload" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">📥</button>';
+  }
+
+  return '<div class="' + cls + '">' + thumb +
+    '<div class="info">' +
+    '<b>' + esc(obj.nom || "Sans nom") + '</b>' +
+    '<span>' + (kind === "lieu" ? "Lieu" : "Personnage") + '</span>' +
+    '</div>' +
+    '<div class="actions">' + actions + '</div>' +
+    '</div>';
+}
+
+function renderEpisodeCard(ep) {
+  var main = ep.plans.filter(function (p) { return !p.reserve; });
+  var done = main.filter(function (p) { return p.videoUrl; }).length;
+  var total = main.length;
+
+  var h = '<details class="glass acc"><summary>' +
+    '<div><b>Épisode ' + ep.n + (ep.titre ? " · " + esc(ep.titre) : "") + '</b><br>' +
+    '<span>' + (has(ep.script) ? "Script OK" : "Script à faire") + ' · ' +
+    (total ? done + "/" + total + " clips" : "plans à créer") + '</span></div>' +
+    '<span class="badge' + (done === total && total > 0 ? " done" : "") + '">' +
+    (done === total && total > 0 ? "Prêt" : (total ? done + "/" + total : "0/0")) +
+    '</span></summary><div class="in">';
+
+  h += '<div class="rowbtns">' +
+    '<button type="button" class="btn big" data-act="genep" data-v="' + ep.n + '">🎬 Générer l\'épisode complet</button>' +
+    '<button type="button" class="btn ghost" data-act="openep" data-v="' + ep.n + '">Détails</button>' +
+    '</div>';
+
+  if (has(ep.resume)) h += '<p class="small muted">' + esc(ep.resume) + '</p>';
+
+  h += '</div></details>';
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VUE PRODUCTION
+   ═══════════════════════════════════════════════════════════ */
+function renderProduction() {
+  var totalClips = 0, doneClips = 0, finalVideos = 0;
+  P.eps.forEach(function (e) {
+    (e.plans || []).forEach(function (p) {
+      if (!p.reserve) {
+        totalClips++;
+        if (p.videoUrl) doneClips++;
+      }
+    });
+    if (e.finalVideoUrl) finalVideos++;
+  });
+
+  var h = '<header class="hero">' +
+    '<span class="kicker">Étape 3 · Production</span>' +
+    '<h1>Assembler et publier</h1>' +
+    '<p class="muted">' + doneClips + " clips prêts sur " + totalClips + "</p>" +
+    '</header>';
+
+  if (!totalClips) {
+    return h + '<section class="glass empty">' +
+      '<h2>Aucun clip</h2>' +
+      '<p class="muted">Génère d\'abord les vidéos dans le Studio.</p>' +
+      '<button type="button" class="btn" data-act="tab" data-v="studio">← Aller au Studio</button>' +
+      '</section>';
+  }
+
+  /* Épisodes avec leurs statuts */
+  P.eps.forEach(function (ep) {
+    var main = ep.plans.filter(function (p) { return !p.reserve; });
+    var done = main.filter(function (p) { return p.videoUrl; }).length;
+
+    h += '<section class="glass card">' +
+      '<div class="row" style="justify-content:space-between">' +
+      '<h2>Épisode ' + ep.n + (ep.titre ? " · " + esc(ep.titre) : "") + '</h2>' +
+      '<span class="badge' + (done === main.length && main.length > 0 ? " done" : "") + '">' + done + "/" + main.length + '</span>' +
+      '</div>' +
+      progressBar(done, main.length);
+
+    if (ep.finalVideoUrl) {
+      h += '<div class="plan-thumb" style="margin-top:12px">' +
+        '<video src="' + esc(ep.finalVideoUrl) + '" controls playsinline></video>' +
+        '<div class="bar">' +
+        '<a class="btn ghost" href="' + esc(ep.finalVideoUrl) + '" download="episode-' + ep.n + '.mp4" target="_blank" rel="noopener">⬇ Télécharger</a>' +
+        '</div></div>';
+    } else {
+      h += '<div class="rowbtns" style="margin-top:12px">' +
+        '<button type="button" class="btn" data-act="assemble" data-v="' + ep.n + '"' + (done >= 2 ? "" : " disabled") + '>🎬 Assembler</button>' +
+        (has(ep.montage) ? '<button type="button" class="btn ghost" data-act="montview" data-v="' + ep.n + '">📄 Voir le plan de montage</button>' : '') +
+        '</div>';
+    }
+    h += '</section>';
+  });
+
+  /* Conseils publication */
+  h += '<section class="glass card"><h2>📱 Publier sur TikTok</h2>' +
+    '<p class="small muted">Une fois la vidéo assemblée, tu peux la télécharger et la publier.</p>' +
+    '<div class="rowbtns">' +
+    '<button type="button" class="btn ghost" data-act="bkfile">📥 Sauvegarde complète</button>' +
+    '<button type="button" class="btn ghost" data-act="reset" style="color:var(--warn)">🗑️ Recommencer</button>' +
+    '</div></section>';
+
+  return h;
+}
+function triggerFileInput(callback, accept) {
+  var input = document.createElement("input");
+  input.type = "file";
+  input.accept = accept || "image/*";
+  input.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+  input.onchange = function () {
+    if (input.files && input.files[0]) callback(input.files[0]);
+    setTimeout(function () { input.remove(); }, 500);
+  };
+  document.body.appendChild(input);
+  input.click();
+}
+/* ═══════════════════════════════════════════════════════════
+   REDÉFINITION STUDIO — Vue épisode détaillée
+   ═══════════════════════════════════════════════════════════ */
+function renderStudio() {
+  if (!P.persos.length && !P.lieux.length && !has(P.concept)) {
+    return '<header class="hero">' +
+      '<span class="kicker">Étape 2 · Studio</span>' +
+      '<h1>Studio</h1>' +
+      '<p class="muted">Commence par le Brief pour générer ton univers.</p>' +
+      '</header>' +
+      '<section class="glass empty">' +
+      '<h2>Aucun univers</h2>' +
+      '<p class="muted">Retourne au Brief et génère ton univers.</p>' +
+      '<button type="button" class="btn" data-act="tab" data-v="brief">← Aller au Brief</button>' +
+      '</section>';
+  }
+
+  /* Si on a un épisode ouvert */
+  if (R.ep && epBy(R.ep)) {
+    return renderEpisodeDetail(epBy(R.ep));
+  }
+
+  var h = '<header class="hero">' +
+    '<span class="kicker">Étape 2 · Studio</span>' +
+    '<h1>' + esc(P.titre || "Studio") + '</h1>' +
+    '<p class="muted">Génère les références, les photos de plans, puis les vidéos.</p>' +
+    '</header>';
+
+  /* Stats globales */
+  var totalRefs = P.persos.length + P.lieux.length;
+  var doneRefs = P.persos.filter(function (p) { return p.refUri; }).length +
+                 P.lieux.filter(function (l) { return l.refUri; }).length;
+  var totalPlans = 0, donePlans = 0;
+  P.eps.forEach(function (e) {
+    (e.plans || []).forEach(function (p) {
+      if (!p.reserve) {
+        totalPlans++;
+        if (p.videoUrl) donePlans++;
+      }
+    });
+  });
+
+  h += '<section class="glass card">' +
+    '<div class="row" style="justify-content:space-between">' +
+    '<b>Progression globale</b>' +
+    '<span class="badge">' + (doneRefs + donePlans) + "/" + (totalRefs + totalPlans) + '</span>' +
+    '</div>' +
+    progressBar(doneRefs + donePlans, totalRefs + totalPlans) +
+    '</section>';
+
+  /* Section 1 — Casting */
+  h += '<section class="stack"><div class="row" style="justify-content:space-between;align-items:baseline">' +
+    '<h2>1. Casting et lieux</h2>' +
+    '<span class="badge' + (doneRefs === totalRefs && totalRefs > 0 ? " done" : "") + '">' + doneRefs + "/" + totalRefs + '</span>' +
+    '</div>' +
+
+    '<div class="rowbtns">' +
+    '<button type="button" class="btn" data-act="genall-refs"' + (totalRefs === 0 ? " disabled" : "") + '>🎨 Tout générer</button>' +
+    '</div>' +
+
+    '<div class="grid-cards">' +
+    P.persos.map(function (p) { return cardRef("perso", p); }).join("") +
+    P.lieux.map(function (l) { return cardRef("lieu", l); }).join("") +
+    '</div>' +
+    '</section>';
+
+  /* Section 2 — Épisodes */
+  h += '<section class="stack"><div class="row" style="justify-content:space-between;align-items:baseline">' +
+    '<h2>2. Épisodes</h2>' +
+    '<span class="badge">' + donePlans + "/" + totalPlans + ' plans</span>' +
+    '</div>';
+
+  if (!P.eps.length) {
+    h += '<section class="glass empty">' +
+      '<p class="muted">Aucun épisode pour l\'instant.</p>' +
+      '<button type="button" class="btn big" data-act="newep">🎬 Créer le premier épisode</button>' +
+      '</section>';
+  } else {
+    P.eps.forEach(function (e) {
+      h += renderEpisodeCard(e);
+    });
+    if (P.eps.length < P.nb) {
+      h += '<button type="button" class="btn ghost big" data-act="newep">+ Créer épisode ' + (P.eps.length + 1) + '</button>';
+    }
+  }
+  h += '</section>';
+
+  return h;
+}
+
+function renderEpisodeCard(ep) {
+  var main = ep.plans.filter(function (p) { return !p.reserve; });
+  var done = main.filter(function (p) { return p.videoUrl; }).length;
+  var total = main.length;
+  var photos = main.filter(function (p) { return p.photoUri; }).length;
+
+  var h = '<section class="glass card">' +
+    '<div class="row" style="justify-content:space-between;align-items:baseline">' +
+    '<h3>Épisode ' + ep.n + (ep.titre ? " · " + esc(ep.titre) : "") + '</h3>' +
+    '<span class="badge' + (done === total && total > 0 ? " done" : "") + '">' +
+    (done === total && total > 0 ? "✓ Prêt" : (total ? done + "/" + total : "0/0")) +
+    '</span></div>' +
+    progressBar(done, total || 1) +
+    '<div class="row" style="gap:12px;margin-top:8px">' +
+    '<span class="small muted">📝 ' + (has(ep.script) ? "Script OK" : "Script à faire") + '</span>' +
+    '<span class="small muted">📷 ' + photos + " photo" + (photos > 1 ? "s" : "") + '</span>' +
+    '<span class="small muted">🎬 ' + done + " clip" + (done > 1 ? "s" : "") + '</span>' +
+    '</div>' +
+    '<div class="rowbtns" style="margin-top:12px">' +
+    '<button type="button" class="btn" data-act="openep" data-v="' + ep.n + '">📂 Ouvrir</button>' +
+    (has(ep.script) && ep.plans.length ? '<button type="button" class="btn ghost" data-act="genep" data-v="' + ep.n + '">🎬 Tout générer</button>' : '') +
+    '</div>' +
+    '</section>';
+  return h;
+}
+
+function renderEpisodeDetail(ep) {
+  var i = P.eps.indexOf(ep);
+  var main = ep.plans.filter(function (p) { return !p.reserve; });
+  var done = main.filter(function (p) { return p.videoUrl; }).length;
+
+  var h = '<button type="button" class="back" data-act="closeep">← Retour au Studio</button>' +
+    '<header class="hero">' +
+    '<span class="kicker">Épisode ' + ep.n + '</span>' +
+    '<h1>' + esc(ep.titre || ("Épisode " + ep.n)) + '</h1>' +
+    '<p class="muted">' + done + " clips prêts sur " + main.length + '</p>' +
+    '</header>';
+
+  /* Actions globales */
+  h += '<section class="glass card"><div class="rowbtns">' +
+    (has(ep.script) ? '' : '<button type="button" class="btn big" data-act="genscript" data-v="' + ep.n + '">📝 Écrire le script</button>') +
+    (has(ep.script) && !ep.plans.length ? '<button type="button" class="btn big" data-act="genplans" data-v="' + ep.n + '">🎞️ Découper en plans</button>' : '') +
+    (ep.plans.length ? '<button type="button" class="btn" data-act="genphotos" data-v="' + ep.n + '">🎨 Toutes les photos</button>' : '') +
+    (ep.plans.length ? '<button type="button" class="btn ghost" data-act="genep" data-v="' + ep.n + '">🎬 Tout générer</button>' : '') +
+    '</div>';
+
+  /* Script aperçu */
+  if (has(ep.script)) {
+    h += '<details class="acc"><summary><div><b>📝 Script</b><br><span>' + ep.script.split("\n").length + ' lignes</span></div></summary><div class="in">' +
+      '<pre class="fin" style="max-height:400px;overflow:auto">' + esc(ep.script) + '</pre>' +
+      (has(ep.resume) ? '<p class="small"><b>Résumé :</b> ' + esc(ep.resume) + '</p>' : '') +
+      '</div></details>';
+  }
+  h += '</section>';
+
+  /* Grille des plans */
+  if (ep.plans.length) {
+    h += '<section class="stack"><h2>' + ep.plans.length + ' plans</h2>' +
+      '<div class="grid-cards">' +
+      ep.plans.map(function (p, j) { return cardPlan(i, j, p); }).join("") +
+      '</div></section>';
+  }
+
+  return h;
+}
+
+function cardPlan(epIdx, planIdx, p) {
+  var cls = "card-asset";
+  if (p.videoStatus === "busy" || p.photoStatus === "busy") cls += " busy";
+  if (p.videoStatus === "err" || p.photoStatus === "err") cls += " err";
+
+  var thumb = "";
+  if (p.videoUrl) {
+    thumb = '<video class="thumb" src="' + esc(p.videoUrl) + '" muted playsinline preload="metadata"></video>';
+  } else if (p.photoUri) {
+    thumb = '<img class="thumb" src="' + esc(p.photoUri) + '" alt="">';
+  } else {
+    thumb = '<div class="thumb" style="display:grid;place-items:center;font-size:1.6rem">' + (p.reserve ? "🔒" : "🎬") + '</div>';
+  }
+
+  var badge = p.reserve ? "Réserve" :
+    (p.videoUrl ? "✓ Clip" : (p.photoUri ? "Photo" : "À faire"));
+
+  var actions = "";
+  if (p.reserve) {
+    actions = '<button type="button" disabled>Réserve</button>';
+  } else if (p.videoStatus === "busy") {
+    actions = '<button type="button" disabled>⏳ Vidéo…</button>';
+  } else if (p.photoStatus === "busy") {
+    actions = '<button type="button" disabled>⏳ Photo…</button>';
+  } else if (p.videoUrl) {
+    actions =
+      '<button type="button" data-act="plan-video-regen" data-i="' + epIdx + '" data-j="' + planIdx + '">🔄</button>' +
+      '<a href="' + esc(p.videoUrl) + '" download="plan-' + p.n + '.mp4" target="_blank" rel="noopener">⬇</a>';
+  } else if (p.photoUri) {
+    actions =
+      '<button type="button" data-act="plan-video" data-i="' + epIdx + '" data-j="' + planIdx + '">🎬</button>' +
+      '<button type="button" data-act="plan-photo-regen" data-i="' + epIdx + '" data-j="' + planIdx + '">🔄</button>';
+  } else {
+    actions =
+      '<button type="button" data-act="plan-photo" data-i="' + epIdx + '" data-j="' + planIdx + '">🎨</button>' +
+      '<button type="button" data-act="plan-photo-upload" data-i="' + epIdx + '" data-j="' + planIdx + '">📥</button>';
+  }
+
+  return '<div class="' + cls + '">' + thumb +
+    '<div class="info">' +
+    '<b>Plan ' + p.n + ' · ' + (p.duree || 6) + 's</b>' +
+    '<span>' + esc(badge) + (p.lieu ? " · " + esc(p.lieu) : "") + '</span>' +
+    '</div>' +
+    '<div class="actions">' + actions + '</div>' +
+    '</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HELPER — Input de fichier dynamique
+   ═══════════════════════════════════════════════════════════ */
+function triggerFileInput(callback) {
+  var input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0";
+  input.onchange = function () {
+    if (input.files && input.files[0]) callback(input.files[0]);
+    setTimeout(function () {
+      if (input.parentNode) input.parentNode.removeChild(input);
+    }, 500);
+  };
+  document.body.appendChild(input);
+  input.click();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ÉVÉNEMENTS — CLIC
+   ═══════════════════════════════════════════════════════════ */
+function arm(key, msg) {
+  if (R.arm === key) { R.arm = ""; return true; }
+  R.arm = key;
+  toast(msg || "Touche encore pour confirmer.");
+  setTimeout(function () { if (R.arm === key) R.arm = ""; }, 4000);
+  return false;
+}
+
+document.addEventListener("click", function (e) {
+  var b = e.target.closest("[data-act]");
+  if (!b) return;
+  var a = b.getAttribute("data-act");
+  var v = b.getAttribute("data-v");
+  if (!a) return;
+
+  /* Stop pipeline */
+  if (a === "stop") {
+    if (R.chain) R.chain.stop = true;
+    R.busy = null;
+    overlay();
+    return;
+  }
+
+  /* Navigation */
+  if (a === "tab") { go(v); return; }
+  if (a === "set-provider") {
+    P.imageProvider = v;
+    save();
+    render();
+    return;
+  }
+  if (a === "cf-save") { saveCloudflareKeys(); render(); return; }
+  if (a === "hf-save") { saveHuggingFaceKeys(); render(); return; }
+
+  /* Clé Agnes */
+  if (a === "agnes-save") { saveAgnesKey(); render(); return; }
+
+  /* Brief */
+  if (a === "nb") { P.nb = +v; save(); render(); return; }
+  if (a === "duree") { P.duree = +v; save(); render(); return; }
+  if (a === "rec") { P.rec = v; save(); render(); return; }
+  if (a === "speech") { P.speech = v; save(); render(); return; }
+  if (a === "amb") {
+    if (!P.ambs) P.ambs = [];
+    var ai = P.ambs.indexOf(v);
+    if (ai >= 0) P.ambs.splice(ai, 1);
+    else P.ambs.push(v);
+    save(); render(); return;
+  }
+  if (a === "style") {
+    if (!Array.isArray(P.style)) P.style = [];
+    var si = P.style.indexOf(v);
+    if (si >= 0) P.style.splice(si, 1);
+    else if (P.style.length >= MAX_STYLES) { toast("Max " + MAX_STYLES + " styles."); return; }
+    else P.style.push(v);
+    save(); render(); return;
+  }
+  if (a === "teint") {
+    if (!P.teints) P.teints = [];
+    var ti = P.teints.indexOf(v);
+    if (ti >= 0) P.teints.splice(ti, 1);
+    else P.teints.push(v);
+    save(); render(); return;
+  }
+  if (a === "yeux") {
+    if (!Array.isArray(P.yeux)) P.yeux = [];
+    var yi = P.yeux.indexOf(v);
+    if (yi >= 0) P.yeux.splice(yi, 1);
+    else P.yeux.push(v);
+    save(); render(); return;
+  }
+  if (a === "effet") {
+    if (!P.effets) P.effets = [];
+    var ei = P.effets.indexOf(v);
+    if (ei >= 0) P.effets.splice(ei, 1);
+    else if (P.effets.length >= 3) { toast("Max 3 effets."); return; }
+    else P.effets.push(v);
+    save(); render(); return;
+  }
+  if (a === "sous") {
+    var sl = sousList();
+    var ssi = sl.indexOf(v);
+    if (ssi >= 0) sl.splice(ssi, 1);
+    else sl.push(v);
+    P.sous = sl.length ? sl : ["U1"];
+    save(); render(); return;
+  }
+
+  /* Concepts */
+  if (a === "concepts") { genConcepts(); return; }
+  if (a === "surprise") { genConcepts({ surprise: true }); return; }
+  if (a === "moreconcepts") { genConcepts({ more: true }); return; }
+  if (a === "dropconcept") { P.concepts.splice(+v, 1); save(); render(); return; }
+  if (a === "pickconcept") {
+    var cc = P.concepts[+v];
+    if (cc) {
+      P.idee = cc.idee +
+        (has(cc.hook) ? "\nAccroche : " + cc.hook : "") +
+        (has(cc.twist) ? "\nRetournement : " + cc.twist : "") +
+        (has(cc.chute) ? "\nFin ép. 1 : " + cc.chute : "");
+      if (has(cc.titre)) P.titre = cc.titre;
+      save();
+      toast("Idée choisie. Choisis un style puis génère l'univers.");
+      render();
+    }
+    return;
+  }
+
+  /* Générer univers */
+  if (a === "genuni") {
+    if (P.persos.length && !arm("uni", "Touche encore : tout sera remplacé.")) return;
+    genUnivers();
+    return;
+  }
+
+  /* Références */
+  if (a === "genall-refs") { generateAllRefs(); return; }
+  if (a === "ref-gen" || a === "ref-regen") {
+    var kind = b.getAttribute("data-kind");
+    var rid = b.getAttribute("data-id");
+    if (kind && rid) generateRef(kind, rid);
+    return;
+  }
+  if (a === "ref-upload") {
+    var kindU = b.getAttribute("data-kind");
+    var ridU = b.getAttribute("data-id");
+    if (kindU && ridU) {
+      triggerFileInput(function (file) { uploadRef(kindU, ridU, file); });
+    }
+    return;
+  }
+  if (a === "ref-clear") {
+    var kindC = b.getAttribute("data-kind");
+    var ridC = b.getAttribute("data-id");
+    if (kindC && ridC) clearRef(kindC, ridC);
+    return;
+  }
+
+  /* Épisodes */
+  if (a === "newep") {
+    var n = P.eps.length + 1;
+    P.eps.push(newEp(n));
+    save();
+    R.ep = n;
+    render();
+    return;
+  }
+  if (a === "openep") {
+    R.ep = +v;
+    render();
+    window.scrollTo(0, 0);
+    return;
+  }
+  if (a === "closeep") {
+    R.ep = 0;
+    render();
+    window.scrollTo(0, 0);
+    return;
+  }
+  if (a === "genscript") {
+    var epS = epBy(+v);
+    if (epS) genScript(epS);
+    return;
+  }
+  if (a === "genplans") {
+    var epP = epBy(+v);
+    if (epP) genPlans(epP);
+    return;
+  }
+  if (a === "genphotos") {
+    var epPh = epBy(+v);
+    if (epPh) generateAllPhotos(epPh.n);
+    return;
+  }
+  if (a === "genep") {
+    var epG = epBy(+v);
+    if (!epG) return;
+    if (!confirm("Générer l'épisode complet ?\n\nScript → plans → photos → vidéos → montage.\nCela peut prendre 20 à 40 minutes.")) return;
+    runChain(function () {
+      return chainEpisode(epG.n, "Épisode " + epG.n, { videos: true });
+    });
+    return;
+  }
+
+  /* Plans */
+  if (a === "plan-photo") { generatePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); return; }
+  if (a === "plan-photo-regen") { generatePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); return; }
+  if (a === "plan-photo-upload") {
+    var pi = +b.getAttribute("data-i");
+    var pj = +b.getAttribute("data-j");
+    triggerFileInput(function (file) { uploadPhoto(pi, pj, file); });
+    return;
+  }
+  if (a === "plan-video" || a === "plan-video-regen") {
+    generateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j"));
+    return;
+  }
+
+  /* Production */
+  if (a === "assemble") {
+    var epA = epBy(+v);
+    if (!epA) return;
+    epA.finalVideoStatus = "busy";
+    epA.finalVideoError = "Préparation…";
+    save(); render();
+    (async function () {
+      try {
+        var url = await ffmpegConcatenate(epA, function (msg) {
+          epA.finalVideoError = msg;
+          save();
+        });
+        epA.finalVideoUrl = url;
+        epA.finalVideoStatus = "done";
+        epA.finalVideoError = "";
+        save(); render();
+        toast("Vidéo assemblée.");
+      } catch (err) {
+        epA.finalVideoStatus = "err";
+        epA.finalVideoError = (err.message || "").slice(0, 120);
+        save(); render();
+        toast("Échec : " + epA.finalVideoError);
+      }
+    })();
+    return;
+  }
+  if (a === "montview") {
+    var epM = epBy(+v);
+    if (epM && has(epM.montage)) {
+      alert(epM.montage);
+    }
+    return;
+  }
+
+  /* Sauvegarde */
+  if (a === "bkfile") {
+    var data = JSON.stringify(P, null, 1);
+    var blob = new Blob([data], { type: "application/json" });
+    var a2 = document.createElement("a");
+    a2.href = URL.createObjectURL(blob);
+    a2.download = "fabrique-sauvegarde.json";
+    document.body.appendChild(a2);
+    a2.click();
+    document.body.removeChild(a2);
+    toast("Sauvegarde téléchargée.");
+    return;
+  }
+  if (a === "reset") {
+    if (arm("reset", "Touche encore : TOUT sera effacé.")) {
+      (async function () {
+        try {
+          if (typeof idbKeyval !== "undefined") {
+            var keys = await idbKeyval.keys();
+            for (var i = 0; i < keys.length; i++) {
+              var k = String(keys[i]);
+              if (k.indexOf("plan-photo-") === 0 || k.indexOf("ref-") === 0) {
+                await idbKeyval.del(k);
+              }
+            }
+          }
+        } catch (e) {}
+        P = fresh();
+        save();
+        R.ep = 0;
+        go("brief");
+        toast("Tout est effacé.");
+      })();
+    }
+    return;
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   ÉVÉNEMENTS — SAISIE
+   ═══════════════════════════════════════════════════════════ */
+document.addEventListener("input", function (e) {
+  var el = e.target;
+  if (el.hasAttribute && el.hasAttribute("data-path")) {
+    setPath(P, el.getAttribute("data-path"), el.value);
+    save();
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   ÉVÉNEMENTS — CHANGEMENT (fichiers)
+   ═══════════════════════════════════════════════════════════ */
+document.addEventListener("change", function (e) {
+  var t = e.target;
+  if (t.id === "bk-file") {
+    var f = t.files && t.files[0];
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function (ev) {
+      try {
+        var d = JSON.parse(ev.target.result);
+        var f2 = fresh();
+        P = f2;
+        for (var k in f2) P[k] = d[k] !== undefined ? d[k] : f2[k];
+        fixState();
+        save();
+        R.ep = 0;
+        render();
+        toast("Sauvegarde ouverte.");
+      } catch (err) { toast("Fichier invalide."); }
+    };
+    rd.readAsText(f);
+    t.value = "";
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════
+   DOCK
+   ═══════════════════════════════════════════════════════════ */
+document.querySelectorAll(".dock button").forEach(function (b) {
+  b.addEventListener("click", function () {
+    go(b.getAttribute("data-tab"));
+  });
+});
+
+/* ============================================================
+   INITIALISATION
+   ============================================================ */
+load();
+$view = document.getElementById("view");
+render();
+setTimeout(planPhotosRestore, 800);
+setTimeout(refsRestoreAll, 900);
