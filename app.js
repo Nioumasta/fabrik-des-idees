@@ -1033,7 +1033,7 @@ function genCast() {
     "Existing places: " + (P.lieux.map(function (l) { return l.nom; }).join(", ") || "none") + "\n" +
     (st ? "Visual style: " + st.nom + ". Style phrase: " + ph + "\n" : "") +
     (sk ? "Skin/eyes rendering: " + sk + "\n" : "") +
-    "\nCreate the fixed cast: all already-named characters, plus the missing ones, 6 maximum. "Each visual field IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with '3D rendered character with', then list ONLY literal visual features. FORBIDDEN: brand names, style references, metaphors. Write ONLY what a camera would see." + JSONNOTE +
+    "\nCreate the fixed cast: all already-named characters, plus the missing ones, 6 maximum. Each visual field IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with '3D rendered character with', then list ONLY literal visual features. FORBIDDEN: brand names, style references, metaphors. Write ONLY what a camera would see." + JSONNOTE +
     '\nFormat: {"personnages":[{"nom":"in French","role":"in French","caractere":"3 mots","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}]}';
   return ask("le casting", prompt, function (d2) {
     if (!d2 || !d2.personnages || !d2.personnages.length) throw new Error("vide");
