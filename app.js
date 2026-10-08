@@ -28,12 +28,7 @@ if (typeof STYLES_LIBRARY !== "undefined" && STYLES_LIBRARY) {
   console.warn("styles.js non chargé.");
 }
 
-var SKINS = [
-  { id:"F1", nom:"Tête-fruit cartoon", d:"Tête = fruit entier, visage cartoon dessus.", p:"3D cartoon Pixar-style character where the HEAD is literally the entire fruit with the fruit's exact silhouette, cute expressive human-like face drawn ON the front of the fruit, tiny cartoon body with short arms and legs, wearing trendy streetwear, glossy realistic fruit skin with natural colors, warm cinematic lighting, 85mm lens, clean pastel background" },
-  { id:"F2", nom:"Fruit en pied streetwear", d:"Corps entier = fruit, petit streetwear.", p:"3D cartoon Pixar-style character where the entire BODY is the fruit with exact silhouette, cute expressive human-like face on the front, small cartoon arms and legs with tiny sneakers, wearing trendy modern streetwear, glossy realistic fruit skin with seeds/fuzz, warm cinematic lighting, 50mm lens, urban background" },
-  { id:"G1", nom:"Poupée glam portrait", d:"Visage ultra-détaillé, coiffure tendance.", p:"high-end stylized 3D render of a glamorous fashion doll in the style of Rainbow High and Bratz collector dolls, ultra-detailed face with oversized almond eyes and long lashes, glossy vinyl lips, flawless smooth vinyl doll skin with soft subsurface scattering, high-poly hair in a trendy style, luxury three-point studio lighting, 85mm portrait lens, Octane render" },
-  { id:"G2", nom:"Poupée glam corps entier", d:"Tenue haute couture, pose élégante.", p:"high-end stylized 3D render of a glamorous fashion doll, full-body elegant pose, ultra-detailed face, glossy vinyl doll skin, high-poly glossy hair styled modern, high-end fashion outfit with matching accessories, luxury interior or urban sunset, cinematic three-point lighting, 85mm lens, Octane render" }
-];
+var SKINS = [];
 
 var TEINTS = [
   { id:"T1", nom:"Très clair", p:"very fair skin with a pink undertone" },
@@ -294,9 +289,8 @@ function phrase() {
   }).join(", ");
 }
 function skinPhrase() {
-  var k = byId(SKINS, P.skin), a = [];
-  if (k) a.push(k.p);
-  P.teints.forEach(function (id) { var x = byId(TEINTS, id); if (x) a.push(x.p); });
+  var a = [];
+  P.teints.forEach(...function (id) { var x = byId(TEINTS, id); if (x) a.push(x.p); });
   var yeux = Array.isArray(P.yeux) ? P.yeux : (P.yeux ? [P.yeux] : []);
   yeux.forEach(function (id) { var y = byId(YEUX, id); if (y) a.push(y.p); });
   return a.join(", ");
@@ -800,10 +794,10 @@ function imagePrompt(pl) {
     if (l && has(l.visuel)) parts.push("Place: " + sentence(l.visuel));
   }
 
-  /* Renforcement anthropomorphe (F1, F2) */
- var fruitStyle = Array.isArray(P.style) && (P.style.indexOf("F1") >= 0 || P.style.indexOf("F2") >= 0);
-if (fruitStyle) {
-    parts.push("⚠️ STRICT SHAPE RULE: The character's HEAD (or ENTIRE BODY if F2) MUST keep the fruit silhouette exactly. This is NOT a human with colored skin — the fruit shape must be instantly recognizable. No human head. No realistic human anatomy. Only the face features are cartoon-human-like, everything else is the fruit.");
+    /* Renforcement anthropomorphe (F1, F2) */
+  var fruitStyle = Array.isArray(P.style) && (P.style.indexOf("F1") >= 0 || P.style.indexOf("F2") >= 0);
+  if (fruitStyle) {
+    parts.push("⚠️ STRICT SHAPE RULE: The character's HEAD (or ENTIRE BODY if F2) MUST keep the fruit silhouette exactly. This is NOT a human with colored skin — the fruit shape must be instantly recognizable. No human head. No realistic human anatomy. Only the face features are cartoon-human-like, everything else is the fruit. The fruit shape is the ENTIRE head, not a helmet or costume. No human skull underneath.");
   }
 
   parts.push("No logo, no brand, no text. Hands relaxed with five fingers. Vertical 9:16.");
@@ -992,7 +986,7 @@ var JSONNOTE = "\n\nAnswer ONLY with a valid JSON object, no text before or afte
 
 /* ---- GEN UNIVERS ---- */
 function genUnivers() {
-  var st = sty(), ph = phrase(), sk = skinPhrase();
+  var st = sty(), ph = phrase();
   var fmt = P.nb === 1 ? "A single video of " + P.duree + " seconds." : P.nb + " videos of " + P.duree + " seconds each.";
   var persoRule = P.rec === "oui" ? "Create the season's cast: 4 to 6 characters maximum. " : "Characters change between videos: characters = empty list. ";
     var coherenceRule = "CULTURAL COHERENCE: if a character has dark skin, their hairstyle MUST match (braids, afro, cornrows, gradient, wig with edges). NEVER blonde hair on dark skin unless explicitly stated. NEVER straight European hair on deep brown skin. Be specific: 'box braids with gold cuffs', 'natural 4C afro', 'long sleek cornrows', etc.\n";
@@ -1003,7 +997,7 @@ function genUnivers() {
     (has(P.genre) ? "Genre: " + P.genre + ".\n" : "") +
     (has(P.cible) ? "Audience: " + P.cible + ".\n" : "") +
       "Visual style: " + (st ? st.nom + ". Style phrase: " + ph : "not specified") + "\n" + coherenceRule +
-    (sk ? "Skin/eyes rendering: " + sk + "\n" : "") + "\n" + persoRule +
+    "\n" + persoRule +
     "No brand, no logo, no real person. No violence, no suggestive scene. Do not mock any body, religion, or origin. " +
     "Each visual description field must be IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with '3D rendered character with', then list ONLY literal visual features: body shape, exact colors using descriptive words, skin/fruit/leather texture, eye shape and color, hair style and color, outfit fabrics and colors, one signature accessory. FORBIDDEN: brand names (Bratz, Barbie, Rainbow High, Disney), style references (K-pop, Y2K, cybergoth), metaphors (mango-skin, doll-like), emotions, story elements. Write ONLY what a camera would see. " +
     "Places: visual description IN ENGLISH with no character, describe the physical decor only (2 to 4 places). " +
@@ -1648,7 +1642,6 @@ function universHtml() {
       : '<p class="small muted">Aucun style — les prompts seront génériques.</p>') +
     '</div></div>' +
     '<details class="glass acc" data-keep="1"><summary><div><b>Affiner : peau, teint, regard, sous-titres</b><br><span>' + (P.skin || P.teints.length || P.yeux.length || sousList().length > 1 ? "Réglages choisis" : "Facultatif") + '</span></div></summary><div class="in">' +
-    '<div class="fld"><span class="q">Rendu de peau</span><div class="chips">' + SKINS.map(function (k) { return '<button type="button" class="chip small" data-act="skin" data-v="' + k.id + '" aria-pressed="' + (P.skin === k.id) + '" title="' + esc(k.d) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
     '<div class="fld"><span class="q">Teints</span><div class="chips">' + TEINTS.map(function (k) { return '<button type="button" class="chip small" data-act="teint" data-v="' + k.id + '" aria-pressed="' + (P.teints.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
     '<div class="fld"><span class="q">Regard (plusieurs possibles)</span><div class="chips">' + YEUX.map(function (k) { var arr = Array.isArray(P.yeux) ? P.yeux : []; return '<button type="button" class="chip small" data-act="yeux" data-v="' + k.id + '" aria-pressed="' + (arr.indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
     '<div class="fld"><span class="q">Sous-titres</span><div class="chips">' + SOUS.map(function (k) { return '<button type="button" class="chip small" data-act="sous" data-v="' + k.id + '" aria-pressed="' + (sousList().indexOf(k.id) >= 0) + '">' + esc(k.nom) + '</button>'; }).join("") + '</div></div>' +
@@ -1976,7 +1969,6 @@ document.addEventListener("click", function (e) {
   else if (a === "nb") { P.nb = +v; save(); render(); }
   else if (a === "duree") { P.duree = +v; save(); render(); }
   else if (a === "rec") { P.rec = v; save(); render(); }
-  else if (a === "skin") { P.skin = P.skin === v ? "" : v; save(); render(); }
   else if (a === "yeux") {
     var y = Array.isArray(P.yeux) ? P.yeux : (P.yeux ? [P.yeux] : []);
     var yi = y.indexOf(v);
