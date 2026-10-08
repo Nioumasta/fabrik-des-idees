@@ -1228,21 +1228,21 @@ function genConcepts(o) {
       rnd(RND.objet) + " ; un retournement du type : " + rnd(RND.twist) + ".\n";
   }
   var vus = (P.vus || []).slice(-30);
-  var prompt = "You are a screenwriter for short vertical series (TikTok, Shorts, Reels). " +
-    "OUTPUT IN FRENCH for user-facing content, all instructions here are for you in English.\n" +
-    (P.genre ? "Genre: " + P.genre + ".\n" : "") +
-    (P.cible ? "Audience: " + P.cible + ".\n" : "") +
-    (amb.length ? "Mood required: " + amb.join(" | ") + ".\n" : "Mood: free, vary it.\n") + seeds +
-    "Format: " + (P.nb === 1 ? "one video" : P.nb + " episodes") + " of " + P.duree + " seconds each." +
-    (sty() ? " Visual style: " + sty().nom + ".\n" : "\n") +
-    (has(P.idee) && !o.surprise ? "Starting hint from user: " + P.idee.trim() + "\n" : "") +
-    (vus.length ? "Ideas already suggested (do NOT repeat, not even a variant): " + vus.join(" ; ") + "\n" : "") +
-    "\nPropose " + n + " DIFFERENT ideas. Each must have: a clear main goal, a concrete obstacle, " +
-    "a secret that changes everything, a twist nobody sees coming. Avoid: amnesia, evil twin, " +
-    "'it was a dream', hidden inheritance.\n" +
-    "For each: short catchy title (in French), mood, the idea in 3 sentences (in French), " +
-    "the 3-second hook (in French), the twist (in French), the end of episode 1 (in French), " +
-    "why it could work (in French), main risk (in French).\n" +
+    var prompt = "You are a TikTok viral short-video writer. Output in FRENCH. Your job: create stories that make people STOP scrolling in the first 2 seconds.\n" +
+    "AUDIENCE: 13-30 year old TikTok users. They have 2-second attention spans. They want EMOTION, DRAMA, SHOCK, TABOO, REVENGE.\n" +
+    (P.cible ? "Target audience: " + P.cible + "\n" : "") +
+    (amb.length ? "Mood: " + amb.join(" | ") + "\n" : "") + seeds +
+    "\nWHAT WORKS ON TIKTOK (RULES):\n" +
+    "1. TITLE = 3-6 words, like a punch. Examples: 'Mon mari m'a menti', 'Ma mère est ma sœur', 'Je suis enceinte de lui', 'Elle a tué sa rivale', 'J'ai vendu mon bébé'.\n" +
+    "2. STORY = ONE big dramatic reveal in 60-90 seconds. NOT a slow literary development.\n" +
+    "3. FORBIDDEN TONES: introspective, melancholic, poetic, philosophical, nostalgic, quiet life in a tea salon.\n" +
+    "4. FORBIDDEN STORIES: 'une personne timide découvre sa vraie famille', 'un secret de famille doux révélé calmement'.\n" +
+    "5. REQUIRED: betrayal, revenge, forbidden love, hidden pregnancy, stolen money, swapped babies, fake death, exposed lies, catastrophic revenge, seduction, jealousy, blood rivalry.\n" +
+    "6. HOOK (3 sec): a sentence that shocks. Examples: 'Je viens de tuer mon mari.', 'Elle m'a pris mon bébé.', 'J'ai couché avec le mari de ma sœur.', 'Papa, tu es vivant ?'.\n" +
+    "7. TWIST: nobody should see it coming. Betrayal from the person we trusted. Dead person who is alive. Fake identity. Reversal of power.\n" +
+    "8. END OF EP 1: an unbearable cliffhanger that makes the viewer comment 'la suite !!!'.\n" +
+    "9. If the characters are fruits or food (anthropomorphic), the drama stays HUMAN (betrayal, sex, family, money) — the fruit is just the visual.\n\n" +
+    "For each idea give: short punchy title (FR), mood, the story in 3 sentences (FR), the shocking 3-sec hook (FR), the twist (FR), the cliffhanger (FR), why it can go viral (FR), the main risk (FR).\n" +
     "No brand, no real person, no resemblance to known series." + JSONNOTE +
     '\nFormat: {"concepts":[{"titre":"in French","ambiance":"in French","idee":"in French","hook":"in French","twist":"in French","chute":"in French","pourquoi":"in French","risque":"in French"}]}';
   return ask(o.more ? "trois idées de plus" : "trois idées d'histoires", prompt, function (r) {
