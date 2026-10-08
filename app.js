@@ -998,7 +998,7 @@ function genUnivers() {
       "Visual style: " + (st ? st.nom + ". Style phrase: " + ph : "not specified") + "\n" + coherenceRule +
     "\n" + persoRule +
     "No brand, no logo, no real person. No violence, no suggestive scene. Do not mock any body, religion, or origin. " +
-    "Each visual description field must be IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with '3D rendered character with', then list ONLY literal visual features: body shape, exact colors using descriptive words, skin/fruit/leather texture, eye shape and color, hair style and color, outfit fabrics and colors, one signature accessory. FORBIDDEN: brand names (Bratz, Barbie, Rainbow High, Disney), style references (K-pop, Y2K, cybergoth), metaphors (mango-skin, doll-like), emotions, story elements. Write ONLY what a camera would see. " +
+    "Each visual description field must be IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with 'character with', then list ONLY literal visual features: body shape, exact colors using descriptive words, skin/fruit/leather texture, eye shape and color, hair style and color, outfit fabrics and colors, one signature accessory. FORBIDDEN: brand names (Bratz, Barbie, Rainbow High, Disney), style references (K-pop, Y2K, cybergoth), metaphors (mango-skin, doll-like), emotions, story elements. Write ONLY what a camera would see. " +
     "Places: visual description IN ENGLISH with no character, describe the physical decor only (2 to 4 places). " +
     "Arc: exactly " + P.nb + " line" + (P.nb > 1 ? "s" : "") + " (one per video, in French)." + JSONNOTE +
     '\nFormat: {"titre":"in French","phrase_concept":"in French","regle_speciale":"in French","ton":"in French","personnages":[{"nom":"in French","role":"in French","caractere":"3 mots en français","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}],"lieux":[{"nom":"in French","visuel":"in English"}],"arc":["in French","in French"]}';
@@ -1706,8 +1706,8 @@ function universHtml() {
 }
 
 function refPrompt(kind, visuel) {
-  if (kind === "lieu") return "Empty background plate. " + sentence(visuel) + " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, no people, no human figure, photorealistic interior rendering.";
-return "Character reference sheet. " + sentence(visuel) + " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
+  if (kind === "lieu") return "Empty background plate. " + sentence(visuel) + " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, photorealistic interior rendering.";
+  return sentence(visuel) + " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
 }
 function refsHtml() {
   var all = [];
