@@ -432,7 +432,7 @@ async function callAgnesText(system, user) {
   return content;
 }
 
-async function agnesCreateImage(prompt, refImages) {
+async function agnesCreateImage(prompt, refImages, negativePrompt) {
   var body = {
     model: "agnes-image-2.5-flash",
     prompt: prompt,
@@ -440,9 +440,9 @@ async function agnesCreateImage(prompt, refImages) {
     ratio: "9:16",
     extra_body: { response_format: "url" }
   };
+  if (negativePrompt) body.negative_prompt = negativePrompt;
   if (refImages && refImages.length) {
     body.extra_body.image = refImages.slice(0, 5);
-    console.log("[IMAGE] " + body.extra_body.image.length + " réf. envoyées");
   }
   var res = await agnesFetch(AGNES_API + "/images/generations", {
     method: "POST",
@@ -1705,8 +1705,8 @@ function universHtml() {
 }
 
 function refPrompt(kind, visuel) {
-  if (kind === "lieu") return "Empty background plate, no characters, no people. " + sentence(visuel) + " Wide establishing shot, eye level, no text, no logo, vertical 9:16. " + phrase() + ".";
-  return "Character reference sheet. " + sentence(visuel) + " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
+  if (kind === "lieu") return "Empty background plate. " + sentence(visuel) + " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, no people, no human figure, photorealistic interior rendering.";
+return "Character reference sheet. " + sentence(visuel) + " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
 }
 function refsHtml() {
   var all = [];
