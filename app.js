@@ -7,8 +7,7 @@
 var AGNES_API = "https://apihub.agnes-ai.com/v1";
 var AGNES_POLL = "https://apihub.agnes-ai.com/agnesapi";
 var AGNES_TEXT_MODEL = "agnes-2.5-flash";
-var AGNES_VIDEO_MODEL = "agnes-video-2.5";
-var AGNES_VIDEO_MODEL_FALLBACK = "agnes-video-v2.0";
+var AGNES_VIDEO_MODEL = "agnes-video-2.5-flash";
 var AGNES_FPS = 24;
 
 var STYLES = [];
@@ -450,58 +449,45 @@ async function callAgnesText(system, user) {
 
 async function agnesCreateImage(prompt, refImages) {
   var body = {
-    model: "agnes-image-2.1-flash",
+    model: "agnes-image-2.5-flash",
     prompt: prompt,
-    n: 1,
-    size: "1024x1792",
-    response_format: "url"
+    size: "2K",
+    ratio: "9:16",
+    extra_body: { response_format: "url" }
   };
   if (refImages && refImages.length) {
-    body.image = refImages.length === 1 ? refImages[0] : refImages;
-    console.log("[IMAGE] Composition avec " + refImages.length + " image(s) de référence");
+    body.extra_body.image = refImages.slice(0, 5);
+    console.log("[IMAGE] " + body.extra_body.image.length + " réf. envoyées");
   }
   var res = await agnesFetch(AGNES_API + "/images/generations", {
     method: "POST",
     headers: { "Authorization": "Bearer " + getAgnesKey(), "Content-Type": "application/json" },
     body: JSON.stringify(body)
   }, "Image");
-  if (!res.ok) {
-    var t = await res.text();
-    console.error("[IMAGE ERROR]", t.slice(0, 300));
-    throw new Error("Image HTTP " + res.status + " : " + t.slice(0, 200));
-  }
+  if (!res.ok) { var t = await res.text(); console.error("[IMAGE ERR]", t.slice(0,300)); throw new Error("Image HTTP " + res.status); }
   var d = await res.json();
   var item = d.data && d.data[0];
-  if (!item) throw new Error("Pas d'image dans la réponse.");
-  if (item.url) return item.url;
-  if (item.b64_json) return "data:image/png;base64," + item.b64_json;
-  throw new Error("Format image inconnu.");
+  if (!item) throw new Error("Pas d'image.");
+  return item.url || ("data:image/png;base64," + item.b64_json);
 }
 
-async function agnesCreateVideoModel(prompt, imageDataUri, numFrames, model) {
+async function agnesCreateVideo(prompt, imageDataUri, numFrames) {
+  var seconds = String(Math.max(4, Math.min(12, Math.round((numFrames || 145) / 24))));
+  var body = {
+    model: "agnes-video-2.5-flash",
+    prompt: prompt,
+    seconds: seconds,
+    mode: imageDataUri ? "reference" : "text",
+    size: "720P",
+    aspect_ratio: "9:16"
+  };
+  if (imageDataUri) body.images = [imageDataUri];
   var res = await agnesFetch(AGNES_API + "/videos", {
     method: "POST",
     headers: { "Authorization": "Bearer " + getAgnesKey(), "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: model, prompt: prompt, image: imageDataUri,
-      num_frames: numFrames, frame_rate: AGNES_FPS
-    })
+    body: JSON.stringify(body)
   }, "Vidéo");
-  return res;
-}
-async function agnesCreateVideo(prompt, imageDataUri, numFrames) {
-  var res = await agnesCreateVideoModel(prompt, imageDataUri, numFrames, AGNES_VIDEO_MODEL);
-  if (res.status >= 400 && res.status < 500) {
-    console.warn("Agnes " + AGNES_VIDEO_MODEL + " a échoué (HTTP " + res.status + "), fallback sur " + AGNES_VIDEO_MODEL_FALLBACK);
-    try {
-      res = await agnesCreateVideoModel(prompt, imageDataUri, numFrames, AGNES_VIDEO_MODEL_FALLBACK);
-    } catch (e) {}
-  }
-  if (!res.ok) {
-    var t = await res.text();
-    console.error("AGNES VIDEO ERROR :", t);
-    throw new Error("HTTP " + res.status + " : " + t.slice(0, 200));
-  }
+  if (!res.ok) { var t = await res.text(); console.error("[VIDEO ERR]", t.slice(0,300)); throw new Error("Vidéo HTTP " + res.status); }
   var d = await res.json();
   var id = d.video_id || d.id || d.task_id;
   if (!id) throw new Error("Pas de video_id.");
@@ -601,29 +587,47 @@ async function ffmpegConcatenate(ep, onProgress) {
     if (onProgress) onProgress("Téléchargement du clip " + (i + 1) + "/" + main.length + "…");
     var res;
     try { res = await fetch(p.videoUrl, { mode: "cors" }); }
-    catch (e) { throw new Error("Clip " + (i + 1) + " inaccessible (CORS). Utilise « Copier la liste des clips »."); }
+    catch (e) { throw new Error("Clip " + (i + 1) + " inaccessible (CORS)."); }
     if (!res.ok) throw new Error("Clip " + (i + 1) + " : HTTP " + res.status);
     var buf = new Uint8Array(await res.arrayBuffer());
-    if (buf.length < 1000) throw new Error("Clip " + (i + 1) + " vide ou corrompu.");
+    if (buf.length < 1000) throw new Error("Clip " + (i + 1) + " vide.");
     var name = "plan" + String(i).padStart(3, "0") + ".mp4";
     await ffmpeg.writeFile(name, buf);
     names.push(name);
   }
   var listTxt = names.map(function (n) { return "file '" + n + "'"; }).join("\n");
   await ffmpeg.writeFile("list.txt", new TextEncoder().encode(listTxt));
-  if (onProgress) onProgress("Assemblage final (1-3 min)…");
+  if (onProgress) onProgress("Upscale 1080×1920 et assemblage (2-5 min)…");
+  var vf = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1";
   try {
-    await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", "sortie.mp4"]);
+    await ffmpeg.exec([
+      "-f", "concat", "-safe", "0", "-i", "list.txt",
+      "-vf", vf,
+      "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+      "-pix_fmt", "yuv420p",
+      "-r", "30",
+      "-c:a", "aac", "-b:a", "128k",
+      "-movflags", "+faststart",
+      "sortie.mp4"
+    ]);
   } catch (e) {
-    if (onProgress) onProgress("Réencodage de secours (plus long)…");
-    await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c:v", "libx264", "-c:a", "aac", "sortie.mp4"]);
+    if (onProgress) onProgress("Réessai avec réencodage rapide…");
+    await ffmpeg.exec([
+      "-f", "concat", "-safe", "0", "-i", "list.txt",
+      "-vf", vf,
+      "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+      "-pix_fmt", "yuv420p",
+      "-r", "30",
+      "-an",
+      "sortie.mp4"
+    ]);
   }
   var data = await ffmpeg.readFile("sortie.mp4");
   if (!data || data.length < 1000) throw new Error("Fichier final vide.");
   var blob = new Blob([data.buffer], { type: "video/mp4" });
+  if (onProgress) onProgress("Terminé — 1080×1920 · " + Math.round(data.length / 1024 / 1024) + " Mo");
   return URL.createObjectURL(blob);
 }
-
 /* ============================================================
    PHOTO DES PLANS (IndexedDB)
    ============================================================ */
@@ -1002,7 +1006,7 @@ function genUnivers() {
     "Visual style: " + (st ? st.nom + ". Style phrase: " + ph : "not specified") + "\n" +
     (sk ? "Skin/eyes rendering: " + sk + "\n" : "") + "\n" + persoRule +
     "No brand, no logo, no real person. No violence, no suggestive scene. Do not mock any body, religion, or origin. " +
-    "Each visual description field must be IN ENGLISH, 40 to 60 words: character type, colors, skin, complexion, face, eyes, hair, clothes without logo, accessory. Do NOT copy the style phrase. " +
+    "Each visual description field must be IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with '3D rendered character with', then list ONLY literal visual features: body shape, exact colors using descriptive words, skin/fruit/leather texture, eye shape and color, hair style and color, outfit fabrics and colors, one signature accessory. FORBIDDEN: brand names (Bratz, Barbie, Rainbow High, Disney), style references (K-pop, Y2K, cybergoth), metaphors (mango-skin, doll-like), emotions, story elements. Write ONLY what a camera would see. " +
     "Places: visual description IN ENGLISH with no character, describe the physical decor only (2 to 4 places). " +
     "Arc: exactly " + P.nb + " line" + (P.nb > 1 ? "s" : "") + " (one per video, in French)." + JSONNOTE +
     '\nFormat: {"titre":"in French","phrase_concept":"in French","regle_speciale":"in French","ton":"in French","personnages":[{"nom":"in French","role":"in French","caractere":"3 mots en français","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}],"lieux":[{"nom":"in French","visuel":"in English"}],"arc":["in French","in French"]}';
@@ -1029,7 +1033,7 @@ function genCast() {
     "Existing places: " + (P.lieux.map(function (l) { return l.nom; }).join(", ") || "none") + "\n" +
     (st ? "Visual style: " + st.nom + ". Style phrase: " + ph + "\n" : "") +
     (sk ? "Skin/eyes rendering: " + sk + "\n" : "") +
-    "\nCreate the fixed cast: all already-named characters, plus the missing ones, 6 maximum. Each visual field IN ENGLISH, 40 to 60 words, without the style phrase." + JSONNOTE +
+    "\nCreate the fixed cast: all already-named characters, plus the missing ones, 6 maximum. "Each visual field IN ENGLISH, 50 to 80 words. MANDATORY FORMAT: start with '3D rendered character with', then list ONLY literal visual features. FORBIDDEN: brand names, style references, metaphors. Write ONLY what a camera would see." + JSONNOTE +
     '\nFormat: {"personnages":[{"nom":"in French","role":"in French","caractere":"3 mots","secret":"in French","voix":"in French","voix_en":"in English","visuel":"in English 40-60 words"}]}';
   return ask("le casting", prompt, function (d2) {
     if (!d2 || !d2.personnages || !d2.personnages.length) throw new Error("vide");
