@@ -29,19 +29,10 @@ if (typeof STYLES_LIBRARY !== "undefined" && STYLES_LIBRARY) {
 }
 
 var SKINS = [
-  { id:"K1", nom:"Lisse stylisée", d:"Peau douce de film d'animation.", p:"smooth stylized skin with soft subsurface glow, no visible pores" },
-  { id:"K2", nom:"Réaliste avec pores", d:"Pores, petit duvet.", p:"realistic skin with visible pores, fine natural texture, peach fuzz" },
-  { id:"K4", nom:"Brillante, glow", d:"Reflets sur les pommettes.", p:"dewy glossy skin with soft specular highlights on cheekbones, healthy glow" },
-  { id:"K6", nom:"Poupée plastique", d:"Peau moulée, brillante.", p:"glossy molded plastic doll skin, flawless surface, strong soft highlights" },
-  { id:"K10", nom:"Fruit ou légume", d:"Graines de fraise, duvet de kiwi, pores de citron.", p:"skin with fruit texture (visible seeds, fuzz or dimples matching the fruit), natural fruit colors" },
-  { id:"K17", nom:"Laquée très brillante", d:"Effet vernis.", p:"lacquered high-gloss skin with circular specular highlights, clearcoat finish" },
-  { id:"K18", nom:"Latex ou caoutchouc", d:"Surface souple brillante.", p:"glossy latex rubber skin, soft squishy surface" },
-  { id:"K21", nom:"Peluche", d:"Fourrure douce, coutures.", p:"plush fabric skin, soft faux fur, visible stitching" },
-  { id:"K22", nom:"Céramique émaillée", d:"Brillant de vaisselle.", p:"glazed ceramic skin, glossy enamel finish" },
-  { id:"K23", nom:"Fruit anthropomorphe", d:"Personnage EN FORME de fruit, avec visage, bras et jambes.", p:"anthropomorphic fruit or vegetable character in 3D cartoon Pixar style, the entire body IS the fruit (round shape, matching silhouette of the fruit or vegetable), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs with small hands and feet, stem and leaf on top of the head, glossy realistic fruit skin texture with natural colors and highlights, seeds or surface details matching the fruit type, no human body parts visible" },
-  { id:"K24", nom:"Animal anthropomorphe", d:"Chat, chien, lapin debout comme un humain.", p:"anthropomorphic animal character in 3D cartoon Pixar style, standing upright like a human, human-like expressive face with big cartoon eyes on the animal head, thin cartoon arms and legs, wearing simple clothes, soft fur texture with natural animal colors and highlights, no human features on the body" },
-  { id:"K25", nom:"Objet anthropomorphe", d:"Un objet du quotidien qui prend vie.", p:"anthropomorphic everyday object character in 3D cartoon Pixar style, the entire body IS the object (matching silhouette and shape), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs with small hands and feet, glossy realistic surface texture matching the object material, no human body parts visible" },
-  { id:"K26", nom:"Nourriture anthropomorphe", d:"Burger, pizza, donut vivant.", p:"anthropomorphic food character in 3D cartoon Pixar style, the entire body IS the food item (matching silhouette), human-like expressive face on the front with big cartoon eyes and animated mouth, thin cartoon arms and legs, glossy appetizing food texture with natural colors, steam or small details for realism, no human body parts visible" }
+  { id:"F1", nom:"Tête-fruit cartoon", d:"Tête = fruit entier, visage cartoon dessus.", p:"3D cartoon Pixar-style character where the HEAD is literally the entire fruit with the fruit's exact silhouette, cute expressive human-like face drawn ON the front of the fruit, tiny cartoon body with short arms and legs, wearing trendy streetwear, glossy realistic fruit skin with natural colors, warm cinematic lighting, 85mm lens, clean pastel background" },
+  { id:"F2", nom:"Fruit en pied streetwear", d:"Corps entier = fruit, petit streetwear.", p:"3D cartoon Pixar-style character where the entire BODY is the fruit with exact silhouette, cute expressive human-like face on the front, small cartoon arms and legs with tiny sneakers, wearing trendy modern streetwear, glossy realistic fruit skin with seeds/fuzz, warm cinematic lighting, 50mm lens, urban background" },
+  { id:"G1", nom:"Poupée glam portrait", d:"Visage ultra-détaillé, coiffure tendance.", p:"high-end stylized 3D render of a glamorous fashion doll in the style of Rainbow High and Bratz collector dolls, ultra-detailed face with oversized almond eyes and long lashes, glossy vinyl lips, flawless smooth vinyl doll skin with soft subsurface scattering, high-poly hair in a trendy style, luxury three-point studio lighting, 85mm portrait lens, Octane render" },
+  { id:"G2", nom:"Poupée glam corps entier", d:"Tenue haute couture, pose élégante.", p:"high-end stylized 3D render of a glamorous fashion doll, full-body elegant pose, ultra-detailed face, glossy vinyl doll skin, high-poly glossy hair styled modern, high-end fashion outfit with matching accessories, luxury interior or urban sunset, cinematic three-point lighting, 85mm lens, Octane render" }
 ];
 
 var TEINTS = [
@@ -809,10 +800,9 @@ function imagePrompt(pl) {
     if (l && has(l.visuel)) parts.push("Place: " + sentence(l.visuel));
   }
 
-  /* Renforcement anthropomorphe : empêche Agnes de faire un humain */
-  var anthroSkins = ["K23", "K24", "K25", "K26"];
-  if (anthroSkins.indexOf(P.skin) >= 0) {
-    parts.push("⚠️ STRICT SHAPE RULE: The character's ENTIRE BODY must keep the fruit/animal/object silhouette (round shape, matching silhouette). This is NOT a human with textured skin. Do NOT draw a humanoid body. The face, arms, legs and body must ALL respect the fruit silhouette. No naked human, no realistic human anatomy.");
+  /* Renforcement anthropomorphe (F1, F2) */
+  if (P.skin === "F1" || P.skin === "F2") {
+    parts.push("⚠️ STRICT SHAPE RULE: The character's HEAD (or ENTIRE BODY if F2) MUST keep the fruit silhouette exactly. This is NOT a human with colored skin — the fruit shape must be instantly recognizable. No human head. No realistic human anatomy. Only the face features are cartoon-human-like, everything else is the fruit.");
   }
 
   parts.push("No logo, no brand, no text. Hands relaxed with five fingers. Vertical 9:16.");
