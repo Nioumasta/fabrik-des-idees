@@ -1947,3 +1947,313 @@ function montView(ep) {
   h += '<section class="glass card stack"><div class="md">' + mdRender(ep.montage) + '</div><button type="button" class="btn ghost big" data-act="copymall" data-v="' + ep.n + '">📋 Copier tout</button></section>';
   return h;
 }
+/* ============================================================
+   ÉVÉNEMENTS — CLIC
+   ============================================================ */
+function arm(key, msg) {
+  if (R.arm === key) { R.arm = ""; return true; }
+  R.arm = key;
+  toast(msg || "Touche encore pour confirmer.");
+  setTimeout(function () { if (R.arm === key) R.arm = ""; }, 4000);
+  return false;
+}
+
+document.addEventListener("click", function (e) {
+  var b = e.target.closest("[data-act]");
+  if (!b) return;
+  var a = b.getAttribute("data-act"), v = b.getAttribute("data-v");
+  if (a === "stop") { if (R.chain) R.chain.stop = true; R.busy = null; overlay(); return; }
+  if (!$v.contains(b) && a !== "stop") return;
+
+  if (a === "nav-prev") { goPrev(); return; }
+  else if (a === "nav-next") { goNext(); return; }
+  else if (a === "tab") { go(v); }
+  else if (a === "speech") { P.speech = v; save(); render(); }
+  else if (a === "nb") { P.nb = +v; save(); render(); }
+  else if (a === "duree") { P.duree = +v; save(); render(); }
+  else if (a === "rec") { P.rec = v; save(); render(); }
+  else if (a === "yeux") {
+    var y = Array.isArray(P.yeux) ? P.yeux : (P.yeux ? [P.yeux] : []);
+    var yi = y.indexOf(v);
+    if (yi >= 0) y.splice(yi, 1); else y.push(v);
+    P.yeux = y;
+    save(); render();
+  }
+  else if (a === "teint") { var ti = P.teints.indexOf(v); if (ti >= 0) P.teints.splice(ti, 1); else P.teints.push(v); save(); render(); }
+  else if (a === "effet") { var ei = P.effets.indexOf(v); if (ei >= 0) P.effets.splice(ei, 1); else if (P.effets.length >= 3) { toast("3 effets max."); return; } else P.effets.push(v); save(); render(); }
+  else if (a === "sous") {
+    var sl = sousList();
+    var si = sl.indexOf(v);
+    if (si >= 0) sl.splice(si, 1); else sl.push(v);
+    P.sous = sl.length ? sl : ["U1"];
+    save(); render();
+  }
+  else if (a === "amb") { var ai = P.ambs.indexOf(v); if (ai >= 0) P.ambs.splice(ai, 1); else P.ambs.push(v); save(); render(); }
+  else if (a === "concepts") { genConcepts(); }
+  else if (a === "surprise") { genConcepts({ surprise: true }); }
+  else if (a === "moreconcepts") { genConcepts({ more: true }); }
+  else if (a === "dropconcept") { P.concepts.splice(+v, 1); save(); render(); }
+  else if (a === "pickconcept") {
+    var cc = P.concepts[+v];
+    if (cc) {
+      P.idee = cc.idee +
+        (has(cc.hook) ? "\nAccroche de l'épisode 1 : " + cc.hook : "") +
+        (has(cc.twist) ? "\nRetournement : " + cc.twist : "") +
+        (has(cc.chute) ? "\nFin de l'épisode 1 : " + cc.chute : "");
+      if (has(cc.titre)) P.titre = cc.titre;
+      if (has(cc.ambiance)) P.genre = cc.ambiance;
+      save();
+      toast("Idée choisie. Choisis un style puis génère ton univers.");
+      go("univers");
+    }
+  }
+  else if (a === "agnes-save") { saveAgnesKey(); }
+  else if (a === "style-remove") {
+    if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
+    var sri = P.style.indexOf(v);
+    if (sri >= 0) P.style.splice(sri, 1);
+    save(); render();
+  }
+  else if (a === "genuni") { if (P.persos.length && !arm("uni", "Touche encore pour tout remplacer.")) return; genUnivers(); }
+  else if (a === "addperso") { P.persos.push({ id: uid(), nom: "", role: "", caractere: "", secret: "", voix: "", voix_en: "", visuel: "", ok: false }); save(); render(); }
+  else if (a === "addlieu") { P.lieux.push({ id: uid(), nom: "", visuel: "", ok: false }); save(); render(); }
+  else if (a === "delperso") { if (arm("dp" + v)) { P.persos.splice(+v, 1); save(); render(); } }
+  else if (a === "dellieu") { if (arm("dl" + v)) { P.lieux.splice(+v, 1); save(); render(); } }
+  else if (a === "copypre") { var pre = document.getElementById(v); if (pre) copyText(pre.textContent, pre, "Prompt copié."); }
+  else if (a === "refok") { var o = R.refs[+v].o; o.ok = !o.ok; save(); render(); }
+  else if (a === "newep") { var n = P.eps.length + 1; P.eps.push(newEp(n)); save(); go("eps", n); }
+  else if (a === "openep") { go("eps", +v); }
+  else if (a === "epback") { go("eps"); }
+  else if (a === "genscript") { var ep = epBy(+v); if (has(ep.script) && !arm("gs" + v)) return; genScript(ep); }
+  else if (a === "genplans") { var ep2 = epBy(+v); if (ep2.plans.length && !arm("gp" + v)) return; genPlans(ep2); }
+  else if (a === "genmont") { var ep3 = epBy(+v); if (has(ep3.montage) && !arm("gm" + v)) return; genMontage(ep3); }
+  else if (a === "shotst") {
+    var pls = P.eps[+b.getAttribute("data-i")].plans[+b.getAttribute("data-j")];
+    pls.st = +v;
+    save(); render();
+  }
+  else if (a === "plan-photo-upload" || a === "plan-photo-change") {
+    var inp = document.getElementById("pf-" + b.getAttribute("data-i") + "-" + b.getAttribute("data-j"));
+    if (inp) inp.click();
+  }
+  else if (a === "plan-photo-clear") { planClearPhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
+  else if (a === "ref-regen-agnes") {
+    var rr = R.refs[+v];
+    if (rr) refGenerate(rr.k, rr.o.id);
+  }
+  else if (a === "ref-upload" || a === "ref-change") {
+    var rIn = document.getElementById("rf-in-" + v);
+    if (rIn) rIn.click();
+  }
+  else if (a === "ref-clear") { var r = R.refs[+v]; if (r) refClear(r.k, r.o.id); }
+  else if (a === "copypre-coherent") {
+    var ci = +b.getAttribute("data-i"), cj = +b.getAttribute("data-j");
+    var cpl = P.eps[ci] && P.eps[ci].plans[cj];
+    if (cpl) copyAll(imagePromptWithCoherence(cpl), "Prompt + note cohérence copiés. Joins les images de référence.");
+  }
+  else if (a === "genallphotos") { planGenerateAllPhotos(+v); }
+  else if (a === "plan-photo-gen") { planGeneratePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
+  else if (a === "plan-video-gen") { planGenerateVideo(+b.getAttribute("data-i"), +b.getAttribute("data-j")); }
+  else if (a === "genseason") { genSeason(); }
+  else if (a === "genall") {
+    var eg = epBy(+v);
+    if (!eg) return;
+    if (!confirm("Tout préparer va générer le script, les plans, PUIS toutes les photos et vidéos.\n\n⚠️ Les vidéos prennent environ 1 à 2 minutes chacune. Un épisode de 12 plans = 20 à 30 minutes.\n\nContinuer ?")) return;
+    runChain(function () {
+      return chainEpisode(eg.n, P.nb === 1 ? "La vidéo" : "Épisode " + eg.n, { videos: true });
+    });
+  }
+  else if (a === "copyimgs") {
+    var ei2 = epBy(+v);
+    if (ei2) copyAll(ei2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "PLAN " + p.n + " (" + p.duree + " s)\n" + imagePrompt(p); }).join("\n\n"), "Prompts image copiés.");
+  }
+  else if (a === "copyvids") {
+    var ev2 = epBy(+v);
+    if (ev2) copyAll(ev2.plans.filter(function (p) { return !p.reserve; }).map(function (p) { return "PLAN " + p.n + " (" + p.duree + " s)\n" + videoPrompt(p); }).join("\n\n"), "Prompts vidéo copiés.");
+  }
+  else if (a === "montopen") { R.mont = true; R.ep = +v; render(); window.scrollTo(0, 0); }
+  else if (a === "montclose") { R.mont = false; render(); }
+  else if (a === "copymall") { var em = epBy(+v); if (em) copyAll(em.montage, "Texte copié."); }
+  else if (a === "bilan") { var eb = epBy(+v); if (eb) genBilan(eb); }
+  else if (a === "copylist") {
+    var el = epBy(+v);
+    if (!el) return;
+    var clips = el.plans.filter(function (p) { return !p.reserve && p.videoUrl; }).map(function (p, k) {
+      return "Plan " + (k + 1) + " (" + p.n + ") : " + p.videoUrl;
+    });
+    copyAll(clips.join("\n"), clips.length + " clip" + (clips.length > 1 ? "s" : "") + " copiés. Colle cette liste quelque part, ouvre chaque lien et enregistre.");
+  }
+  else if (a === "hard-reload") {
+    if (confirm("Recharger l'app ? Les modifications du code seront prises en compte.")) {
+      if ('caches' in window) {
+        caches.keys().then(function (names) {
+          Promise.all(names.map(function (n) { return caches.delete(n); })).then(function () {
+            location.reload(true);
+          });
+        });
+      } else {
+        location.reload(true);
+      }
+    }
+  }
+  else if (a === "ffmpeg-ep") {
+    var ef = epBy(+v);
+    if (!ef) return;
+    ef.finalVideoStatus = "busy";
+    ef.finalVideoError = "Préparation…";
+    save(); render();
+    (async function () {
+      try {
+        var url = await ffmpegConcatenate(ef, function (msg) {
+          ef.finalVideoError = msg;
+          var el2 = document.querySelector('#view .badge');
+          if (el2 && el2.textContent.indexOf("⏳") === 0) el2.textContent = "⏳ " + msg;
+        });
+        ef.finalVideoUrl = url;
+        ef.finalVideoStatus = "done";
+        ef.finalVideoError = "";
+        save(); render(); toast("Vidéo finale assemblée.");
+      } catch (err) {
+        ef.finalVideoStatus = "err";
+        ef.finalVideoError = (err.message || "").slice(0, 120);
+        save(); render();
+        toast("Échec FFmpeg : " + ef.finalVideoError);
+      }
+    })();
+  }
+  else if (a === "bkfile") {
+    var data = JSON.stringify(P, null, 1);
+    var blob = new Blob([data], { type: "application/json" });
+    var a2 = document.createElement("a");
+    a2.href = URL.createObjectURL(blob);
+    a2.download = "fabrique-sauvegarde.json";
+    document.body.appendChild(a2);
+    a2.click();
+    document.body.removeChild(a2);
+    toast("Sauvegarde téléchargée.");
+  }
+  else if (a === "bkrestore") {
+    try {
+      var d2 = JSON.parse(document.getElementById("bk-in").value);
+      var f2 = fresh();
+      P = f2;
+      for (var k2 in f2) P[k2] = d2[k2] !== undefined ? d2[k2] : f2[k2];
+      fixEps(); save(); render();
+      toast("Sauvegarde restaurée.");
+    } catch (err) { toast("Sauvegarde illisible."); }
+  }
+  else if (a === "reset") {
+    if (arm("reset", "Touche encore : TOUT sera effacé (photos, références, scripts).")) {
+      (async function () {
+        try {
+          if (typeof idbKeyval !== "undefined") {
+            var keys = await idbKeyval.keys();
+            for (var i = 0; i < keys.length; i++) {
+              var k = String(keys[i]);
+              if (k.indexOf("plan-photo-") === 0 || k.indexOf("ref-") === 0) {
+                await idbKeyval.del(k);
+              }
+            }
+          }
+        } catch (e) { console.warn("Reset IndexedDB :", e); }
+        P = fresh();
+        save();
+        go("univers");
+        toast("Tout est effacé. Nouvelle histoire !");
+      })();
+    }
+  }
+});
+
+/* ============================================================
+   ÉVÉNEMENTS — SAISIE
+   ============================================================ */
+document.addEventListener("input", function (e) {
+  var el = e.target;
+  if (el.id === "style-search") {
+    var q = String(el.value || "").toLowerCase().trim();
+    var sel = document.getElementById("style-add");
+    if (!sel) return;
+    Array.prototype.forEach.call(sel.querySelectorAll("optgroup"), function (grp) {
+      var visible = 0;
+      Array.prototype.forEach.call(grp.querySelectorAll("option"), function (opt) {
+        var match = !q || opt.textContent.toLowerCase().indexOf(q) >= 0;
+        opt.style.display = match ? "" : "none";
+        if (match) visible++;
+      });
+      grp.style.display = visible ? "" : "none";
+    });
+    return;
+  }
+  if (el.hasAttribute("data-path")) {
+    setPath(P, el.getAttribute("data-path"), el.value);
+    save();
+    var m = /^eps\.(\d+)\.plans\.(\d+)\./.exec(el.getAttribute("data-path"));
+    if (m) {
+      var pl = P.eps[+m[1]].plans[+m[2]];
+      var a = document.getElementById("pi-" + m[1] + "-" + m[2]);
+      var b = document.getElementById("pv-" + m[1] + "-" + m[2]);
+      if (a) a.textContent = imagePrompt(pl);
+      if (b) b.textContent = videoPrompt(pl);
+    }
+    refreshStrip();
+  }
+});
+
+/* ============================================================
+   ÉVÉNEMENTS — CHANGEMENT
+   ============================================================ */
+document.addEventListener("change", function (e) {
+  var id = e.target.id;
+  if (id === "style-add") {
+    var v = e.target.value;
+    if (v) {
+      if (!Array.isArray(P.style)) P.style = P.style ? [P.style] : [];
+      if (P.style.length >= MAX_STYLES) { toast("Max " + MAX_STYLES + " styles. Retires-en un d'abord."); e.target.value = ""; return; }
+      if (P.style.indexOf(v) < 0) P.style.push(v);
+      save(); render();
+    }
+    return;
+  }
+  if (id === "cam") { P.cam = e.target.value; save(); }
+  else if (id === "video-engine") { P.videoEngine = e.target.value; save(); render(); }
+  else if (id === "bk-file") {
+    var f = e.target.files[0];
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function (ev) {
+      try {
+        var d3 = JSON.parse(ev.target.result);
+        var f3 = fresh();
+        P = f3;
+        for (var k3 in f3) P[k3] = d3[k3] !== undefined ? d3[k3] : f3[k3];
+        fixEps(); save(); render();
+        toast("Sauvegarde ouverte.");
+      } catch (err) { toast("Fichier invalide."); }
+    };
+    rd.readAsText(f);
+    e.target.value = "";
+  }
+  else if (e.target.classList && e.target.classList.contains("plan-file-input")) {
+    planUploadPhoto(+e.target.getAttribute("data-i"), +e.target.getAttribute("data-j"), e.target.files[0]);
+    e.target.value = "";
+  }
+  else if (e.target.classList && e.target.classList.contains("ref-file-input")) {
+    var rv = +e.target.getAttribute("data-v");
+    var ro = R.refs[rv];
+    if (ro) refUpload(ro.k, ro.o.id, e.target.files[0]);
+    e.target.value = "";
+  }
+});
+
+document.querySelectorAll(".dock button").forEach(function (b) {
+  b.addEventListener("click", function () { go(b.getAttribute("data-tab")); });
+});
+
+/* ============================================================
+   INITIALISATION
+   ============================================================ */
+load();
+render();
+setTimeout(planPhotosRestore, 800);
+setTimeout(refsRestoreAll, 900);
