@@ -165,6 +165,214 @@ pre.fin { margin: 0; white-space: pre-wrap; word-break: break-word; font-family:
 .plan-drop { border:2px dashed var(--line); background:transparent; border-radius:14px; padding:16px; text-align:center; color:var(--accent-text); font-weight:700; min-height:70px; display:flex; align-items:center; justify-content:center; gap:8px; width:100%; }
 .plan-drop:active { border-color:var(--accent-a); background:var(--glass); }
 .nav-bottom { display: flex; justify-content: space-between; gap: 8px; margin-top: 18px; }
+  /* ============================================================
+   UI/UX v2 — Glassmorphism renforcé
+   ============================================================ */
+
+/* --- Cibles tactiles 44px minimum (Apple/Google) --- */
+.chip {
+  min-height: 46px;
+  padding: 12px 18px;
+}
+.chip.small {
+  min-height: 44px;
+  padding: 10px 16px;
+  font-size: .9rem;
+}
+.dock button {
+  min-height: 58px;
+}
+.btn {
+  min-height: 52px;
+}
+.btn.ghost {
+  min-height: 52px;
+}
+
+/* --- Focus visible partout (WCAG 2.2 AA) --- */
+.chip:focus-visible,
+.optb:focus-visible,
+.btn:focus-visible,
+.stage:focus-visible,
+.dock button:focus-visible,
+.chrow:focus-visible {
+  outline: 3px solid var(--accent-a);
+  outline-offset: 2px;
+}
+
+/* --- Surfaces glassmorphism renforcées (3 niveaux) --- */
+:root {
+  --glass-n1: rgba(255, 255, 255, .58);
+  --glass-n2: rgba(255, 255, 255, .78);
+  --glass-n3: rgba(255, 255, 255, .92);
+  --glass-border: rgba(255, 255, 255, .85);
+  --glass-shadow-1: 0 6px 22px rgba(72, 46, 160, .12);
+  --glass-shadow-2: 0 10px 34px rgba(72, 46, 160, .18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --glass-n1: rgba(255, 255, 255, .07);
+    --glass-n2: rgba(255, 255, 255, .11);
+    --glass-n3: rgba(28, 20, 60, .88);
+    --glass-border: rgba(255, 255, 255, .18);
+    --glass-shadow-1: 0 6px 22px rgba(0, 0, 0, .35);
+    --glass-shadow-2: 0 10px 34px rgba(0, 0, 0, .5);
+  }
+}
+:root[data-theme="dark"] {
+  --glass-n1: rgba(255, 255, 255, .07);
+  --glass-n2: rgba(255, 255, 255, .11);
+  --glass-n3: rgba(28, 20, 60, .88);
+  --glass-border: rgba(255, 255, 255, .18);
+  --glass-shadow-1: 0 6px 22px rgba(0, 0, 0, .35);
+  --glass-shadow-2: 0 10px 34px rgba(0, 0, 0, .5);
+}
+
+/* Carte principale (niveau 1) */
+.glass {
+  background: var(--glass-n1);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-1);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+}
+
+/* Sous-carte (niveau 2) — pour prompts et détails */
+.glass-deep {
+  background: var(--glass-n2);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+}
+
+/* Bloc technique (niveau 3) — prompts bruts */
+.tech-block {
+  background: var(--glass-n3);
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--glass-border);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: .82rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--fg);
+}
+
+/* --- CTA primaire dominant --- */
+.btn.big:not(.ghost) {
+  min-height: 58px;
+  font-size: 1.02rem;
+  font-weight: 800;
+  letter-spacing: .01em;
+  box-shadow: 0 10px 28px rgba(109, 74, 232, .38), 0 4px 12px rgba(181, 52, 143, .25);
+}
+.btn.big:not(.ghost):active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(109, 74, 232, .28);
+}
+
+/* --- CTA secondaire (ghost) plus discret --- */
+.btn.ghost {
+  background: var(--glass-n2);
+  border: 1px solid var(--glass-border);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* --- Dock : auto-hide au scroll --- */
+.dock.dock-hidden {
+  transform: translateX(-50%) translateY(calc(100% + 24px));
+  opacity: 0;
+  pointer-events: none;
+}
+.dock {
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1),
+              opacity .22s ease;
+}
+
+/* --- Tokens typographiques améliorés --- */
+.kicker {
+  font-size: .74rem;
+  letter-spacing: .14em;
+}
+h1 {
+  font-size: 1.55rem;
+  letter-spacing: -.015em;
+}
+
+/* --- Prompts repliés : bouton discret --- */
+details.tech-toggle > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--accent-text);
+  min-height: 40px;
+}
+details.tech-toggle > summary::-webkit-details-marker { display: none; }
+details.tech-toggle > summary::before {
+  content: "▸";
+  display: inline-block;
+  transition: transform .18s ease;
+  font-size: .75rem;
+}
+details.tech-toggle[open] > summary::before {
+  transform: rotate(90deg);
+}
+details.tech-toggle > summary:hover {
+  opacity: .85;
+}
+
+/* --- Accordéon mutuellement exclusif --- */
+details.acc[open] {
+  box-shadow: var(--glass-shadow-2);
+  border-color: rgba(109, 74, 232, .35);
+}
+
+/* --- Barre de progression globale --- */
+.progress-bar {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  height: 4px;
+  background: var(--code-bg);
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.progress-bar > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+  border-radius: 0 0 4px 4px;
+  transition: width .35s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* --- Masquer les détails secondaires --- */
+.advanced-hidden {
+  display: none;
+}
+
+/* --- Réduire les animations si l'utilisateur le demande --- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* --- Mobile : strip désactivé sous 640px --- */
+@media (max-width: 640px) {
+  .strip { display: none; }
+}
 </style>
 </head><body>
 <div class="bg" aria-hidden="true"></div>
