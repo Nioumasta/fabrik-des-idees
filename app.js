@@ -416,6 +416,24 @@ function getCloudflareAccountId() {
 function getCloudflareApiToken() {
   try { return (localStorage.getItem("cf_api_token") || "").trim(); } catch (e) { return ""; }
 }
+function getPollinationsToken() {
+  try { return (localStorage.getItem("pollinations_api_key") || "").trim(); } catch (e) { return ""; }
+}
+
+function savePollinationsKey() {
+  var inp = document.getElementById("poll-token-input");
+  if (!inp) return;
+  var k = inp.value.trim();
+  if (!k) {
+    try { localStorage.removeItem("pollinations_api_key"); } catch (e) {}
+    toast("Token Pollinations effacé.");
+    return;
+  }
+  try {
+    localStorage.setItem("pollinations_api_key", k);
+    toast("Token Pollinations enregistré.");
+  } catch (e) { toast("Sauvegarde impossible."); }
+}
 function getHuggingFaceToken() {
   try { return (localStorage.getItem("hf_token") || "").trim(); } catch (e) { return ""; }
 }
@@ -1834,7 +1852,16 @@ function renderBrief() {
     '</button>' +
     '</div>' +
 
-    (currentProvider === "cloudflare" ?
+        (currentProvider === "pollinations" ?
+      '<div class="provider-keys">' +
+      '<label>Token Pollinations (recommandé)</label>' +
+      '<input type="password" id="poll-token-input" placeholder="pk_..." value="' + esc(getPollinationsToken()) + '">' +
+      '<button type="button" class="btn big" data-act="poll-save">Enregistrer le token</button>' +
+      '<p class="small muted" style="margin-top:8px">Sans token : quota anonyme très limité (erreur 402). Avec token gratuit : 1 image / 6 secondes.</p>' +
+      (getPollinationsToken() ? '<span class="key-status ok">✓ Configuré</span>' : '<span class="key-status">Anonyme</span>') +
+      '</div>'
+      : '') +
+   (currentProvider === "cloudflare" ?
       '<div class="provider-keys" id="cf-keys-block">' +
       '<label>Account ID Cloudflare</label>' +
       '<input type="text" id="cf-account-input" placeholder="1a2b3c4d..." value="' + esc(getCloudflareAccountId()) + '">' +
@@ -2467,6 +2494,8 @@ document.addEventListener("click", function (e) {
     render();
     return;
   }
+     if (a === "poll-save") { savePollinationsKey(); render(); return; }
+
   if (a === "cf-save") { saveCloudflareKeys(); render(); return; }
   if (a === "hf-save") { saveHuggingFaceKeys(); render(); return; }
 
