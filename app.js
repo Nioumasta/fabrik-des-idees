@@ -1328,8 +1328,22 @@ function refPrompt(kind, visuel) {
     return "Empty background plate. " + sentence(visuel) +
       " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, no people, no human figure, photorealistic interior rendering.";
   }
-  return "fruit-dominant character, " + sentence(visuel) +
-    " with simple cartoon face drawn directly on the fruit surface, two small black dot or oval eyes with white highlights, tiny curved smile line, NO human nose, NO realistic lips, NO eyelashes, NO realistic eyebrows, no human skin, glossy fruit skin texture, cute cartoon proportions. Full body front view, neutral expression, standing, plain light grey background, no text, vertical format, Pixar-style 3D cartoon render, cinematic lighting, high quality.";
+
+  var v = String(visuel || "").toLowerCase();
+  var fruitWords = ["strawberry","mango","banana","apple","pear","watermelon","cherry","peach","lemon","orange","grape","pineapple","kiwi","pomegranate","raspberry","blueberry","coconut","avocado","tomato","melon","fig","plum","apricot","papaya","guava","lime","grapefruit","tangerine","clementine","mandarin","nectarine","passion fruit","dragon fruit","lychee","papaya","persimmon","quince","starfruit","tamarind","tangerine"];
+  var isFruit = fruitWords.some(function (w) { return v.indexOf(w) >= 0; });
+
+  var faceRule = "large expressive almond-shaped eyes with detailed irises and bright catchlights, bold winged eyeliner, long curled eyelashes, glossy lips with natural fruit tint, expressive cartoon features drawn on the surface";
+
+  if (isFruit) {
+    var fruitName = "fruit";
+    for (var i = 0; i < fruitWords.length; i++) {
+      if (v.indexOf(fruitWords[i]) >= 0) { fruitName = fruitWords[i]; break; }
+    }
+    return "Character reference sheet. Anthropomorphic " + fruitName + " character with a glossy " + fruitName + "-shaped head, visible " + fruitName + " skin texture with seeds or dimples, small " + fruitName + " stem or leaf on top. " + faceRule + ". Wearing stylish outfit. Human body with realistic proportions, standing confidently. Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. 3D animated Pixar-style photorealistic render, octane render, cinematic lighting, shallow depth of field, high detail, luxury fashion doll aesthetic.";
+  }
+
+  return "Character reference sheet. Anthropomorphic object character, " + sentence(visuel) + ". The object itself is alive with a human-like face integrated directly into its surface. " + faceRule + ". Wearing stylish outfit. Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. 3D animated Pixar-style photorealistic render, octane render, cinematic lighting, shallow depth of field, high detail, luxury fashion doll aesthetic.";
 }
 function findRefObj(kind, id) {
   var idStr = String(id);
