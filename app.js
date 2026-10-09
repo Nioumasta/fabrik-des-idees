@@ -953,7 +953,12 @@ function genUnivers() {
     ? "Create the season's cast: 4 to 6 characters maximum. "
     : "Characters change between videos: characters = empty list. ";
   var coherenceRule = "CULTURAL COHERENCE: if a character has dark skin, their hairstyle MUST match (braids, afro, cornrows, gradient, wig with edges). NEVER blonde hair on dark skin unless explicitly stated.\n";
-
+ETHNIC LOCK: When describing a Black or dark-skinned character, you MUST specify:
+- skin tone: "deep brown skin" or "ebony skin"
+- hairstyle: "box braids with gold cuffs" or "natural 4C afro" or "long cornrows" or "edge-laid wig"
+- NEVER write just "black hair" without a specific style
+- NEVER use "blonde" or "straight European hair" on dark skin
+Format example: "dark-skinned woman with natural 4C afro" or "ebony-skinned man with short cornrows and a fade"
   var prompt = "You are a screenwriter for short vertical animated videos (TikTok, YouTube Shorts). Output user-facing content in FRENCH, but every instruction here is for you in English. Technical fields (visual descriptions) must be IN ENGLISH.\n" +
     "Starting idea (in French): " + P.idee.trim() + "\n" +
     (has(P.titre) ? "Desired title (in French): " + P.titre.trim() + "\n" : "") +
@@ -1331,7 +1336,12 @@ function refPrompt(kind, visuel) {
 
   var v = String(visuel || "").toLowerCase();
   var fruitWords = ["strawberry","mango","banana","apple","pear","watermelon","cherry","peach","lemon","orange","grape","pineapple","kiwi","pomegranate","raspberry","blueberry","coconut","avocado","tomato","melon","fig","plum","apricot","papaya","guava","lime","grapefruit","tangerine","clementine","mandarin","nectarine","passion fruit","dragon fruit","lychee","papaya","persimmon","quince","starfruit","tamarind","tangerine"];
-  var isFruit = fruitWords.some(function (w) { return v.indexOf(w) >= 0; });
+  var objectWords = ["lipstick","perfume","beauty blender","mascara","eyeshadow","nail polish","compact","powder","blush","highlighter","foundation","concealer","primer","toner","serum","cream","lotion","shampoo","conditioner","soap","candle","vase","bottle","jar","tube","case","palette","brush","comb","mirror","clock","lamp","mug","cup","plate","bowl","spoon","fork","knife","phone","headphones","watch","ring","necklace","earring","bracelet","bag","wallet","key","notebook","pen","pencil","book","magazine","newspaper","card","letter","envelope","ticket","receipt"];
+   if (isObject) {
+  return "Character reference sheet. Anthropomorphic object character, " + sentence(visuel) + ". The object itself is alive with a human-like face integrated directly into its surface. Large expressive almond-shaped eyes with detailed irises and bright catchlights, bold winged eyeliner, long curled eyelashes, glossy lips, expressive cartoon features drawn on the object surface. Human body with realistic proportions, standing confidently. Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. 3D animated Pixar-style photorealistic render, octane render, cinematic lighting, shallow depth of field, high detail, luxury fashion doll aesthetic.";
+}
+   var isObject = objectWords.some(function (w) { return v.indexOf(w) >= 0; });
+   var isFruit = fruitWords.some(function (w) { return v.indexOf(w) >= 0; });
 
   var faceRule = "large expressive almond-shaped eyes with detailed irises and bright catchlights, bold winged eyeliner, long curled eyelashes, glossy lips with natural fruit tint, expressive cartoon features drawn on the surface";
 
