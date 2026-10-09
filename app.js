@@ -489,10 +489,19 @@ async function callAgnesText(system, user) {
    ═══════════════════════════════════════════════════════════ */
 async function pollinationsCreateImage(prompt) {
   var seed = Math.floor(Math.random() * 1000000);
+  var apiKey = "";
+  try { apiKey = (localStorage.getItem("pollinations_api_key") || "").trim(); } catch (e) {}
   var url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt)
-    + "?width=768&height=1344&seed=" + seed + "&nologo=true&model=flux";
+    + "?width=768&height=1344&seed=" + seed
+    + "&nologo=true&model=flux";
+  if (apiKey) {
+    url += "&token=" + encodeURIComponent(apiKey);
+  }
   var res = await fetch(url);
-  if (!res.ok) throw new Error("Pollinations HTTP " + res.status);
+  if (!res.ok) {
+    if (res.status === 402) throw new Error("Pollinations : quota épuisé. Vérifie ton token ou attends 24h.");
+    throw new Error("Pollinations HTTP " + res.status);
+  }
   var blob = await res.blob();
   return await new Promise(function (resolve, reject) {
     var reader = new FileReader();
