@@ -1329,7 +1329,7 @@ function refPrompt(kind, visuel) {
       " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, no people, no human figure, photorealistic interior rendering.";
   }
   return sentence(visuel) +
-    " Full body, front view, neutral expression, standing, plain light grey background, no text, vertical format. " + phrase() + ".";
+    " 3D cartoon character with exaggerated cartoon proportions, simple rounded shapes, NOT realistic, NOT human. Face is drawn as SIMPLE CARTOON features directly on the fruit surface: two small black dot or oval eyes with big white highlights, tiny simple curved smile line, NO eyelashes, NO realistic eyebrows, NO realistic lips, NO human nose. Full body front view, neutral expression, standing, plain light grey background, no text, vertical format, Pixar-style toy render.";
 }
 
 function findRefObj(kind, id) {
