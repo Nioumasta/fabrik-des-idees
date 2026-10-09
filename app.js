@@ -1328,10 +1328,9 @@ function refPrompt(kind, visuel) {
     return "Empty background plate. " + sentence(visuel) +
       " Wide establishing shot, eye level, no text, no logo, vertical 9:16. Deserted architectural space, no people, no human figure, photorealistic interior rendering.";
   }
-  return sentence(visuel) +
-    " 3D cartoon character with exaggerated cartoon proportions, simple rounded shapes, NOT realistic, NOT human. Face is drawn as SIMPLE CARTOON features directly on the fruit surface: two small black dot or oval eyes with big white highlights, tiny simple curved smile line, NO eyelashes, NO realistic eyebrows, NO realistic lips, NO human nose. Full body front view, neutral expression, standing, plain light grey background, no text, vertical format, Pixar-style toy render.";
+  return "fruit-dominant character, " + sentence(visuel) +
+    " with simple cartoon face drawn directly on the fruit surface, two small black dot or oval eyes with white highlights, tiny curved smile line, NO human nose, NO realistic lips, NO eyelashes, NO realistic eyebrows, no human skin, glossy fruit skin texture, cute cartoon proportions. Full body front view, neutral expression, standing, plain light grey background, no text, vertical format, Pixar-style 3D cartoon render, cinematic lighting, high quality.";
 }
-
 function findRefObj(kind, id) {
   var idStr = String(id);
   if (kind === "perso") {
