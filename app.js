@@ -1828,59 +1828,16 @@ function renderBrief() {
     '</div></details>';
 
   /* Fournisseur d'images */
-  var currentProvider = P.imageProvider || "pollinations";
-  h += '<details class="glass acc" data-keep="1"><summary><div><b>🎨 Fournisseur d\'images</b><br><span>' +
-    (currentProvider === "pollinations" ? "Pollinations (par défaut)" : currentProvider === "cloudflare" ? "Cloudflare" : "Hugging Face") +
-    '</span></div><span class="badge' + (currentProvider !== "pollinations" ? " done" : "") + '">' +
-    (currentProvider === "pollinations" ? "Sans clé" : "Clés requises") + '</span></summary><div class="in">' +
-    '<p class="small muted">Choisis le service qui générera tes images.</p>' +
-
-    '<div class="provider-grid">' +
-    '<button type="button" class="card-pick" data-act="set-provider" data-v="pollinations" aria-pressed="' + (currentProvider === "pollinations") + '">' +
-    '<span class="pick-icon">🌸</span>' +
-    '<span class="pick-text"><b>Pollinations</b><span>Sans clé. Gratuit. Modèle Flux.</span></span>' +
-    '</button>' +
-
-    '<button type="button" class="card-pick" data-act="set-provider" data-v="cloudflare" aria-pressed="' + (currentProvider === "cloudflare") + '">' +
-    '<span class="pick-icon">☁️</span>' +
-    '<span class="pick-text"><b>Cloudflare Workers AI</b><span>Flux Schnell. 10k neurones/jour gratuits.</span></span>' +
-    '</button>' +
-
-    '<button type="button" class="card-pick" data-act="set-provider" data-v="huggingface" aria-pressed="' + (currentProvider === "huggingface") + '">' +
-    '<span class="pick-icon">🤗</span>' +
-    '<span class="pick-text"><b>Hugging Face</b><span>FLUX.1-schnell. 300 req/h gratuites.</span></span>' +
-    '</button>' +
-    '</div>' +
-
-        (currentProvider === "pollinations" ?
-      '<div class="provider-keys">' +
-      '<label>Token Pollinations (recommandé)</label>' +
-      '<input type="password" id="poll-token-input" placeholder="pk_..." value="' + esc(getPollinationsToken()) + '">' +
-      '<button type="button" class="btn big" data-act="poll-save">Enregistrer le token</button>' +
-      '<p class="small muted" style="margin-top:8px">Sans token : quota anonyme très limité (erreur 402). Avec token gratuit : 1 image / 6 secondes.</p>' +
-      (getPollinationsToken() ? '<span class="key-status ok">✓ Configuré</span>' : '<span class="key-status">Anonyme</span>') +
-      '</div>'
-      : '') +
-   (currentProvider === "cloudflare" ?
-      '<div class="provider-keys" id="cf-keys-block">' +
-      '<label>Account ID Cloudflare</label>' +
-      '<input type="text" id="cf-account-input" placeholder="1a2b3c4d..." value="' + esc(getCloudflareAccountId()) + '">' +
-      '<label>Token API Workers AI</label>' +
-      '<input type="password" id="cf-token-input" placeholder="AbC123..." value="' + esc(getCloudflareApiToken()) + '">' +
-      '<button type="button" class="btn big" data-act="cf-save">Enregistrer les clés Cloudflare</button>' +
-      (getCloudflareAccountId() && getCloudflareApiToken() ? '<span class="key-status ok">✓ Configuré</span>' : '<span class="key-status">En attente</span>') +
-      '</div>'
-      : '') +
-
-    (currentProvider === "huggingface" ?
-      '<div class="provider-keys" id="hf-keys-block">' +
-      '<label>Token Hugging Face</label>' +
-      '<input type="password" id="hf-token-input" placeholder="hf_..." value="' + esc(getHuggingFaceToken()) + '">' +
-      '<button type="button" class="btn big" data-act="hf-save">Enregistrer le token</button>' +
-      (getHuggingFaceToken() ? '<span class="key-status ok">✓ Configuré</span>' : '<span class="key-status">En attente</span>') +
-      '</div>'
-      : '') +
-
+    /* Info workflow images */
+  h += '<details class="glass acc" data-keep="1"><summary><div><b>🎨 Comment générer les images</b><br><span>Workflow manuel : ChatGPT → app</span></div></summary><div class="in">' +
+    '<p class="small">Pour chaque personnage, lieu ou plan :</p>' +
+    '<ol class="small" style="margin:8px 0 8px 20px;padding:0;line-height:1.8">' +
+    '<li>Clique sur <b>📋 Copier le prompt</b> dans la card</li>' +
+    '<li>Colle-le dans <b>ChatGPT</b> (ou Gemini, Ideogram, Midjourney…)</li>' +
+    '<li>Télécharge l\'image générée</li>' +
+    '<li>Clique sur <b>📥</b> dans la card et sélectionne l\'image</li>' +
+    '</ol>' +
+    '<p class="small muted">L\'image est stockée dans ton navigateur. Tu ne la perds jamais.</p>' +
     '</div></details>';
 
   /* Format */
@@ -2114,18 +2071,21 @@ function cardRef(kind, obj, idx) {
     : '<div class="thumb" style="display:grid;place-items:center;font-size:2rem">' +
       (kind === "lieu" ? "🏠" : "👤") + '</div>';
 
+  var promptId = "ref-prompt-" + kind + "-" + idx;
+  var promptText = refPrompt(kind, obj.visuel);
+
   var actions = "";
   if (obj.refStatus === "busy") {
     actions = '<button type="button" disabled>⏳</button>';
   } else if (hasUri) {
     actions =
-      '<button type="button" data-act="ref-regen" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">🔄</button>' +
-      '<button type="button" data-act="ref-upload" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">📥</button>' +
-      '<button type="button" data-act="ref-clear" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">🗑️</button>';
+      '<button type="button" data-act="copy-ref-prompt" data-kind="' + kind + '" data-id="' + esc(obj.id) + '" title="Copier le prompt">📋</button>' +
+      '<button type="button" data-act="ref-upload" data-kind="' + kind + '" data-id="' + esc(obj.id) + '" title="Remplacer l\'image">📥</button>' +
+      '<button type="button" data-act="ref-clear" data-kind="' + kind + '" data-id="' + esc(obj.id) + '" title="Retirer">🗑️</button>';
   } else {
     actions =
-      '<button type="button" data-act="ref-gen" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">🎨</button>' +
-      '<button type="button" data-act="ref-upload" data-kind="' + kind + '" data-id="' + esc(obj.id) + '">📥</button>';
+      '<button type="button" data-act="copy-ref-prompt" data-kind="' + kind + '" data-id="' + esc(obj.id) + '" title="Copier le prompt">📋</button>' +
+      '<button type="button" data-act="ref-upload" data-kind="' + kind + '" data-id="' + esc(obj.id) + '" title="Uploader l\'image">📥</button>';
   }
 
   return '<div class="' + cls + '">' + thumb +
@@ -2134,6 +2094,7 @@ function cardRef(kind, obj, idx) {
     '<span>' + (kind === "lieu" ? "Lieu" : "Personnage") + '</span>' +
     '</div>' +
     '<div class="actions">' + actions + '</div>' +
+    '<div style="display:none" id="' + promptId + '">' + esc(promptText) + '</div>' +
     '</div>';
 }
 
@@ -2425,12 +2386,13 @@ function cardPlan(epIdx, planIdx, p) {
       '<a href="' + esc(p.videoUrl) + '" download="plan-' + p.n + '.mp4" target="_blank" rel="noopener">⬇</a>';
   } else if (p.photoUri) {
     actions =
-      '<button type="button" data-act="plan-video" data-i="' + epIdx + '" data-j="' + planIdx + '">🎬</button>' +
-      '<button type="button" data-act="plan-photo-regen" data-i="' + epIdx + '" data-j="' + planIdx + '">🔄</button>';
+      '<button type="button" data-act="copy-plan-prompt" data-i="' + epIdx + '" data-j="' + planIdx + '" title="Copier le prompt">📋</button>' +
+      '<button type="button" data-act="plan-video" data-i="' + epIdx + '" data-j="' + planIdx + '" title="Générer la vidéo">🎬</button>' +
+      '<button type="button" data-act="plan-photo-upload" data-i="' + epIdx + '" data-j="' + planIdx + '" title="Remplacer">📥</button>';
   } else {
     actions =
-      '<button type="button" data-act="plan-photo" data-i="' + epIdx + '" data-j="' + planIdx + '">🎨</button>' +
-      '<button type="button" data-act="plan-photo-upload" data-i="' + epIdx + '" data-j="' + planIdx + '">📥</button>';
+      '<button type="button" data-act="copy-plan-prompt" data-i="' + epIdx + '" data-j="' + planIdx + '" title="Copier le prompt">📋</button>' +
+      '<button type="button" data-act="plan-photo-upload" data-i="' + epIdx + '" data-j="' + planIdx + '" title="Uploader la photo">📥</button>';
   }
 
   return '<div class="' + cls + '">' + thumb +
@@ -2441,7 +2403,6 @@ function cardPlan(epIdx, planIdx, p) {
     '<div class="actions">' + actions + '</div>' +
     '</div>';
 }
-
 /* ═══════════════════════════════════════════════════════════
    HELPER — Input de fichier dynamique
    ═══════════════════════════════════════════════════════════ */
@@ -2588,6 +2549,17 @@ document.addEventListener("click", function (e) {
     if (kind && rid) generateRef(kind, rid);
     return;
   }
+     if (a === "copy-ref-prompt") {
+    var ck = b.getAttribute("data-kind");
+    var cid = b.getAttribute("data-id");
+    var obj = findRefObj(ck, cid);
+    if (obj) {
+      var p = refPrompt(ck, obj.visuel);
+      copyAll(p, "Prompt copié. Colle-le dans ChatGPT.");
+    }
+    return;
+  }
+
   if (a === "ref-upload") {
     var kindU = b.getAttribute("data-kind");
     var ridU = b.getAttribute("data-id");
@@ -2650,6 +2622,18 @@ document.addEventListener("click", function (e) {
   }
 
   /* Plans */
+     if (a === "copy-plan-prompt") {
+    var ci = +b.getAttribute("data-i");
+    var cj = +b.getAttribute("data-j");
+    var ep = P.eps[ci];
+    var pl = ep && ep.plans[cj];
+    if (pl) {
+      var prompt = imagePrompt(pl);
+      copyAll(prompt, "Prompt image copié. Colle-le dans ChatGPT.");
+    }
+    return;
+  }
+
   if (a === "plan-photo") { generatePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); return; }
   if (a === "plan-photo-regen") { generatePhoto(+b.getAttribute("data-i"), +b.getAttribute("data-j")); return; }
   if (a === "plan-photo-upload") {
