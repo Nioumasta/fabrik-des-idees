@@ -1333,15 +1333,16 @@ function refPrompt(kind, visuel) {
 }
 
 function findRefObj(kind, id) {
+  var idStr = String(id);
   if (kind === "perso") {
-    var p = P.persos.filter(function (x) { return x.id === id; })[0];
+    var p = P.persos.filter(function (x) { return String(x.id) === idStr; })[0];
     if (p) return p;
     for (var i = 0; i < P.eps.length; i++) {
-      var c = (P.eps[i].cast || []).filter(function (x) { return x.id === id; })[0];
+      var c = (P.eps[i].cast || []).filter(function (x) { return String(x.id) === idStr; })[0];
       if (c) return c;
     }
   } else if (kind === "lieu") {
-    return P.lieux.filter(function (x) { return x.id === id; })[0];
+    return P.lieux.filter(function (x) { return String(x.id) === idStr; })[0];
   }
   return null;
 }
@@ -2027,7 +2028,6 @@ function renderStudio() {
     '</div>' +
 
     '<div class="rowbtns">' +
-    '<button type="button" class="btn" data-act="genall-refs"' + (totalRefs === 0 ? " disabled" : "") + '>🎨 Tout générer</button>' +
     '</div>' +
 
     '<div class="grid-cards">' +
